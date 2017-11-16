@@ -171,7 +171,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     DXUTInit( true, true ); // Parse the command line, show msgboxes on error, and an extra cmd line param to force REF for now
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
     DXUTCreateWindow( L"SimpleBezier11" );
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0,  true, 1280, 720 );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0,  true, 1280, 1024 );
     DXUTMainLoop(); // Enter into the DXUT render loop
 
     return DXUTGetExitCode();
@@ -198,24 +198,24 @@ void InitApp()
     WCHAR sz[100];
     iY += 10;
     swprintf_s( sz, L"Patch Divisions: %2.1f", g_fSubdivs );
-    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 150, 22 );
-    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 150, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fSubdivs * 10) );
+    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
+    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fSubdivs * 10) );
 
     swprintf_s( sz, L"Material Ka: %2.1f", g_fKa );
-    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 150, 22 );
-    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 150, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fKa * 10) );
+    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
+    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fKa * 10) );
     
     swprintf_s( sz, L"Material Kd: %2.1f", g_fKd );
-    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 150, 22 );
-    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 150, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fKd * 10) );
+    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
+    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fKd * 10) );
 
     swprintf_s( sz, L"Material Ks: %2.1f", g_fKs );
-    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 150, 22 );
-    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 150, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fKs * 10) );
+    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
+    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fKs * 10) );
 
     swprintf_s( sz, L"Material Shininess: %2.1f", g_fShininess );
-    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 150, 22 );
-    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 150, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fShininess * 10) );
+    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
+    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fShininess * 10) );
 
     iY += 24;
     g_SampleUI.AddCheckBox( IDC_TOGGLE_LINES, L"Toggle Wires", 20, iY += 26, 150, 22, g_bDrawWires );

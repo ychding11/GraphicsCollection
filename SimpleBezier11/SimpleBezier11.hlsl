@@ -254,6 +254,23 @@ float4 blinnPhong(DS_OUTPUT Input)
 	float3 color = max(pow(dot(N, H), shininess), 0.0) * Ks * Lintensity + Kd * Lintensity * max(dot(N, L), 0.0) + Ka * Lambient;
 	return float4(color, 1.0) * tex;
 }
+
+float4 microFacet(DS_OUTPUT Input)
+{
+	float3 N = normalize(Input.vNormal);
+	float3 V = normalize(Input.vWorldPos - g_vCameraPosWorld);
+	float3 L = normalize(float3(1, -1, 1));
+	float3 H = normalize(-L + V);
+	float3 Lintensity = float3(1.0, 1.0, 1.0);
+	float3 Lambient = float3(0.3, 0.3, 0.2);
+	float3 f0 = float3(0.972, 0.960, 0.915);
+	float3 frenel = f0 + (1 - f0) * pow((1 - dot(L, H)), 5);
+	float d = 1.0 /( 4 * dot(N, L) * dot(N, V));
+	float4 tex = txSkin.Sample(samLinear, Input.vtex);
+
+	float3 color = abs(dot(N, H)) * frenel * d * Lintensity;
+	return float4(color, 1.0);
+}
 //--------------------------------------------------------------------------------------
 // Smooth shading pixel shader section
 //--------------------------------------------------------------------------------------
@@ -264,8 +281,9 @@ float4 blinnPhong(DS_OUTPUT Input)
 float4 BezierPS( DS_OUTPUT Input ) : SV_TARGET
 {
     //return lambert(Input);
-    return phong(Input);
+    //return phong(Input);
     //return blinnPhong(Input);
+	return microFacet(Input);
 
 }
 
