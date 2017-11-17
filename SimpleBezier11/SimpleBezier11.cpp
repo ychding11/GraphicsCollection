@@ -136,7 +136,7 @@ void CALLBACK OnD3D11ReleasingSwapChain( void* pUserContext );
 void CALLBACK OnD3D11DestroyDevice( void* pUserContext );
 void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
                                   float fElapsedTime, void* pUserContext );
-
+void CALLBACK KeyboardProc(UINT nChar, bool bKeyDown, bool bAltDown, void* pUserContext);
 
 void CALLBACK MyRenderTeapot( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
                                   float fElapsedTime, void* pUserContext );
@@ -160,6 +160,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     // Set DXUT callbacks
     DXUTSetCallbackDeviceChanging( ModifyDeviceSettings );
     DXUTSetCallbackMsgProc( MsgProc );
+	DXUTSetCallbackKeyboard(KeyboardProc);
     DXUTSetCallbackFrameMove( OnFrameMove );
 
     DXUTSetCallbackD3D11DeviceAcceptable( IsD3D11DeviceAcceptable );
@@ -305,6 +306,18 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bo
     return 0;
 }
 
+//--------------------------------------------------------------------------------------
+void CALLBACK KeyboardProc(UINT nChar, bool bKeyDown, bool bAltDown, void* pUserContext)
+{
+	if (bKeyDown)
+	{
+		switch (nChar)
+		{
+		case VK_F1:
+			break;
+		}
+	}
+}
 
 //--------------------------------------------------------------------------------------
 // Handles the GUI events
