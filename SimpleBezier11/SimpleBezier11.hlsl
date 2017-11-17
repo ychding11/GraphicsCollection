@@ -28,6 +28,7 @@ SamplerState samLinear : register(s0);
 //--------------------------------------------------------------------------------------
 cbuffer cbPerFrame : register( b0 )
 {
+    matrix g_mWorld;
     matrix g_mViewProjection;
     float3 g_vCameraPosWorld;
     float  g_fTessellationFactor;
@@ -203,11 +204,11 @@ DS_OUTPUT BezierDS( HS_CONSTANT_DATA_OUTPUT input,
     float3 Norm      = normalize( cross( Tangent, BiTangent ) );
 
     DS_OUTPUT Output;
-    Output.vPosition = mul( float4(WorldPos,1), g_mViewProjection );
-    //Output.vPosition = float4(WorldPos, 1);
     Output.vWorldPos = WorldPos;
     Output.vNormal = Norm;
     Output.vtex = UV;
+    Output.vPosition = mul( mul(float4(WorldPos,1), g_mWorld), g_mViewProjection );
+    //Output.vPosition = float4(WorldPos, 1);
 
     return Output;    
 }

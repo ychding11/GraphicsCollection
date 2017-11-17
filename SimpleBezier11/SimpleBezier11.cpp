@@ -55,8 +55,11 @@ ID3D11Buffer*   g_pControlPointVB;                           // Control points f
 ID3D11Buffer*   g_pTeapotControlPointVB;                           // Control points for mesh
 ID3D11Buffer*   g_pTeapotControlPointIB;                           // Control points for mesh
 
+XMMATRIX        g_mWorld(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
 struct CB_PER_FRAME_CONSTANTS
 {
+    XMFLOAT4X4  mWorld;
     XMFLOAT4X4  mViewProjection;
     XMFLOAT3    vCameraPosWorld;
     float       fTessellationFactor;
@@ -697,6 +700,7 @@ void updateCamera(ID3D11DeviceContext* pd3dImmediateContext)
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     pd3dImmediateContext->Map( g_pcbPerFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource );
     auto pData = reinterpret_cast<CB_PER_FRAME_CONSTANTS*>( MappedResource.pData );
+    XMStoreFloat4x4( &pData->mWorld, g_mWorld );
     XMStoreFloat4x4( &pData->mViewProjection, XMMatrixTranspose( mViewProjection ) );
     //XMStoreFloat4x4( &pData->mViewProjection,  mViewProjection  );
     XMStoreFloat3( &pData->vCameraPosWorld, g_Camera.GetEyePt() );
