@@ -200,7 +200,7 @@ void InitApp()
     swprintf_s( sz, L"Patch Divisions: %2.1f", g_fSubdivs );
     g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
     g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fSubdivs * 10) );
-
+#if 0
     swprintf_s( sz, L"Material Ka: %2.1f", g_fKa );
     g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
     g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fKa * 10) );
@@ -216,7 +216,7 @@ void InitApp()
     swprintf_s( sz, L"Material Shininess: %2.1f", g_fShininess );
     g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
     g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fShininess * 10) );
-
+#endif
     iY += 24;
     g_SampleUI.AddCheckBox( IDC_TOGGLE_LINES, L"Toggle Wires", 20, iY += 26, 150, 22, g_bDrawWires );
     g_SampleUI.AddCheckBox( IDC_SINGLE_PATCH, L"Single Patch", 20, iY += 26, 150, 22, g_bSinglePatch );
@@ -561,7 +561,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     g_HUD.SetLocation( pBackBufferSurfaceDesc->Width - 170, 0 );
     g_HUD.SetSize( 170, 170 );
-    g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 170, pBackBufferSurfaceDesc->Height - 400 );
+    g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 200, pBackBufferSurfaceDesc->Height - 500 );
     g_SampleUI.SetSize( 170, 400 );
 
     return S_OK;
@@ -673,6 +673,36 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     DXUT_EndPerfEvent();
 }
 
+void updateMaterail(ID3D11DeviceContext* pd3dImmediateContext)
+{
+	// update material
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    pd3dImmediateContext->Map( g_pcbMaterial, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource );
+    auto pData1 = reinterpret_cast<CB_CONSTANTS_MATERIAL*>( MappedResource.pData );
+	pData1->Ka =  (float)g_fKa;
+	pData1->Kd =  (float)g_fKd;
+	pData1->Ks =  (float)g_fKs;
+	pData1->shininess =  (float)g_fShininess;
+    pd3dImmediateContext->Unmap( g_pcbMaterial, 0 );
+}
+
+void updateCamera(ID3D11DeviceContext* pd3dImmediateContext)
+{
+    // WVP
+    XMMATRIX mProj = g_Camera.GetProjMatrix();
+    XMMATRIX mView = g_Camera.GetViewMatrix();
+    XMMATRIX mViewProjection = mView * mProj;
+
+    // Update per-frame variables
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    pd3dImmediateContext->Map( g_pcbPerFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource );
+    auto pData = reinterpret_cast<CB_PER_FRAME_CONSTANTS*>( MappedResource.pData );
+    XMStoreFloat4x4( &pData->mViewProjection, XMMatrixTranspose( mViewProjection ) );
+    //XMStoreFloat4x4( &pData->mViewProjection,  mViewProjection  );
+    XMStoreFloat3( &pData->vCameraPosWorld, g_Camera.GetEyePt() );
+	pData->fTessellationFactor =  (float)g_fSubdivs;
+    pd3dImmediateContext->Unmap( g_pcbPerFrame, 0 );
+}
 
 void CALLBACK MyRenderTeapot( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext )
 {
@@ -683,29 +713,8 @@ void CALLBACK MyRenderTeapot( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3
         return;
     }
 
-    // WVP
-    XMMATRIX mProj = g_Camera.GetProjMatrix();
-    XMMATRIX mView = g_Camera.GetViewMatrix();
-
-    XMMATRIX mViewProjection = mView * mProj;
-
-    // Update per-frame variables
-    D3D11_MAPPED_SUBRESOURCE MappedResource;
-    pd3dImmediateContext->Map( g_pcbPerFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource );
-    auto pData = reinterpret_cast<CB_PER_FRAME_CONSTANTS*>( MappedResource.pData );
-    XMStoreFloat4x4( &pData->mViewProjection, XMMatrixTranspose( mViewProjection ) );
-    XMStoreFloat3( &pData->vCameraPosWorld, g_Camera.GetEyePt() );
-	pData->fTessellationFactor =  (float)g_fSubdivs;
-    pd3dImmediateContext->Unmap( g_pcbPerFrame, 0 );
-
-	// update material
-    pd3dImmediateContext->Map( g_pcbMaterial, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource );
-    auto pData1 = reinterpret_cast<CB_CONSTANTS_MATERIAL*>( MappedResource.pData );
-	pData1->Ka =  (float)g_fKa;
-	pData1->Kd =  (float)g_fKd;
-	pData1->Ks =  (float)g_fKs;
-	pData1->shininess =  (float)g_fShininess;
-    pd3dImmediateContext->Unmap( g_pcbMaterial, 0 );
+    updateCamera(pd3dImmediateContext);
+    updateMaterail(pd3dImmediateContext);
 
     // Clear the render target and depth stencil
     auto pRTV = DXUTGetD3D11RenderTargetView();

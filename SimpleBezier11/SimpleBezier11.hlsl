@@ -259,7 +259,7 @@ float4 microFacet(DS_OUTPUT Input)
 {
 	float3 N = normalize(Input.vNormal);
 	float3 V = normalize(Input.vWorldPos - g_vCameraPosWorld);
-	float3 L = normalize(float3(1, -1, 1));
+	float3 L = normalize(float3(0, 0, -1));
 	float3 H = normalize(-L + V);
 	float3 Lintensity = float3(1.0, 1.0, 1.0);
 	float3 Lambient = float3(0.3, 0.3, 0.2);
