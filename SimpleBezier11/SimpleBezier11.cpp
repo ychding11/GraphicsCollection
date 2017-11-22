@@ -552,7 +552,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     V_RETURN( pd3dDevice->CreateSamplerState(&sampDesc, &g_pSamplerLinear) );
-    V_RETURN( CreateDDSTextureFromFile(pd3dDevice, L"earth-4k.dds", nullptr, &g_pTextureRV) );
+    //V_RETURN( CreateDDSTextureFromFile(pd3dDevice, L"earth-4k.dds", nullptr, &g_pTextureRV) );
+    V_RETURN(DXUTCreateShaderResourceViewFromFile(pd3dDevice, L"earth-4k.dds", &g_pTextureRV));
 
     return S_OK;
 }
@@ -571,7 +572,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     // Setup the camera's projection parameters
     float fAspectRatio = pBackBufferSurfaceDesc->Width / ( FLOAT )pBackBufferSurfaceDesc->Height;
-    g_Camera.SetProjParams( XM_PI / 4, fAspectRatio, 0.1f, 20.0f );
+    g_Camera.SetProjParams( XM_PI / 4, fAspectRatio, 0.1f, 2000.0f );
     g_Camera.SetWindow( pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height );
     g_Camera.SetButtonMasks( MOUSE_MIDDLE_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON );
 
