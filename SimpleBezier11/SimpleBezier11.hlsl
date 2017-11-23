@@ -204,8 +204,10 @@ DS_OUTPUT BezierDS( HS_CONSTANT_DATA_OUTPUT input,
     float3 Norm      = normalize( cross( Tangent, BiTangent ) );
 
     DS_OUTPUT Output;
-    Output.vWorldPos = WorldPos;
-    Output.vNormal = Norm;
+    //Output.vWorldPos = WorldPos;
+    float4 temp = mul(float4(WorldPos,1.0), g_mWorld);
+    Output.vWorldPos = temp.xyz;
+    Output.vNormal   = mul(Norm, (float3x3)g_mWorld);
     Output.vtex = UV;
     Output.vPosition = mul( mul(float4(WorldPos,1), g_mWorld), g_mViewProjection );
     //Output.vPosition = float4(WorldPos, 1);
@@ -275,10 +277,6 @@ float4 microFacet(DS_OUTPUT Input)
 //--------------------------------------------------------------------------------------
 // Smooth shading pixel shader section
 //--------------------------------------------------------------------------------------
-
-// The pixel shader works the same as it would in a normal graphics pipeline.
-// In this sample, it performs very simple N dot L lighting.
-
 float4 BezierPS( DS_OUTPUT Input ) : SV_TARGET
 {
     //return lambert(Input);
@@ -293,6 +291,5 @@ float4 BezierPS( DS_OUTPUT Input ) : SV_TARGET
 //--------------------------------------------------------------------------------------
 float4 SolidColorPS( DS_OUTPUT Input ) : SV_TARGET
 {
-    // Return a solid green color
     return float4( 0, 1, 0, 1 );
 }
