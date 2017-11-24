@@ -20,6 +20,7 @@
 
 using namespace DirectX;
 
+
 const DWORD MIN_DIVS = 2;
 const DWORD MAX_DIVS = 32; // Min and Max divisions of the patch per side for the slider control
 
@@ -709,6 +710,7 @@ void updateCamera(ID3D11DeviceContext* pd3dImmediateContext)
     XMMATRIX mProj = g_Camera.GetProjMatrix();
     XMMATRIX mView = g_Camera.GetViewMatrix();
     XMMATRIX mViewProjection = mView * mProj;
+    g_mWorld = g_Camera.GetWorldMatrix();
 
     // Update per-frame variables
     D3D11_MAPPED_SUBRESOURCE MappedResource;
@@ -720,6 +722,16 @@ void updateCamera(ID3D11DeviceContext* pd3dImmediateContext)
     XMStoreFloat3( &pData->vCameraPosWorld, g_Camera.GetEyePt() );
 	pData->fTessellationFactor =  (float)g_fSubdivs;
     pd3dImmediateContext->Unmap( g_pcbPerFrame, 0 );
+
+    XMVECTOR tempEyePos = g_Camera.GetEyePt();
+    char buf[256];
+    sprintf(buf,"- eye position: %f, %f, %f, %f.\n",
+        tempEyePos.m128_f32[0],
+        tempEyePos.m128_f32[1],
+        tempEyePos.m128_f32[2],
+        tempEyePos.m128_f32[3]
+        );
+    OutputDebugStringA(buf);
 }
 
 void CALLBACK MyRenderTeapot( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext )
