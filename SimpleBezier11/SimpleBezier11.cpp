@@ -236,7 +236,7 @@ void InitApp()
     g_SampleUI.GetRadioButton( IDC_PARTITION_INTEGER )->SetChecked( true );
 
     // Setup the camera's view parameters
-    static const XMVECTORF32 s_vecEye = { 1.0f, 1.5f, -3.5f, 0.f };
+    static const XMVECTORF32 s_vecEye = { 1.0f, 1.5f, -15.0f, 0.f };
     static const XMVECTORF32 s_vecAt = { 0.0f, 0.0f, 0.0f, 0.f };
     g_Camera.SetViewParams( s_vecEye, s_vecAt );
 
@@ -558,7 +558,13 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     //V_RETURN( CreateDDSTextureFromFile(pd3dDevice, L"earth-4k.dds", nullptr, &g_pTextureRV) );
     V_RETURN(DXUTCreateShaderResourceViewFromFile(pd3dDevice, L"earth-4k.dds", &g_pTextureRV));
 
-    g_Camera.SetAttachCameraToModel(true);
+   // g_Camera.SetAttachCameraToModel(true);
+
+    XMMATRIX mRot;
+    mRot = XMMatrixRotationX(45.0f);
+    //mRot = XMMatrixRotationY(XMConvertToRadians(180.f));
+    g_mWorld = g_mWorld * mRot;
+    //g_mWorld = mRot * g_mWorld;
     return S_OK;
 }
 
@@ -674,13 +680,15 @@ void updateCamera(ID3D11DeviceContext* pd3dImmediateContext)
     XMMATRIX mProj = g_Camera.GetProjMatrix();
     XMMATRIX mView = g_Camera.GetViewMatrix();
     XMMATRIX mViewProjection = mView * mProj;
-    g_mWorld = g_Camera.GetWorldMatrix();
+   // g_mWorld = g_Camera.GetWorldMatrix();
 
     // Update per-frame variables
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     pd3dImmediateContext->Map( g_pcbPerFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource );
     auto pData = reinterpret_cast<CB_PER_FRAME_CONSTANTS*>( MappedResource.pData );
-    XMStoreFloat4x4( &pData->mWorld, g_mWorld );
+//    XMStoreFloat4x4( &pData->mWorld, g_mWorld );
+
+    XMStoreFloat4x4( &pData->mWorld, XMMatrixTranspose(g_mWorld) );
     XMStoreFloat4x4( &pData->mViewProjection, XMMatrixTranspose( mViewProjection ) );
     //XMStoreFloat4x4( &pData->mViewProjection,  mViewProjection  );
     XMStoreFloat3( &pData->vCameraPosWorld, g_Camera.GetEyePt() );

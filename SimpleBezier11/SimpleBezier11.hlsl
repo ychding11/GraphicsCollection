@@ -28,7 +28,7 @@ SamplerState samLinear : register(s0);
 //--------------------------------------------------------------------------------------
 cbuffer cbPerFrame : register( b0 )
 {
-    matrix g_mWorld;
+    column_major matrix g_mWorld; // column_major is default.
     matrix g_mViewProjection;
     float3 g_vCameraPosWorld;
     float  g_fTessellationFactor;
