@@ -56,7 +56,7 @@ ID3D11Buffer*   g_pControlPointVB;                           // Control points f
 ID3D11Buffer*   g_pTeapotControlPointVB;                           // Control points for mesh
 ID3D11Buffer*   g_pTeapotControlPointIB;                           // Control points for mesh
 
-XMMATRIX        g_mWorld(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+XMMATRIX        g_mWorld(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 6, 0, 0, 1);
 
 struct CB_PER_FRAME_CONSTANTS
 {
@@ -503,7 +503,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 
     Desc.ByteWidth = sizeof( CB_CONSTANTS_MATERIAL );
     V_RETURN( pd3dDevice->CreateBuffer( &Desc, nullptr, &g_pcbMaterial ) );
-    DXUT_SetDebugName( g_pcbPerFrame, "CB_PER_FRAME_CONSTANTS_material" );
+    DXUT_SetDebugName( g_pcbMaterial, "CB_PER_FRAME_CONSTANTS_material" );
 
     // Create solid and wireframe rasterizer state objects
     D3D11_RASTERIZER_DESC RasterDesc;
@@ -561,9 +561,9 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
    // g_Camera.SetAttachCameraToModel(true);
 
     XMMATRIX mRot;
-    mRot = XMMatrixRotationX(45.0f);
+    mRot = XMMatrixRotationX(XM_PI * (90.0 / 180.0) );
     //mRot = XMMatrixRotationY(XMConvertToRadians(180.f));
-    g_mWorld = g_mWorld * mRot;
+    //g_mWorld = g_mWorld * mRot;
     //g_mWorld = mRot * g_mWorld;
     return S_OK;
 }

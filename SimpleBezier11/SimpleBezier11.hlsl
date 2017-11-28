@@ -28,7 +28,7 @@ SamplerState samLinear : register(s0);
 //--------------------------------------------------------------------------------------
 cbuffer cbPerFrame : register( b0 )
 {
-    column_major matrix g_mWorld; // column_major is default.
+    row_major matrix g_mWorld; // column_major is default.
     matrix g_mViewProjection;
     float3 g_vCameraPosWorld;
     float  g_fTessellationFactor;
@@ -64,7 +64,7 @@ struct VS_CONTROL_POINT_OUTPUT
 VS_CONTROL_POINT_OUTPUT BezierVS( VS_CONTROL_POINT_INPUT Input )
 {
     VS_CONTROL_POINT_OUTPUT Output;
-    Output.vPosition = Input.vPosition;
+    Output.vPosition = mul(float4(Input.vPosition,1.0), g_mWorld).xyz;
     return Output;
 }
 
@@ -204,12 +204,13 @@ DS_OUTPUT BezierDS( HS_CONSTANT_DATA_OUTPUT input,
     float3 Norm      = normalize( cross( Tangent, BiTangent ) );
 
     DS_OUTPUT Output;
-    //Output.vWorldPos = WorldPos;
-    float4 temp = mul(float4(WorldPos,1.0), g_mWorld);
-    Output.vWorldPos = temp.xyz;
-    Output.vNormal   = mul(Norm, (float3x3)g_mWorld);
+    Output.vWorldPos = WorldPos;
+    //float4 temp = mul(float4(WorldPos,1.0), g_mWorld);
+    //Output.vWorldPos = temp.xyz;
+    //Output.vNormal   = mul(Norm, (float3x3)g_mWorld);
+    Output.vNormal   = Norm;
     Output.vtex = UV;
-    Output.vPosition = mul( mul(float4(WorldPos,1), g_mWorld), g_mViewProjection );
+    Output.vPosition = mul( float4(WorldPos, 1.0), g_mViewProjection );
     //Output.vPosition = float4(WorldPos, 1);
 
     return Output;    
