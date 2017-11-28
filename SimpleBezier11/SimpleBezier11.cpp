@@ -139,8 +139,10 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
                                   float fElapsedTime, void* pUserContext );
 void CALLBACK KeyboardProc(UINT nChar, bool bKeyDown, bool bAltDown, void* pUserContext);
 
-void CALLBACK MyRenderTeapot( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
-                                  float fElapsedTime, void* pUserContext );
+void MyRenderTeapot( ID3D11DeviceContext* pd3dImmediateContext);
+void MobiusStripRender(ID3D11DeviceContext* pd3dImmediateContext);
+void updateMaterail(ID3D11DeviceContext* pd3dImmediateContext);
+void updateCamera(ID3D11DeviceContext* pd3dImmediateContext);
 void InitApp();
 void RenderText();
 
@@ -167,8 +169,8 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     DXUTSetCallbackD3D11DeviceAcceptable( IsD3D11DeviceAcceptable );
     DXUTSetCallbackD3D11DeviceCreated( OnD3D11CreateDevice );
     DXUTSetCallbackD3D11SwapChainResized( OnD3D11ResizedSwapChain );
-    //DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender );
-    DXUTSetCallbackD3D11FrameRender( MyRenderTeapot );
+    DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender );
+    //DXUTSetCallbackD3D11FrameRender( MyRenderTeapot );
     DXUTSetCallbackD3D11SwapChainReleasing( OnD3D11ReleasingSwapChain );
     DXUTSetCallbackD3D11DeviceDestroyed( OnD3D11DestroyDevice );
 
@@ -556,6 +558,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     //V_RETURN( CreateDDSTextureFromFile(pd3dDevice, L"earth-4k.dds", nullptr, &g_pTextureRV) );
     V_RETURN(DXUTCreateShaderResourceViewFromFile(pd3dDevice, L"earth-4k.dds", &g_pTextureRV));
 
+    g_Camera.SetAttachCameraToModel(true);
     return S_OK;
 }
 
@@ -585,45 +588,14 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
     return S_OK;
 }
 
-//--------------------------------------------------------------------------------------
-// Render the scene using the D3D11 device
-//--------------------------------------------------------------------------------------
-void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
-                                  float fElapsedTime, void* pUserContext )
+void MobiusStripRender(ID3D11DeviceContext* pd3dImmediateContext)
 {
-    // If the settings dialog is being shown, then render it instead of rendering the app's scene
-    if( g_D3DSettingsDlg.IsActive() )
-    {
-        g_D3DSettingsDlg.OnRender( fElapsedTime );
-        return;
-    }
-
-    // WVP
-    XMMATRIX mProj = g_Camera.GetProjMatrix();
-    XMMATRIX mView = g_Camera.GetViewMatrix();
-
-    XMMATRIX mViewProjection = mView * mProj;
-
-    // Update per-frame variables
-    D3D11_MAPPED_SUBRESOURCE MappedResource;
-    pd3dImmediateContext->Map( g_pcbPerFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource );
-    auto pData = reinterpret_cast<CB_PER_FRAME_CONSTANTS*>( MappedResource.pData );
-    XMStoreFloat4x4( &pData->mViewProjection, XMMatrixTranspose( mViewProjection ) );
-    XMStoreFloat3( &pData->vCameraPosWorld, g_Camera.GetEyePt() );
-    pData->fTessellationFactor = (float)g_fSubdivs;
-
-    pd3dImmediateContext->Unmap( g_pcbPerFrame, 0 );
-
     // Clear the render target and depth stencil
     auto pRTV = DXUTGetD3D11RenderTargetView();
     pd3dImmediateContext->ClearRenderTargetView( pRTV, Colors::Black );
     auto pDSV = DXUTGetD3D11DepthStencilView();
     pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
 
-    // Set state for solid rendering
-    pd3dImmediateContext->RSSetState( g_pRasterizerStateSolid );
-
-    // Render the meshes
     // Bind all of the CBs
     pd3dImmediateContext->VSSetConstantBuffers( g_iBindPerFrame, 1, &g_pcbPerFrame );
     pd3dImmediateContext->HSSetConstantBuffers( g_iBindPerFrame, 1, &g_pcbPerFrame );
@@ -633,62 +605,54 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     // Set the shaders
     pd3dImmediateContext->VSSetShader( g_pVertexShader, nullptr, 0 );
 
-    // For this sample, choose either the "integer", "fractional_even",
-    // or "fractional_odd" hull shader
+    // For this sample, choose either the "integer", "fractional_even" or "fractional_odd" hull shader
     if (g_iPartitionMode == PARTITION_INTEGER)
         pd3dImmediateContext->HSSetShader( g_pHullShaderInteger, nullptr, 0 );
     else if (g_iPartitionMode == PARTITION_FRACTIONAL_EVEN)
         pd3dImmediateContext->HSSetShader( g_pHullShaderFracEven, nullptr, 0 );
     else if (g_iPartitionMode == PARTITION_FRACTIONAL_ODD)
         pd3dImmediateContext->HSSetShader( g_pHullShaderFracOdd, nullptr, 0 );
+    else
+    { }
 
     pd3dImmediateContext->DSSetShader( g_pDomainShader, nullptr, 0 );
     pd3dImmediateContext->GSSetShader( nullptr, nullptr, 0 );
-    pd3dImmediateContext->PSSetShader( g_pPixelShader, nullptr, 0 );
 
     if (g_bTriDomain)
     {
-    // For this sample, choose either the "integer", "fractional_even",
-    // or "fractional_odd" hull shader
-    if (g_iPartitionMode == PARTITION_INTEGER)
-        pd3dImmediateContext->HSSetShader( g_pTriHullShaderInteger, nullptr, 0 );
-    else if (g_iPartitionMode == PARTITION_FRACTIONAL_EVEN)
-        pd3dImmediateContext->HSSetShader( g_pTriHullShaderFracEven, nullptr, 0 );
-    else if (g_iPartitionMode == PARTITION_FRACTIONAL_ODD)
-        pd3dImmediateContext->HSSetShader( g_pTriHullShaderFracOdd, nullptr, 0 );
-
-    pd3dImmediateContext->DSSetShader( g_pTriDomainShader, nullptr, 0 );
-
+        // For this sample, choose either the "integer", "fractional_even" or "fractional_odd" hull shader
+        if (g_iPartitionMode == PARTITION_INTEGER)
+            pd3dImmediateContext->HSSetShader( g_pTriHullShaderInteger, nullptr, 0 );
+        else if (g_iPartitionMode == PARTITION_FRACTIONAL_EVEN)
+            pd3dImmediateContext->HSSetShader( g_pTriHullShaderFracEven, nullptr, 0 );
+        else if (g_iPartitionMode == PARTITION_FRACTIONAL_ODD)
+            pd3dImmediateContext->HSSetShader( g_pTriHullShaderFracOdd, nullptr, 0 );
+        else
+        { }
+        pd3dImmediateContext->DSSetShader( g_pTriDomainShader, nullptr, 0 );
     }
 
+    // Set state for solid rendering
+    pd3dImmediateContext->RSSetState( g_pRasterizerStateSolid );
+    pd3dImmediateContext->PSSetShader( g_pPixelShader, nullptr, 0 );
     // Optionally draw the wireframe
     if( g_bDrawWires )
     {
-        pd3dImmediateContext->PSSetShader( g_pSolidColorPS, nullptr, 0 );
         pd3dImmediateContext->RSSetState( g_pRasterizerStateWireframe ); 
+        pd3dImmediateContext->PSSetShader( g_pSolidColorPS, nullptr, 0 );
     }
 
-    // Set the input assembler
-    // This sample uses patches with 16 control points each
-    // Although the Mobius strip only needs to use a vertex buffer,
-    // you can use an index buffer as well by calling IASetIndexBuffer().
-    pd3dImmediateContext->IASetInputLayout( g_pPatchLayout );
     UINT Stride = sizeof( BEZIER_CONTROL_POINT );
     UINT Offset = 0;
     pd3dImmediateContext->IASetVertexBuffers( 0, 1, &g_pControlPointVB, &Stride, &Offset );
     pd3dImmediateContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST );
+    pd3dImmediateContext->IASetInputLayout( g_pPatchLayout );
 
-	UINT Points = ARRAYSIZE(g_MobiusStrip);
+	UINT Points = ARRAYSIZE(g_MobiusStrip); // Mobius Strip consist of 4 bezier patch.
 	if (g_bSinglePatch) Points /= 4;
+
     // Draw the mesh
     pd3dImmediateContext->Draw( Points, 0 );
-
-    // Render the HUD
-    DXUT_BeginPerfEvent( DXUT_PERFEVENTCOLOR, L"HUD / Stats" );
-    g_HUD.OnRender( fElapsedTime );
-    g_SampleUI.OnRender( fElapsedTime );
-    RenderText();
-    DXUT_EndPerfEvent();
 }
 
 void updateMaterail(ID3D11DeviceContext* pd3dImmediateContext)
@@ -723,6 +687,7 @@ void updateCamera(ID3D11DeviceContext* pd3dImmediateContext)
 	pData->fTessellationFactor =  (float)g_fSubdivs;
     pd3dImmediateContext->Unmap( g_pcbPerFrame, 0 );
 
+    // for debug purpose
     XMVECTOR tempEyePos = g_Camera.GetEyePt();
     char buf[256];
     sprintf(buf,"- eye position: %f, %f, %f, %f.\n",
@@ -734,7 +699,11 @@ void updateCamera(ID3D11DeviceContext* pd3dImmediateContext)
     OutputDebugStringA(buf);
 }
 
-void CALLBACK MyRenderTeapot( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext )
+//--------------------------------------------------------------------------------------
+// Render the scene using the D3D11 device
+//--------------------------------------------------------------------------------------
+void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
+                                  float fElapsedTime, void* pUserContext )
 {
     // If the settings dialog is being shown, then render it instead of rendering the app's scene
     if( g_D3DSettingsDlg.IsActive() )
@@ -742,18 +711,28 @@ void CALLBACK MyRenderTeapot( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3
         g_D3DSettingsDlg.OnRender( fElapsedTime );
         return;
     }
-
     updateCamera(pd3dImmediateContext);
     updateMaterail(pd3dImmediateContext);
 
+    MobiusStripRender(pd3dImmediateContext);
+    MyRenderTeapot(pd3dImmediateContext);
+
+    // Render the HUD
+    DXUT_BeginPerfEvent( DXUT_PERFEVENTCOLOR, L"HUD / Stats" );
+    g_HUD.OnRender( fElapsedTime );
+    g_SampleUI.OnRender( fElapsedTime );
+    RenderText();
+    DXUT_EndPerfEvent();
+}
+
+
+void MyRenderTeapot( ID3D11DeviceContext* pd3dImmediateContext)
+{
     // Clear the render target and depth stencil
     auto pRTV = DXUTGetD3D11RenderTargetView();
     pd3dImmediateContext->ClearRenderTargetView( pRTV, Colors::Black );
     auto pDSV = DXUTGetD3D11DepthStencilView();
     pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
-
-    // Set state for solid rendering
-    pd3dImmediateContext->RSSetState( g_pRasterizerStateSolid );
 
     // Render the meshes
     // Bind all of the CBs
@@ -766,41 +745,25 @@ void CALLBACK MyRenderTeapot( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3
     // Set the shaders
     pd3dImmediateContext->VSSetShader( g_pVertexShader, nullptr, 0 );
 
-    // For this sample, choose either the "integer", "fractional_even",
-    // or "fractional_odd" hull shader
     if (g_iPartitionMode == PARTITION_INTEGER)
         pd3dImmediateContext->HSSetShader( g_pHullShaderInteger, nullptr, 0 );
     else if (g_iPartitionMode == PARTITION_FRACTIONAL_EVEN)
         pd3dImmediateContext->HSSetShader( g_pHullShaderFracEven, nullptr, 0 );
     else if (g_iPartitionMode == PARTITION_FRACTIONAL_ODD)
         pd3dImmediateContext->HSSetShader( g_pHullShaderFracOdd, nullptr, 0 );
+    else
+    { }
 
     pd3dImmediateContext->DSSetShader( g_pDomainShader, nullptr, 0 );
     pd3dImmediateContext->GSSetShader( nullptr, nullptr, 0 );
-    pd3dImmediateContext->PSSetShader( g_pPixelShader, nullptr, 0 );
     pd3dImmediateContext->PSSetShaderResources(0, 1, &g_pTextureRV);
     pd3dImmediateContext->PSSetSamplers(0, 1, &g_pSamplerLinear);
-
-    if (g_bTriDomain)
-    {
-    // For this sample, choose either the "integer", "fractional_even",
-    // or "fractional_odd" hull shader
-    if (g_iPartitionMode == PARTITION_INTEGER)
-        pd3dImmediateContext->HSSetShader( g_pTriHullShaderInteger, nullptr, 0 );
-    else if (g_iPartitionMode == PARTITION_FRACTIONAL_EVEN)
-        pd3dImmediateContext->HSSetShader( g_pTriHullShaderFracEven, nullptr, 0 );
-    else if (g_iPartitionMode == PARTITION_FRACTIONAL_ODD)
-        pd3dImmediateContext->HSSetShader( g_pTriHullShaderFracOdd, nullptr, 0 );
-
-    pd3dImmediateContext->DSSetShader( g_pTriDomainShader, nullptr, 0 );
-
-    }
-
-    // Optionally draw the wireframe
+    pd3dImmediateContext->RSSetState( g_pRasterizerStateSolid );
+    pd3dImmediateContext->PSSetShader( g_pPixelShader, nullptr, 0 );
     if( g_bDrawWires )
     {
-        pd3dImmediateContext->PSSetShader( g_pSolidColorPS, nullptr, 0 );
         pd3dImmediateContext->RSSetState( g_pRasterizerStateWireframe ); 
+        pd3dImmediateContext->PSSetShader( g_pSolidColorPS, nullptr, 0 );
     }
 
     // Set the input assembler
@@ -811,14 +774,8 @@ void CALLBACK MyRenderTeapot( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3
     pd3dImmediateContext->IASetVertexBuffers( 0, 1, &g_pTeapotControlPointVB, &Stride, &Offset );
     pd3dImmediateContext->IASetIndexBuffer(g_pTeapotControlPointIB, DXGI_FORMAT_R32_UINT, 0 );
     pd3dImmediateContext->DrawIndexed(kTeapotNumPatches * 16, 0,0);
-
-    // Render the HUD
-    DXUT_BeginPerfEvent( DXUT_PERFEVENTCOLOR, L"HUD / Stats" );
-    g_HUD.OnRender( fElapsedTime );
-    g_SampleUI.OnRender( fElapsedTime );
-    RenderText();
-    DXUT_EndPerfEvent();
 }
+
 //--------------------------------------------------------------------------------------
 // Release D3D11 resources created in OnD3D11ResizedSwapChain 
 //--------------------------------------------------------------------------------------
