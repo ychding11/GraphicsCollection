@@ -233,12 +233,12 @@ float4 lambert( DS_OUTPUT Input )
 
 float4 phong( DS_OUTPUT Input )
 {
-    float3 N = normalize(Input.vNormal);
-    float3 V = normalize(Input.vWorldPos - g_vCameraPosWorld);
-    float3 L = normalize(float3(1, -1, 1));
-	float3 R = normalize(L + 2 * dot(-L,N) * N);
-    float3 Lintensity = float3(1.0, 0.8, 0.7);
-    float3 Lambient   = float3(0.3, 0.3, 0.2);
+    float3 N = Input.vNormal;
+    float3 V = normalize(g_vCameraPosWorld - Input.vWorldPos);
+    float3 L = normalize(float3(10, 6, -10) - Input.vWorldPos);
+	float3 R = normalize(2 * dot(L,N) * N - L);
+    float3 Lintensity = float3(1.0, 1.0, 1.0);
+    float3 Lambient   = float3(0.3, 0.3, 0.3);
     float4 tex = txSkin.Sample(samLinear, Input.vtex);
 
     float3 color = max(pow(dot(R,V),shininess),0.0) * Ks * Lintensity +  Kd * Lintensity * max(dot(N,L), 0.0) + Ka * Lambient;
@@ -262,8 +262,9 @@ float4 blinnPhong(DS_OUTPUT Input)
 float4 microFacet(DS_OUTPUT Input)
 {
 	float3 N = normalize(Input.vNormal);
-	float3 V = normalize(Input.vWorldPos - g_vCameraPosWorld);
-	float3 L = normalize(float3(0, 0, -1));
+	float3 V = normalize(g_vCameraPosWorld - Input.vWorldPos);
+	float3 L = normalize(float3(-2.0f, 5.0f, -3.0f) - Input.vWorldPos);
+	//float3 L = normalize(float3(1, 1, 1));
 	float3 H = normalize(-L + V);
 	float3 Lintensity = float3(1.0, 1.0, 1.0);
 	float3 Lambient = float3(0.3, 0.3, 0.2);
@@ -272,7 +273,7 @@ float4 microFacet(DS_OUTPUT Input)
 	float d = 1.0 /( 4 * dot(N, L) * dot(N, V));
 	float4 tex = txSkin.Sample(samLinear, Input.vtex);
 
-	float3 color = abs(dot(N, H)) * frenel * d * Lintensity;
+	float3 color = abs(dot(N, H)) * frenel * d * Lintensity + Lambient;
 	return float4(color, 1.0);
 }
 //--------------------------------------------------------------------------------------
@@ -281,7 +282,7 @@ float4 microFacet(DS_OUTPUT Input)
 float4 BezierPS( DS_OUTPUT Input ) : SV_TARGET
 {
     //return lambert(Input);
-    //return phong(Input);
+    return phong(Input);
     //return blinnPhong(Input);
 	return microFacet(Input);
 
