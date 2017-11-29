@@ -56,7 +56,12 @@ ID3D11Buffer*   g_pControlPointVB;                           // Control points f
 ID3D11Buffer*   g_pTeapotControlPointVB;                           // Control points for mesh
 ID3D11Buffer*   g_pTeapotControlPointIB;                           // Control points for mesh
 
-XMMATRIX        g_mWorld(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 6, 0, 0, 1);
+//XMMATRIX        g_mWorld(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 6, 0, 0, 1);
+XMMATRIX        g_mWorld(1, 0, 0, 0,
+    0, 0, -1, 0,
+    0, 1, 0, 0,
+    0, 0, 0, 1);
+
 
 struct CB_PER_FRAME_CONSTANTS
 {
