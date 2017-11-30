@@ -236,12 +236,15 @@ float4 phong( DS_OUTPUT Input )
     float3 N = Input.vNormal;
     float3 V = normalize(g_vCameraPosWorld - Input.vWorldPos);
     float3 L = normalize(float3(10, 6, -10) - Input.vWorldPos);
-	float3 R = normalize(2 * dot(L,N) * N - L);
-    float3 Lintensity = float3(1.0, 1.0, 1.0);
-    float3 Lambient   = float3(0.3, 0.3, 0.3);
+    float3 R = normalize(2 * dot(L, N) * N - L);
+    float3 Lintensity = float3(0.125, 0.643, 0.6423);
+    float3 Lambient = float3(0.1, 0.1, 0.1);
+    float3 Kdiffuse = float3(0.55231, 0.232, 0.5612);
+    float3 Kspecular = float3(0.262344, 0.623421, 0.1233);
+    float3 Kambient = float3(0.072, 0.060, 0.015);
     float4 tex = txSkin.Sample(samLinear, Input.vtex);
 
-    float3 color = max(pow(dot(R,V),shininess),0.0) * Ks * Lintensity +  Kd * Lintensity * max(dot(N,L), 0.0f) + Ka * Lambient;
+    float3 color = max(pow(dot(R,V),shininess),0.0) * Kspecular * Lintensity +  Kdiffuse * Lintensity * max(dot(N,L), 0.0f) + Kambient * Lambient;
     return float4(color, 1.0);
 }
 

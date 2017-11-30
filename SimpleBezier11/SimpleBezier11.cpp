@@ -82,7 +82,7 @@ struct CB_CONSTANTS_MATERIAL
 float                               g_fKa = 0.3;     
 float                               g_fKd = 0.4;     
 float                               g_fKs = 0.8;     
-float                               g_fShininess = 11;     
+float                               g_fShininess = 110;     
 
 ID3D11Buffer*                       g_pcbPerFrame = nullptr;
 ID3D11Buffer*                       g_pcbMaterial = nullptr;
@@ -92,7 +92,7 @@ ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
 ID3D11RasterizerState*              g_pRasterizerStateWireframe = nullptr;
 
 // Control variables
-float                               g_fSubdivs = 8;          // Startup subdivisions per side
+float                               g_fSubdivs = 16;          // Startup subdivisions per side
 bool                                g_bDrawWires = false;    // Draw the mesh with wireframe overlay
 bool                                g_bSinglePatch = false;    // Draw single patch only 
 bool                                g_bTriDomain = false;    // Draw single patch only 
