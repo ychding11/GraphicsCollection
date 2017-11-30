@@ -67,6 +67,20 @@ ID3D11Buffer*           g_pIndexBuffer = nullptr;
 ID3D11RasterizerState*              g_pRasterizerStateWireframe = nullptr;
 ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
 
+    // Define the input layout
+    D3D11_INPUT_ELEMENT_DESC g_ObjectLayout[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    };
+
+	// Define the sphere input layout
+	D3D11_INPUT_ELEMENT_DESC g_SimpleLayout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+
 //--------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
@@ -141,7 +155,6 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     // Read the D3DX effect file
     WCHAR str[MAX_PATH];
     V_RETURN( DXUTFindDXSDKMediaFileCch( str, MAX_PATH, L"Tutorial12.fx" ) );
-
     V_RETURN( D3DX11CompileEffectFromFile( str, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, dwShaderFlags, 0, pd3dDevice, &g_pEffect, nullptr) );
 
 #else
@@ -152,7 +165,6 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     SAFE_RELEASE( pEffectBuffer );
     if ( FAILED(hr) )
         return hr;
-    
 #endif
 
     // Obtain the technique
@@ -161,39 +173,32 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     g_pBackgroundTechnique      = g_pEffect->GetTechniqueByName( "BackgroundRender" );
 
     // Obtain the variables
-    g_ptxDiffuseVariable = g_pEffect->GetVariableByName( "g_txDiffuse" )->AsShaderResource();
-    g_pWorldVariable = g_pEffect->GetVariableByName( "World" )->AsMatrix();
-    g_pViewVariable = g_pEffect->GetVariableByName( "View" )->AsMatrix();
+    g_pWorldVariable      = g_pEffect->GetVariableByName( "World" )->AsMatrix();
+    g_pViewVariable       = g_pEffect->GetVariableByName( "View" )->AsMatrix();
     g_pProjectionVariable = g_pEffect->GetVariableByName( "Projection" )->AsMatrix();
-    g_pEnvMapVariable = g_pEffect->GetVariableByName( "g_txEnvMap" )->AsShaderResource();
-    g_bSpinVariable = g_pEffect->GetVariableByName( "SpinBackground" )->AsScalar();
-
-    // Define the input layout
-    D3D11_INPUT_ELEMENT_DESC layout[] =
-    {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    };
-    UINT numElements = ARRAYSIZE( layout );
+    g_pEnvMapVariable    = g_pEffect->GetVariableByName( "g_txEnvMap" )->AsShaderResource();
+    g_bSpinVariable      = g_pEffect->GetVariableByName( "SpinBackground" )->AsScalar();
+    g_ptxDiffuseVariable = g_pEffect->GetVariableByName( "g_txDiffuse" )->AsShaderResource();
 
     // Create the input layout
     D3DX11_PASS_DESC PassDesc;
+    UINT numElements = ARRAYSIZE(g_ObjectLayout);
     V_RETURN( g_pTechnique->GetPassByIndex( 0 )->GetDesc( &PassDesc ) );
-    V_RETURN( pd3dDevice->CreateInputLayout( layout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pVertexLayout ) );
+    V_RETURN( pd3dDevice->CreateInputLayout(g_ObjectLayout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pVertexLayout ) );
 
-    // Load the mesh
-    //V_RETURN( g_Mesh.Create( pd3dDevice, L"Tiny\\tiny.sdkmesh" ) );
+	numElements = ARRAYSIZE(g_SimpleLayout);
+	V_RETURN(g_pSphereTechnique->GetPassByIndex(0)->GetDesc(&PassDesc));
+	V_RETURN(pd3dDevice->CreateInputLayout(g_SimpleLayout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pSphereVertexLayout));
+
+	numElements = ARRAYSIZE(g_SimpleLayout);
+	V_RETURN(g_pBackgroundTechnique->GetPassByIndex(0)->GetDesc(&PassDesc));
+	V_RETURN(pd3dDevice->CreateInputLayout(g_SimpleLayout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pBackgroundVertexLayout));
 
     // Initialize the world matrices
     g_World = XMMatrixIdentity();
 
     // Load the Environment Map
-    //V_RETURN( DXUTCreateShaderResourceViewFromFile( pd3dDevice, L"Lobby\\LobbyCube.dds" , &g_pEnvMapSRV ) );
     V_RETURN( DXUTCreateShaderResourceViewFromFile( pd3dDevice,L"uffizi_cross32.dds", &g_pEnvMapSRV ) );
-	//L"Light Probes\\uffizi_cross32.dds
-
-    // Set the Environment Map
     g_pEnvMapVariable->SetResource( g_pEnvMapSRV );
 
     // Setup the camera's view parameters
@@ -210,30 +215,6 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 HRESULT CALLBACK MyCreateResources( ID3D11Device* pd3dDevice, const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc, void* pUserContext )
 {
 	HRESULT  hr;
-
-	// Define the sphere input layout
-	D3D11_INPUT_ELEMENT_DESC spherelayout[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	UINT numSphereElements = ARRAYSIZE(spherelayout);
-
-	// Create the sphere input layout
-	D3DX11_PASS_DESC SpherePassDesc;
-	V_RETURN(g_pSphereTechnique->GetPassByIndex(0)->GetDesc(&SpherePassDesc));
-	V_RETURN(pd3dDevice->CreateInputLayout(spherelayout, numSphereElements, SpherePassDesc.pIAInputSignature, SpherePassDesc.IAInputSignatureSize, &g_pSphereVertexLayout));
-
-	// Define the sphere input layout
-	D3D11_INPUT_ELEMENT_DESC backgroundlayout[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	UINT numBackgroundElements = ARRAYSIZE(backgroundlayout);
-
-	// Create the sphere input layout
-	D3DX11_PASS_DESC BackgroundPassDesc;
-	V_RETURN(g_pBackgroundTechnique->GetPassByIndex(0)->GetDesc(&BackgroundPassDesc));
-	V_RETURN(pd3dDevice->CreateInputLayout(backgroundlayout, numBackgroundElements, BackgroundPassDesc.pIAInputSignature, BackgroundPassDesc.IAInputSignatureSize, &g_pBackgroundVertexLayout));
 
 	MeshGenerator sphereMesh;
 	g_uNumIndex = sphereMesh.mNumIndex;
@@ -399,7 +380,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     XMMATRIX mView = g_Camera.GetViewMatrix();
     XMMATRIX mProj = g_Camera.GetProjMatrix();
     XMMATRIX mWorldViewProjection = g_World * mView * mProj;
-	g_World = g_Camera.GetWorldMatrix();
+	//g_World = g_Camera.GetWorldMatrix();
     //
     // Update variables that change once per frame
     //
@@ -476,12 +457,9 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 	XMMATRIX mProj = g_Camera.GetProjMatrix();
 	XMMATRIX mWorldViewProjection = g_World * mView * mProj;
 	g_World = g_Camera.GetWorldMatrix();
-	//
-	// Update variables that change once per frame
-	//
-	g_pProjectionVariable->SetMatrix((float*)&mProj);
-	g_pViewVariable->SetMatrix((float*)&mView);
 	g_pWorldVariable->SetMatrix((float*)&g_World);
+	g_pViewVariable->SetMatrix((float*)&mView);
+	g_pProjectionVariable->SetMatrix((float*)&mProj);
 	g_bSpinVariable->SetBool(g_bSpinning);
 
 	UINT stride = 0;
@@ -489,15 +467,15 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 	D3DX11_TECHNIQUE_DESC techDesc;
 	HRESULT hr;
 
+    //
+    // Render Background 
+    //
     if (g_bDrawBackground)
     {
-        //
-        // Render Background 
-        //
-        pd3dImmediateContext->IASetInputLayout(g_pBackgroundVertexLayout);
         stride = sizeof(XMFLOAT4); offset = 0;
         pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pBackgroundVertexBuffer, &stride, &offset);
         pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
+        pd3dImmediateContext->IASetInputLayout(g_pBackgroundVertexLayout);
         V(g_pTechnique->GetDesc(&techDesc));
         for (UINT p = 0; p < techDesc.Passes; ++p)
         {
@@ -506,7 +484,6 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
             pd3dImmediateContext->Draw(4, 0);
         }
     }
-
 
 	//
 	// Render  Object
@@ -518,11 +495,8 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 	if (g_bWireframe) pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
 	else pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
 
-    if (g_bSimpleMode)
+    if (g_bSimpleMode) // simple Mode
     {
-        //
-        // simple mode 
-        //
         pd3dImmediateContext->IASetInputLayout(g_pSphereVertexLayout);
         V(g_pSphereTechnique->GetDesc(&techDesc));
         for (UINT p = 0; p < techDesc.Passes; ++p)
@@ -535,11 +509,8 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
             pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
         }
     }
-    else
+    else // texture mode
     {
-        //
-        // Oject mode 
-        //
         pd3dImmediateContext->IASetInputLayout(g_pVertexLayout);
         V(g_pTechnique->GetDesc(&techDesc));
         for (UINT p = 0; p < techDesc.Passes; ++p)
@@ -548,13 +519,10 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
                 pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
             else if (g_eMeshType == TRIANGLE_LIST)
                 pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            //g_pSphereTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
             g_pTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
             pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
         }
     }
-
-
 
 	//
 	// Render the UI
