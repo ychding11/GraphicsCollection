@@ -241,7 +241,7 @@ float4 phong( DS_OUTPUT Input )
     float3 Lambient   = float3(0.3, 0.3, 0.3);
     float4 tex = txSkin.Sample(samLinear, Input.vtex);
 
-    float3 color = max(pow(dot(R,V),shininess),0.0) * Ks * Lintensity +  Kd * Lintensity * max(dot(N,L), 0.0) + Ka * Lambient;
+    float3 color = max(pow(dot(R,V),shininess),0.0) * Ks * Lintensity +  Kd * Lintensity * max(dot(N,L), 0.0f) + Ka * Lambient;
     return float4(color, 1.0);
 }
 

@@ -82,7 +82,7 @@ struct CB_CONSTANTS_MATERIAL
 float                               g_fKa = 0.3;     
 float                               g_fKd = 0.4;     
 float                               g_fKs = 0.8;     
-float                               g_fShininess = .1;     
+float                               g_fShininess = 11;     
 
 ID3D11Buffer*                       g_pcbPerFrame = nullptr;
 ID3D11Buffer*                       g_pcbMaterial = nullptr;
