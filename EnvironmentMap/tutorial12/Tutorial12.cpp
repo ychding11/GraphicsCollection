@@ -717,7 +717,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     DXUTCreateWindow( L"Tutorial12" );
 
     // Only require 10-level hardware or later
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 800, 600 );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 1000, 1280 );
     DXUTMainLoop(); // Enter into the DXUT render loop
 
     // Perform any application-level cleanup here
