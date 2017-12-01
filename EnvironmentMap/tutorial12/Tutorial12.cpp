@@ -194,6 +194,16 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	V_RETURN(g_pBackgroundTechnique->GetPassByIndex(0)->GetDesc(&PassDesc));
 	V_RETURN(pd3dDevice->CreateInputLayout(g_SimpleLayout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pBackgroundVertexLayout));
 
+	// Create solid and wireframe rasterizer state objects
+	D3D11_RASTERIZER_DESC RasterDesc;
+	ZeroMemory(&RasterDesc, sizeof(D3D11_RASTERIZER_DESC));
+	RasterDesc.CullMode = D3D11_CULL_NONE;
+	RasterDesc.DepthClipEnable = TRUE;
+	RasterDesc.FillMode = D3D11_FILL_WIREFRAME;
+	pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateWireframe);
+	RasterDesc.FillMode = D3D11_FILL_SOLID;
+	pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateSolid);
+
     // Initialize the world matrices
     g_World = XMMatrixIdentity();
 
@@ -239,18 +249,6 @@ HRESULT CALLBACK MyCreateResources( ID3D11Device* pd3dDevice, const DXGI_SURFACE
 	InitData.pSysMem = &(sphereMesh.mIndex[0]);
 	hr = pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer);
 	if (FAILED(hr)) return hr;
-
-	// Create solid and wireframe rasterizer state objects
-	D3D11_RASTERIZER_DESC RasterDesc;
-	ZeroMemory(&RasterDesc, sizeof(D3D11_RASTERIZER_DESC));
-	RasterDesc.CullMode = D3D11_CULL_NONE;
-	RasterDesc.DepthClipEnable = TRUE;
-	RasterDesc.FillMode = D3D11_FILL_WIREFRAME;
-	pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateWireframe);
-	RasterDesc.FillMode = D3D11_FILL_SOLID;
-	pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateSolid);
-
-	
 
 	return S_OK;
 }
@@ -436,6 +434,81 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 }
 
 
+void BackgroundRender(ID3D11DeviceContext* pd3dImmediateContext)
+{
+	UINT stride = 0;
+	UINT offset = 0;
+	D3DX11_TECHNIQUE_DESC techDesc;
+	HRESULT hr;
+
+    // Render Background 
+    stride = sizeof(XMFLOAT4); offset = 0;
+    pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pBackgroundVertexBuffer, &stride, &offset);
+    pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
+    pd3dImmediateContext->IASetInputLayout(g_pBackgroundVertexLayout);
+    V(g_pTechnique->GetDesc(&techDesc));
+    for (UINT p = 0; p < techDesc.Passes; ++p)
+    {
+        pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        g_pBackgroundTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
+        pd3dImmediateContext->Draw(4, 0);
+    }
+}
+
+void SimpleRender(ID3D11DeviceContext* pd3dImmediateContext)
+{
+	UINT stride = 0;
+	UINT offset = 0;
+	D3DX11_TECHNIQUE_DESC techDesc;
+	HRESULT hr;
+
+	if (g_bWireframe) pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
+	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
+
+	// Render  Object
+	stride = sizeof(SphereVertex); offset = 0;
+	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
+	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    pd3dImmediateContext->IASetInputLayout(g_pSphereVertexLayout);
+    V(g_pSphereTechnique->GetDesc(&techDesc));
+    for (UINT p = 0; p < techDesc.Passes; ++p)
+    {
+        if (g_eMeshType == LINE_LIST)
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+        else if (g_eMeshType == TRIANGLE_LIST)
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        g_pSphereTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
+        pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
+    }
+}
+
+void EnvironmentMapRender(ID3D11DeviceContext* pd3dImmediateContext)
+{
+	UINT stride = 0;
+	UINT offset = 0;
+	D3DX11_TECHNIQUE_DESC techDesc;
+	HRESULT hr;
+
+	if (g_bWireframe) pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
+	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
+
+	// Render  Object
+	stride = sizeof(SphereVertex); offset = 0;
+	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
+	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    pd3dImmediateContext->IASetInputLayout(g_pVertexLayout);
+    V(g_pTechnique->GetDesc(&techDesc));
+    for (UINT p = 0; p < techDesc.Passes; ++p)
+    {
+        if (g_eMeshType == LINE_LIST)
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+        else if (g_eMeshType == TRIANGLE_LIST)
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        g_pTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
+        pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
+    }
+}
+
 void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext)
 {
 	// If the settings dialog is being shown, then render it instead of rendering the app's scene
@@ -445,9 +518,7 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 		return;
 	}
 
-	//
 	// Clear the back buffer & depth stencil
-	//
 	auto pRTV = DXUTGetD3D11RenderTargetView();
 	pd3dImmediateContext->ClearRenderTargetView(pRTV, Colors::MidnightBlue);
 	auto pDSV = DXUTGetD3D11DepthStencilView();
@@ -456,77 +527,27 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 	XMMATRIX mView = g_Camera.GetViewMatrix();
 	XMMATRIX mProj = g_Camera.GetProjMatrix();
 	XMMATRIX mWorldViewProjection = g_World * mView * mProj;
-	g_World = g_Camera.GetWorldMatrix();
+	g_World = g_Camera.GetWorldMatrix(); // update world matrix from model camera
 	g_pWorldVariable->SetMatrix((float*)&g_World);
 	g_pViewVariable->SetMatrix((float*)&mView);
 	g_pProjectionVariable->SetMatrix((float*)&mProj);
 	g_bSpinVariable->SetBool(g_bSpinning);
 
-	UINT stride = 0;
-	UINT offset = 0;
-	D3DX11_TECHNIQUE_DESC techDesc;
-	HRESULT hr;
-
-    //
     // Render Background 
-    //
     if (g_bDrawBackground)
     {
-        stride = sizeof(XMFLOAT4); offset = 0;
-        pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pBackgroundVertexBuffer, &stride, &offset);
-        pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
-        pd3dImmediateContext->IASetInputLayout(g_pBackgroundVertexLayout);
-        V(g_pTechnique->GetDesc(&techDesc));
-        for (UINT p = 0; p < techDesc.Passes; ++p)
-        {
-            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-            g_pBackgroundTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
-            pd3dImmediateContext->Draw(4, 0);
-        }
+        BackgroundRender(pd3dImmediateContext);
     }
-
-	//
-	// Render  Object
-	//
-	stride = sizeof(SphereVertex); offset = 0;
-	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
-	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	if (g_bWireframe) pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
-	else pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
 
     if (g_bSimpleMode) // simple Mode
     {
-        pd3dImmediateContext->IASetInputLayout(g_pSphereVertexLayout);
-        V(g_pSphereTechnique->GetDesc(&techDesc));
-        for (UINT p = 0; p < techDesc.Passes; ++p)
-        {
-            if (g_eMeshType == LINE_LIST)
-                pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-            else if (g_eMeshType == TRIANGLE_LIST)
-                pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            g_pSphereTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
-            pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
-        }
+        SimpleRender(pd3dImmediateContext);
     }
     else // texture mode
     {
-        pd3dImmediateContext->IASetInputLayout(g_pVertexLayout);
-        V(g_pTechnique->GetDesc(&techDesc));
-        for (UINT p = 0; p < techDesc.Passes; ++p)
-        {
-            if (g_eMeshType == LINE_LIST)
-                pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-            else if (g_eMeshType == TRIANGLE_LIST)
-                pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            g_pTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
-            pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
-        }
+        EnvironmentMapRender(pd3dImmediateContext);
     }
 
-	//
-	// Render the UI
-	//
 	g_HUD.OnRender(fElapsedTime);
 	g_SampleUI.OnRender(fElapsedTime);
 	RenderText();
