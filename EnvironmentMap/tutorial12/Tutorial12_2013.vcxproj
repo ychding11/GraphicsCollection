@@ -387,6 +387,7 @@
     <None Include="Tutorial12.fx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="meshgenerator.h" />
     <CLInclude Include="resource.h" />
     <ResourceCompile Include="Tutorial12.rc" />
   </ItemGroup>
@@ -402,6 +403,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="shadingModel.fx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
