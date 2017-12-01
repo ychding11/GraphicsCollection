@@ -21,6 +21,11 @@ SamplerState samLinearClamp
 cbuffer cbConstant
 {
     float3 vLightDir = float3(-0.577,0.577,-0.577);
+    float3 Lambient = float3(0.1, 0.1, 0.1);
+    float3 Lintensity = float3(0.125, 0.643, 0.6423);
+    float3 Kdiffuse = float3(0.55231, 0.232, 0.5612);
+    float3 Kspecular = float3(0.262344, 0.623421, 0.1233);
+    float3 Kambient = float3(0.072, 0.060, 0.015);
 };
 
 cbuffer cbChangesEveryFrame
@@ -28,7 +33,8 @@ cbuffer cbChangesEveryFrame
     matrix World;
     matrix View;
     matrix Projection;
-    float Time;
+    float3 CameraPosWorld;
+    float Shininess;
 	bool SpinBackground;
 };
 
@@ -113,14 +119,60 @@ float4 PS( PS_INPUT input) : SV_Target
     cTotal.a = 1;
     return cTotal;
 }
+
+struct PhongPS_INPUT
+{
+    float4 Pos    : SV_POSITION;
+    float3 WorldPos  : POSITION;
+    float3 Normal   : TEXCOORD0;
+    float2 Tex    : TEXCOORD1;
+};
+
+// Vertex Shader
+PhongPS_INPUT PhongVS(VS_INPUT input)
+{
+    PhongPS_INPUT output;
+    float4 temp = mul(float4(input.Pos, 1.0f), World);
+    output.WorldPos = temp.xyz;
+    output.Pos = mul(float4(input.Pos, 1.0f), World);
+    output.Pos = mul(output.Pos, View);
+    output.Pos = mul(output.Pos, Projection);
+    output.Normal = mul(input.Norm, (float3x3)World);
+    output.Tex = input.Tex;
+
+    return output;
+}
+
+
+// Pixel Shader
+float4 PhongPS(PhongPS_INPUT Input) : SV_Target
+{
+    float3 N = normalize(Input.Normal);
+    float3 V = normalize(CameraPosWorld - Input.WorldPos);
+    float3 L = normalize(float3(9, 6, -10) - Input.WorldPos);
+    float3 R = normalize(2 * dot(L, N) * N - L);
+    //float3 Lintensity = float3(0.125, 0.643, 0.6423);
+    //float3 Lambient = float3(0.1, 0.1, 0.1);
+    //float3 Kdiffuse = float3(0.55231, 0.232, 0.5612);
+    //float3 Kspecular = float3(0.262344, 0.623421, 0.1233);
+    //float3 Kambient = float3(0.072, 0.060, 0.015);
+
+    float3 color = max(pow(dot(R, V), Shininess), 0.0) * Kspecular * Lintensity + Kdiffuse * Lintensity * max(dot(N, L), 0.0f) + Kambient * Lambient;
+    return float4(color, 1.0);
+}
+
 technique11 Render
 {
     pass P0
     {
-        SetVertexShader( CompileShader( vs_4_0, VS() ) );
-        SetGeometryShader( NULL );
-        SetPixelShader( CompileShader( ps_4_0, PS() ) );
+        //SetVertexShader( CompileShader( vs_4_0, VS() ) );
+        //SetGeometryShader( NULL );
+        //SetPixelShader( CompileShader( ps_4_0, PS() ) );
         
+        SetVertexShader( CompileShader( vs_4_0,PhongVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, PhongPS() ) );
+
         SetDepthStencilState( EnableDepth, 0 );
         SetBlendState( NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ), 0xFFFFFFFF );
     }
@@ -159,9 +211,8 @@ float4 SimplePS( SimplePS_INPUT input) : SV_Target
     return cTotal;
 }
 
-//
+
 // Technique
-//
 technique11 SimpleRender
 {
     pass P0
@@ -170,6 +221,7 @@ technique11 SimpleRender
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_5_0, SimplePS() ) );
         
+
         SetDepthStencilState( EnableDepth, 0 );
         SetBlendState( NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ), 0xFFFFFFFF );
     }

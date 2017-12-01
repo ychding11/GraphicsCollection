@@ -2,7 +2,9 @@
 // Constant Buffer Variables
 //
 
-Texture2D g_txDiffuse;
+Texture2D   g_txDiffuse;
+TextureCube g_txEnvMap;
+
 SamplerState samLinear
 {
     Filter = MIN_MAG_MIP_LINEAR;
@@ -10,7 +12,6 @@ SamplerState samLinear
     AddressV = Wrap;
 };
 
-TextureCube g_txEnvMap;
 SamplerState samLinearClamp
 {
     Filter = MIN_MAG_MIP_LINEAR;
@@ -21,6 +22,10 @@ SamplerState samLinearClamp
 cbuffer cbConstant
 {
     float3 vLightDir = float3(-0.577,0.577,-0.577);
+    float3 Lambient = float3(0.1, 0.1, 0.1);
+    float3 Kdiffuse = float3(0.55231, 0.232, 0.5612);
+    float3 Kspecular = float3(0.262344, 0.623421, 0.1233);
+    float3 Kambient = float3(0.072, 0.060, 0.015);
 };
 
 cbuffer cbChangesEveryFrame
@@ -28,8 +33,10 @@ cbuffer cbChangesEveryFrame
     matrix World;
     matrix View;
     matrix Projection;
-    float Time;
+    float3 CameraPosWorld;
+    float  Shininess;
 	bool SpinBackground;
+
 };
 
 cbuffer cbUserChanges
@@ -41,16 +48,16 @@ cbuffer cbUserChanges
 struct VS_INPUT
 {
     float3 Pos       : POSITION;         //position
-    float3 Norm      : NORMAL;           //normal
+    float3 Normal      : NORMAL;           //normal
     float2 Tex       : TEXCOORD0;        //texture coordinate
 };
 
 struct PS_INPUT
 {
     float4 Pos    : SV_POSITION;
-    float3 Norm   : TEXCOORD0;
+    float3 WorldPos  : POSITION;
+    float3 Normal   : TEXCOORD0;
     float2 Tex    : TEXCOORD1;
-    float3 ViewR  : TEXCOORD2;
 };
 
 //--------------------------------------------------------------------------------------
@@ -76,31 +83,36 @@ BlendState NoBlending
     BlendEnable[0] = FALSE;
 };
 
-//
 // Vertex Shader
-//
 PS_INPUT VS( VS_INPUT input )
 {
     PS_INPUT output;
     output.Pos = mul( float4(input.Pos,1.0f), World );
+    output.WorldPos = output.Pos.xyz;
     output.Pos = mul( output.Pos, View );
     output.Pos = mul( output.Pos, Projection );
-    output.Norm = mul( input.Norm, (float3x3)World );
+    output.Normal = mul( input.Normal, (float3x3)World );
     output.Tex = input.Tex;
     
-    // Calculate the reflection vector
-    float3 viewNorm = mul( output.Norm, (float3x3)View );
-    output.ViewR = reflect( viewNorm, float3(0,0,-1.0) );
     return output;
 }
 
 
-//
 // Pixel Shader
-//
-float4 PS( PS_INPUT input) : SV_Target
+float4 PS( PS_INPUT Input) : SV_Target
 {
+    float3 N = Input.Normal;
+    float3 V = normalize(CameraPosWorld - Input.WorldPos);
+    float3 L = normalize(float3(9, 6, -10) - Input.WorldPos);
+    float3 R = normalize(2 * dot(L, N) * N - L);
+    //float3 Lintensity = float3(0.125, 0.643, 0.6423);
+    //float3 Lambient = float3(0.1, 0.1, 0.1);
+    //float3 Kdiffuse = float3(0.55231, 0.232, 0.5612);
+    //float3 Kspecular = float3(0.262344, 0.623421, 0.1233);
+    //float3 Kambient = float3(0.072, 0.060, 0.015);
 
+    float3 color = max(pow(dot(R, V), Shininess), 0.0) * Kspecular * Lintensity + Kdiffuse * Lintensity * max(dot(N, L), 0.0f) + Kambient * Lambient;
+    return float4(color, 1.0);
 }
 
 technique11 PhongRender

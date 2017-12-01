@@ -54,7 +54,9 @@ ID3DX11EffectMatrixVariable*        g_pWorldVariable = nullptr;
 ID3DX11EffectMatrixVariable*        g_pViewVariable = nullptr;
 ID3DX11EffectMatrixVariable*        g_pProjectionVariable = nullptr;
 ID3DX11EffectShaderResourceVariable* g_pEnvMapVariable = nullptr;
+ID3DX11EffectVectorVariable*        g_vCameraPosVariable = nullptr;
 ID3DX11EffectScalarVariable*        g_bSpinVariable = nullptr;
+ID3DX11EffectScalarVariable*        g_fShininessVariable = nullptr;
 
 UINT                    g_uNumIndex;
 UINT                    g_uNumVertex;
@@ -177,8 +179,10 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     g_pViewVariable       = g_pEffect->GetVariableByName( "View" )->AsMatrix();
     g_pProjectionVariable = g_pEffect->GetVariableByName( "Projection" )->AsMatrix();
     g_pEnvMapVariable    = g_pEffect->GetVariableByName( "g_txEnvMap" )->AsShaderResource();
-    g_bSpinVariable      = g_pEffect->GetVariableByName( "SpinBackground" )->AsScalar();
     g_ptxDiffuseVariable = g_pEffect->GetVariableByName( "g_txDiffuse" )->AsShaderResource();
+    g_vCameraPosVariable  = g_pEffect->GetVariableByName( "CameraPosWorld" )->AsVector();
+    g_bSpinVariable       = g_pEffect->GetVariableByName( "SpinBackground" )->AsScalar();
+    g_fShininessVariable  = g_pEffect->GetVariableByName( "Shininess" )->AsScalar();
 
     // Create the input layout
     D3DX11_PASS_DESC PassDesc;
@@ -271,8 +275,8 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     g_HUD.SetLocation( pBackBufferSurfaceDesc->Width - 170, 0 );
     g_HUD.SetSize( 170, 170 );
-    g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 170, pBackBufferSurfaceDesc->Height - 300 );
-    g_SampleUI.SetSize( 170, 300 );
+    g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 200, pBackBufferSurfaceDesc->Height - 400 );
+    g_SampleUI.SetSize( 200, 400 );
 
     // background vertex buffer.
     // Map texels to pixels 
@@ -526,12 +530,16 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 
 	XMMATRIX mView = g_Camera.GetViewMatrix();
 	XMMATRIX mProj = g_Camera.GetProjMatrix();
+    XMVECTORF32 vCameraPos;
+    vCameraPos.v = g_Camera.GetEyePt();
+	g_vCameraPosVariable->SetFloatVector(vCameraPos.f);
 	XMMATRIX mWorldViewProjection = g_World * mView * mProj;
 	g_World = g_Camera.GetWorldMatrix(); // update world matrix from model camera
 	g_pWorldVariable->SetMatrix((float*)&g_World);
 	g_pViewVariable->SetMatrix((float*)&mView);
 	g_pProjectionVariable->SetMatrix((float*)&mProj);
 	g_bSpinVariable->SetBool(g_bSpinning);
+    g_fShininessVariable->SetFloat(100);
 
     // Render Background 
     if (g_bDrawBackground)
