@@ -20,12 +20,13 @@ SamplerState samLinearClamp
 
 cbuffer cbConstant
 {
-    float3 vLightDir = float3(-0.577,0.577,-0.577);
+    float3 vLightDir = float3(-0.577, 0.577, -0.577);
     float3 Lambient = float3(0.1, 0.1, 0.1);
     float3 Lintensity = float3(0.125, 0.643, 0.6423);
-    float3 Kdiffuse = float3(0.55231, 0.232, 0.5612);
+    float3 Lpos       = float3(1.512, 1.123, 1.132);
+    float3 Kdiffuse  = float3(0.55231, 0.232, 0.5612);
     float3 Kspecular = float3(0.262344, 0.623421, 0.1233);
-    float3 Kambient = float3(0.072, 0.060, 0.015);
+    float3 Kambient  = float3(0.072, 0.060, 0.015);
 };
 
 cbuffer cbChangesEveryFrame
@@ -149,13 +150,8 @@ float4 PhongPS(PhongPS_INPUT Input) : SV_Target
 {
     float3 N = normalize(Input.Normal);
     float3 V = normalize(CameraPosWorld - Input.WorldPos);
-    float3 L = normalize(float3(9, 6, -10) - Input.WorldPos);
+    float3 L = normalize(Lpos - Input.WorldPos);
     float3 R = normalize(2 * dot(L, N) * N - L);
-    //float3 Lintensity = float3(0.125, 0.643, 0.6423);
-    //float3 Lambient = float3(0.1, 0.1, 0.1);
-    //float3 Kdiffuse = float3(0.55231, 0.232, 0.5612);
-    //float3 Kspecular = float3(0.262344, 0.623421, 0.1233);
-    //float3 Kambient = float3(0.072, 0.060, 0.015);
 
     float3 color = max(pow(dot(R, V), Shininess), 0.0) * Kspecular * Lintensity + Kdiffuse * Lintensity * max(dot(N, L), 0.0f) + Kambient * Lambient;
     return float4(color, 1.0);
