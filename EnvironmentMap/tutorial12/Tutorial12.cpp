@@ -743,7 +743,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
 
     InitApp();
-    DXUTCreateWindow( L"Tutorial12" );
+    DXUTCreateWindow( L"EnvMap&LightingModel" );
 
     // Only require 10-level hardware or later
     DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 1000, 1280 );

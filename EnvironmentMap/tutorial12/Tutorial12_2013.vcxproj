@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>Tutorial12</ProjectName>
+    <ProjectName>EnvMap_LightingModel</ProjectName>
     <ProjectGuid>{38546508-2B03-4784-917B-38CE79EE6C08}</ProjectGuid>
     <RootNamespace>Tutorial12</RootNamespace>
     <Keyword>Win32Proj</Keyword>

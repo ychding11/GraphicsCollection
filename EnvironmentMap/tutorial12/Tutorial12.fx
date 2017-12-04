@@ -241,8 +241,6 @@ SkyboxVS_Output SkyboxVS(SkyboxVS_Input Input)
 	if (SpinBackground)
 	{
 		Output.Pos = mul(Input.Pos, World);
-		//Output.Pos = mul(Output.Pos, View);
-		//Output.Pos = mul(Output.Pos, Projection);
 	}
 	Output.Tex = normalize(Output.Pos);
 	Output.Pos = Input.Pos;
@@ -255,9 +253,7 @@ float4 SkyboxPS(SkyboxVS_Output Input) : SV_TARGET
 	float4 color = g_txEnvMap.Sample(samLinear, Input.Tex);
 	return color;
 }
-//
-// Technique
-//
+
 technique11 BackgroundRender
 {
     pass P0
