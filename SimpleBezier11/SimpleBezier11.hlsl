@@ -235,7 +235,7 @@ float4 phong( DS_OUTPUT Input )
 {
     float3 N = Input.vNormal;
     float3 V = normalize(g_vCameraPosWorld - Input.vWorldPos);
-    float3 L = normalize(float3(10, 6, -10) - Input.vWorldPos);
+    float3 L = normalize(float3(9, 6, -10) - Input.vWorldPos);
     float3 R = normalize(2 * dot(L, N) * N - L);
     float3 Lintensity = float3(0.125, 0.643, 0.6423);
     float3 Lambient = float3(0.1, 0.1, 0.1);

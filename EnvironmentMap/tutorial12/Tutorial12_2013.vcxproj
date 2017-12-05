@@ -384,7 +384,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Tutorial12.fx" />
+    <None Include="EnvMap.fx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="meshgenerator.h" />
