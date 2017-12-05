@@ -38,14 +38,15 @@ CDXUTDialog                         g_SampleUI;             // dialog for sample
 XMMATRIX                            g_World;
 bool                                g_bSpinning = false;
 bool                                g_bWireframe = false;
-bool                                g_bSimpleMode = false;
 bool                                g_bDrawBackground = false;
+int                                 g_iRenderMode = 0;
 ID3DX11Effect*                      g_pEffect = nullptr;
 ID3D11InputLayout*                  g_pVertexLayout = nullptr;
 ID3D11InputLayout*                  g_pSphereVertexLayout = nullptr;
 ID3D11InputLayout*                  g_pBackgroundVertexLayout = nullptr;
 ID3DX11EffectTechnique*             g_pTechnique = nullptr;
-ID3DX11EffectTechnique*             g_pSphereTechnique = nullptr;
+ID3DX11EffectTechnique*             g_pSimpleTechnique = nullptr;
+ID3DX11EffectTechnique*             g_pPhongTechnique = nullptr;
 ID3DX11EffectTechnique*             g_pBackgroundTechnique = nullptr;
 CDXUTSDKMesh                        g_Mesh;
 ID3D11ShaderResourceView*           g_pEnvMapSRV;
@@ -94,8 +95,22 @@ ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
 #define IDC_TOGGLESPIN          5
 #define IDC_TOGGLEWIREFRAME     6
 #define IDC_TOGGLEBACKGROUND    7
-#define IDC_TOGGLESIMPLEMODE    8
 
+#define IDC_RENDER_MODE      (IDC_TOGGLEBACKGROUND + 1) 
+#define IDC_RENDER_PHONG     (IDC_TOGGLEBACKGROUND + 2) 
+#define IDC_RENDER_BLINPHONG (IDC_TOGGLEBACKGROUND + 3) 
+#define IDC_RENDER_ENVMAP	 (IDC_TOGGLEBACKGROUND + 4) 
+#define IDC_RENDER_SIMPLE	 (IDC_TOGGLEBACKGROUND + 5) 
+
+
+
+enum RENDER_MODE
+{
+	PHONG_RENDER,
+	BLINPHONG_RENDER,
+	ENVMAP_RENDER,
+	SIMPLE_RENDER,
+};
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -170,8 +185,9 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 #endif
 
     // Obtain the technique
-    g_pTechnique                = g_pEffect->GetTechniqueByName( "Render" );
-    g_pSphereTechnique          = g_pEffect->GetTechniqueByName( "SimpleRender" );
+    g_pTechnique                = g_pEffect->GetTechniqueByName( "EnvMapRender" );
+    g_pSimpleTechnique          = g_pEffect->GetTechniqueByName( "SimpleRender" );
+    g_pPhongTechnique          = g_pEffect->GetTechniqueByName( "PhongRender" );
     g_pBackgroundTechnique      = g_pEffect->GetTechniqueByName( "BackgroundRender" );
 
     // Obtain the variables
@@ -191,7 +207,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( pd3dDevice->CreateInputLayout(g_ObjectLayout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pVertexLayout ) );
 
 	numElements = ARRAYSIZE(g_SimpleLayout);
-	V_RETURN(g_pSphereTechnique->GetPassByIndex(0)->GetDesc(&PassDesc));
+	V_RETURN(g_pSimpleTechnique->GetPassByIndex(0)->GetDesc(&PassDesc));
 	V_RETURN(pd3dDevice->CreateInputLayout(g_SimpleLayout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pSphereVertexLayout));
 
 	numElements = ARRAYSIZE(g_SimpleLayout);
@@ -474,14 +490,14 @@ void SimpleRender(ID3D11DeviceContext* pd3dImmediateContext)
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     pd3dImmediateContext->IASetInputLayout(g_pSphereVertexLayout);
-    V(g_pSphereTechnique->GetDesc(&techDesc));
+    V(g_pSimpleTechnique->GetDesc(&techDesc));
     for (UINT p = 0; p < techDesc.Passes; ++p)
     {
         if (g_eMeshType == LINE_LIST)
             pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
         else if (g_eMeshType == TRIANGLE_LIST)
             pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        g_pSphereTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
+        g_pSimpleTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
         pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
     }
 }
@@ -509,6 +525,33 @@ void EnvironmentMapRender(ID3D11DeviceContext* pd3dImmediateContext)
         else if (g_eMeshType == TRIANGLE_LIST)
             pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         g_pTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
+        pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
+    }
+}
+
+void PhongRender(ID3D11DeviceContext* pd3dImmediateContext)
+{
+	UINT stride = 0;
+	UINT offset = 0;
+	D3DX11_TECHNIQUE_DESC techDesc;
+	HRESULT hr;
+
+	if (g_bWireframe) pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
+	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
+
+	// Render  Object
+	stride = sizeof(SphereVertex); offset = 0;
+	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
+	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    pd3dImmediateContext->IASetInputLayout(g_pVertexLayout);
+    V(g_pPhongTechnique->GetDesc(&techDesc));
+    for (UINT p = 0; p < techDesc.Passes; ++p)
+    {
+        if (g_eMeshType == LINE_LIST)
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+        else if (g_eMeshType == TRIANGLE_LIST)
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        g_pPhongTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
         pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
     }
 }
@@ -547,14 +590,23 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
         BackgroundRender(pd3dImmediateContext);
     }
 
-    if (g_bSimpleMode) // simple Mode
-    {
-        SimpleRender(pd3dImmediateContext);
-    }
-    else // texture mode
-    {
+	switch (g_iRenderMode)
+	{
+	case PHONG_RENDER:
+        PhongRender(pd3dImmediateContext);
+		break;
+	case BLINPHONG_RENDER:
+		break;
+	case ENVMAP_RENDER:
         EnvironmentMapRender(pd3dImmediateContext);
-    }
+		break;
+	case SIMPLE_RENDER:
+        SimpleRender(pd3dImmediateContext);
+		break;
+	default:
+		break;
+
+	}
 
 	g_HUD.OnRender(fElapsedTime);
 	g_SampleUI.OnRender(fElapsedTime);
@@ -690,9 +742,24 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
             g_bDrawBackground = g_SampleUI.GetCheckBox( IDC_TOGGLEBACKGROUND )->GetChecked();
             break;
         }
-        case IDC_TOGGLESIMPLEMODE:
+        case IDC_RENDER_PHONG:
         {
-            g_bSimpleMode = g_SampleUI.GetCheckBox( IDC_TOGGLESIMPLEMODE )->GetChecked();
+            g_iRenderMode = PHONG_RENDER;
+            break;
+        }
+        case IDC_RENDER_BLINPHONG:
+        {
+            g_iRenderMode = BLINPHONG_RENDER;
+            break;
+        }
+        case IDC_RENDER_ENVMAP:
+        {
+            g_iRenderMode = ENVMAP_RENDER;
+            break;
+        }
+        case IDC_RENDER_SIMPLE:
+        {
+            g_iRenderMode = SIMPLE_RENDER;
             break;
         }
     }
@@ -772,16 +839,20 @@ void InitApp()
     g_HUD.AddButton( IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 22, VK_F3 );
     g_HUD.AddButton( IDC_TOGGLEWARP, L"Toggle WARP (F4)", 0, iY += 26, 170, 22, VK_F4 );
 
-    g_SampleUI.SetCallback( OnGUIEvent ); iY = 10;
+    g_SampleUI.SetCallback( OnGUIEvent );
+	iY = 5;
 
-    iY += 10;
-    g_SampleUI.AddCheckBox( IDC_TOGGLESPIN, L"Toggle Spinning", 0, iY += 26, 170, 22, g_bSpinning );
-    iY += 10;
-    g_SampleUI.AddCheckBox( IDC_TOGGLEWIREFRAME, L"Toggle Wireframe", 0, iY += 26, 170, 22, g_bWireframe );
-    iY += 10;
-    g_SampleUI.AddCheckBox( IDC_TOGGLEBACKGROUND, L"Toggle Background", 0, iY += 26, 170, 22, g_bDrawBackground );
-    iY += 10;
-    g_SampleUI.AddCheckBox( IDC_TOGGLESIMPLEMODE, L"Toggle Simple Mode", 0, iY += 26, 170, 22, g_bSimpleMode );
+    g_SampleUI.AddCheckBox( IDC_TOGGLESPIN,       L"Rotate", 0, iY += 26, 170, 22, g_bSpinning );
+    g_SampleUI.AddCheckBox( IDC_TOGGLEWIREFRAME,  L"Wireframe", 0, iY += 26, 170, 22, g_bWireframe );
+    g_SampleUI.AddCheckBox( IDC_TOGGLEBACKGROUND, L"Background", 0, iY += 26, 170, 22, g_bDrawBackground );
+
+	iY += 5;
+	g_SampleUI.AddRadioButton(IDC_RENDER_PHONG,     IDC_RENDER_MODE, L"Phong", 0, iY += 26, 170, 22);
+	g_SampleUI.AddRadioButton(IDC_RENDER_BLINPHONG, IDC_RENDER_MODE, L"Bllin-Phong", 0, iY += 26, 170, 22);
+	g_SampleUI.AddRadioButton(IDC_RENDER_ENVMAP,    IDC_RENDER_MODE, L"Env Map", 0, iY += 26, 170, 22);
+	g_SampleUI.AddRadioButton(IDC_RENDER_SIMPLE,    IDC_RENDER_MODE, L"Env Map", 0, iY += 26, 170, 22);
+	g_SampleUI.GetRadioButton(IDC_RENDER_PHONG)->SetChecked(true);
+
 }
 
-
+ 

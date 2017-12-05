@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>Tutorial12</ProjectName>
+    <ProjectName>EnvMapLightModel</ProjectName>
     <ProjectGuid>{38546508-2B03-4784-917B-38CE79EE6C08}</ProjectGuid>
     <RootNamespace>Tutorial12</RootNamespace>
     <Keyword>Win32Proj</Keyword>
@@ -403,6 +403,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="shadingModel.fx">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
