@@ -246,7 +246,8 @@ HRESULT CALLBACK MyCreateResources( ID3D11Device* pd3dDevice, const DXGI_SURFACE
 {
 	HRESULT  hr;
 
-	MeshGenerator sphereMesh;
+	//MeshGenerator sphereMesh;
+	Sphere sphereMesh;
 	g_uNumIndex = sphereMesh.mNumIndex;
 	g_uNumVertex = sphereMesh.mNumVertex;
 	g_eMeshType = sphereMesh.mType;
