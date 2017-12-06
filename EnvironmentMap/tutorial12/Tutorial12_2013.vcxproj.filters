@@ -14,9 +14,6 @@
     <None Include="..\..\DXUT\Optional\directx.ico">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="shadingModel.fx">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="EnvMap.fx">
       <Filter>Shaders</Filter>
     </None>
