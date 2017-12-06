@@ -1,8 +1,7 @@
-//
-// Constant Buffer Variables
-//
 
 Texture2D g_txDiffuse;
+TextureCube g_txEnvMap;
+
 SamplerState samLinear
 {
     Filter = MIN_MAG_MIP_LINEAR;
@@ -10,7 +9,6 @@ SamplerState samLinear
     AddressV = Wrap;
 };
 
-TextureCube g_txEnvMap;
 SamplerState samLinearClamp
 {
     Filter = MIN_MAG_MIP_LINEAR;
@@ -59,9 +57,6 @@ struct PS_INPUT
     float3 ViewR  : TEXCOORD2;
 };
 
-//--------------------------------------------------------------------------------------
-// DepthStates
-//--------------------------------------------------------------------------------------
 DepthStencilState EnableDepth
 {
     DepthEnable = TRUE;
@@ -82,9 +77,6 @@ BlendState NoBlending
     BlendEnable[0] = FALSE;
 };
 
-//
-// Vertex Shader
-//
 PS_INPUT VS( VS_INPUT input )
 {
     PS_INPUT output;
@@ -101,9 +93,6 @@ PS_INPUT VS( VS_INPUT input )
 }
 
 
-//
-// Pixel Shader
-//
 float4 PS( PS_INPUT input) : SV_Target
 {
     // Calculate lighting assuming light color is <1,1,1,1>
@@ -121,12 +110,26 @@ float4 PS( PS_INPUT input) : SV_Target
     return cTotal;
 }
 
+technique11 EnvMapRender
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, VS()));
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, PS()));
+
+        SetDepthStencilState( EnableDepth, 0 );
+        SetBlendState( NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ), 0xFFFFFFFF );
+    }
+}
+
+//==========================================================//
 struct PhongPS_INPUT
 {
-    float4 Pos    : SV_POSITION;
+    float4 Pos       : SV_POSITION;
     float3 WorldPos  : POSITION;
-    float3 Normal   : TEXCOORD0;
-    float2 Tex    : TEXCOORD1;
+    float3 Normal    : TEXCOORD0;
+    float2 Tex       : TEXCOORD1;
 };
 
 // Vertex Shader
@@ -135,7 +138,7 @@ PhongPS_INPUT PhongVS(VS_INPUT input)
     PhongPS_INPUT output;
     float4 temp = mul(float4(input.Pos, 1.0f), World);
     output.WorldPos = temp.xyz;
-    output.Pos = mul(float4(input.Pos, 1.0f), World);
+    output.Pos = temp;
     output.Pos = mul(output.Pos, View);
     output.Pos = mul(output.Pos, Projection);
     output.Normal = mul(input.Norm, (float3x3)World);
@@ -157,14 +160,10 @@ float4 PhongPS(PhongPS_INPUT Input) : SV_Target
     return float4(color, 1.0);
 }
 
-technique11 Render
+technique11 PhongRender
 {
     pass P0
     {
-        //SetVertexShader( CompileShader( vs_4_0, VS() ) );
-        //SetGeometryShader( NULL );
-        //SetPixelShader( CompileShader( ps_4_0, PS() ) );
-        
         SetVertexShader( CompileShader( vs_4_0,PhongVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, PhongPS() ) );
@@ -174,6 +173,7 @@ technique11 Render
     }
 }
 
+//==========================================================//
 struct SimpleVS_INPUT
 {
      float3 Pos : POSITION;
@@ -184,31 +184,21 @@ struct SimplePS_INPUT
      float4 Pos : SV_POSITION;
 };
 
-//
-// Vertex Shader
-//
 SimplePS_INPUT SimpleVS( SimpleVS_INPUT input )
 {
     SimplePS_INPUT output;
     output.Pos = mul( float4(input.Pos,1), World );
-    //output.Pos =  float4(input.Pos,1);
     output.Pos = mul( output.Pos, View );
     output.Pos = mul( output.Pos, Projection );
     return output;
 }
 
-
-//
-// Pixel Shader
-//
 float4 SimplePS( SimplePS_INPUT input) : SV_Target
 {
 	float4 cTotal = float4(1,0.9,0.6,1);
     return cTotal;
 }
 
-
-// Technique
 technique11 SimpleRender
 {
     pass P0
@@ -216,7 +206,6 @@ technique11 SimpleRender
         SetVertexShader( CompileShader( vs_5_0, SimpleVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_5_0, SimplePS() ) );
-        
 
         SetDepthStencilState( EnableDepth, 0 );
         SetBlendState( NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ), 0xFFFFFFFF );
