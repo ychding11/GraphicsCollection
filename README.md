@@ -6,3 +6,4 @@ I keep the project name unchanged if it is adapted.
 # Demo
 
 ![sphere phong model](./demo/demo-sphere-phong.png)
+![teapot](./demo/teapot-phong.png)
