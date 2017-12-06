@@ -565,9 +565,11 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 		return;
 	}
 
+	XMVECTORF32 background = { 0.1, 0.1, 0.1, 1.000000000f };
 	// Clear the back buffer & depth stencil
 	auto pRTV = DXUTGetD3D11RenderTargetView();
-	pd3dImmediateContext->ClearRenderTargetView(pRTV, Colors::MidnightBlue);
+	//pd3dImmediateContext->ClearRenderTargetView(pRTV, Colors::MidnightBlue);
+	pd3dImmediateContext->ClearRenderTargetView(pRTV, background);
 	auto pDSV = DXUTGetD3D11DepthStencilView();
 	pd3dImmediateContext->ClearDepthStencilView(pDSV, D3D11_CLEAR_DEPTH, 1.0, 0);
 
@@ -850,7 +852,7 @@ void InitApp()
 	g_SampleUI.AddRadioButton(IDC_RENDER_PHONG,     IDC_RENDER_MODE, L"Phong", 0, iY += 26, 170, 22);
 	g_SampleUI.AddRadioButton(IDC_RENDER_BLINPHONG, IDC_RENDER_MODE, L"Bllin-Phong", 0, iY += 26, 170, 22);
 	g_SampleUI.AddRadioButton(IDC_RENDER_ENVMAP,    IDC_RENDER_MODE, L"Env Map", 0, iY += 26, 170, 22);
-	g_SampleUI.AddRadioButton(IDC_RENDER_SIMPLE,    IDC_RENDER_MODE, L"Env Map", 0, iY += 26, 170, 22);
+	g_SampleUI.AddRadioButton(IDC_RENDER_SIMPLE,    IDC_RENDER_MODE, L"Simple", 0, iY += 26, 170, 22);
 	g_SampleUI.GetRadioButton(IDC_RENDER_PHONG)->SetChecked(true);
 
 }

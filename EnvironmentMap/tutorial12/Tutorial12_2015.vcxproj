@@ -384,9 +384,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Tutorial12.fx" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="meshgenerator.h" />
     <CLInclude Include="resource.h" />
     <ResourceCompile Include="Tutorial12.rc" />
@@ -403,7 +400,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shadingModel.fx">
+    <None Include="EnvMap.fx">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

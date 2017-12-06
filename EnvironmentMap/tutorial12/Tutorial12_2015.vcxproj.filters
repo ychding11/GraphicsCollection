@@ -14,17 +14,12 @@
     <None Include="..\..\DXUT\Optional\directx.ico">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="shadingModel.fx">
+    <None Include="EnvMap.fx">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tutorial12.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Tutorial12.fx">
-      <Filter>Shaders</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">

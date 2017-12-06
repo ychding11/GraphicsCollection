@@ -28,7 +28,7 @@ cbuffer cbConstant
     float3 vLightDir = float3(-0.577, 0.577, -0.577);
     float3 Lambient = float3(0.1, 0.1, 0.1);
     float3 Lintensity = float3(0.125, 0.643, 0.6423);
-    float3 Lpos = float3(1.512, 1.123, 1.132);
+    float3 Lpos = float3(0.012, 1.123, 1.132);
     float3 Kdiffuse = float3(0.55231, 0.232, 0.5612);
     float3 Kspecular = float3(0.262344, 0.623421, 0.1233);
     float3 Kambient = float3(0.072, 0.060, 0.015);
@@ -166,13 +166,25 @@ float4 PhongPS(PhongPS_INPUT Input) : SV_Target
     float3 R = normalize(2 * dot(L, N) * N - L);
 
     float3 color = max(pow(dot(R, V), Shininess), 0.0) * Kspecular * Lintensity + Kdiffuse * Lintensity * max(dot(N, L), 0.0f) + Kambient * Lambient;
-    float3 lpos = float3(1.512, 1.123, 1.132);
+    float3 lpos = float3(1.512, 1.123, 0.132);
     float3 ll = float3(0.125, 0.643, 0.6423);
     L = normalize(lpos - Input.WorldPos);
     R = normalize(2 * dot(L, N) * N - L);
     color += max(pow(dot(R, V), Shininess), 0.0) * Kspecular * ll + Kdiffuse * ll * max(dot(N, L), 0.0f);
 
-    lpos = float3(-1.512, -1.3123, -1.312);
+    lpos = float3(-1.512, -1.1123, -1.312);
+    ll   = float3(0.123, 0.6236, 0.623);
+    L = normalize(lpos - Input.WorldPos);
+    R = normalize(2 * dot(L, N) * N - L);
+    color += max(pow(dot(R, V), Shininess), 0.0) * Kspecular * ll + Kdiffuse * ll * max(dot(N, L), 0.0f);
+
+    lpos = float3(-1.512, 1.1123, -1.312);
+    ll   = float3(0.123, 0.6236, 0.623);
+    L = normalize(lpos - Input.WorldPos);
+    R = normalize(2 * dot(L, N) * N - L);
+    color += max(pow(dot(R, V), Shininess), 0.0) * Kspecular * ll + Kdiffuse * ll * max(dot(N, L), 0.0f);
+
+    lpos = float3(1.512, -1.1123, -1.112);
     ll   = float3(0.123, 0.6236, 0.623);
     L = normalize(lpos - Input.WorldPos);
     R = normalize(2 * dot(L, N) * N - L);
