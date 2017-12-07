@@ -47,7 +47,7 @@ public:
 	int    mSlice;
     std::vector<SphereVertex> mVertex;
 
-	Sphere(double radius=1.0, int stack = 16, int slice = 32)
+	Sphere(int stack = 16, int slice = 32, double radius=1.0)
 		:mRadius(radius),  mStack(stack), mSlice(slice)
 	{
 		generate();
@@ -79,15 +79,14 @@ public:
 		}
 
 		// index
-		int n = mVertex.size() / mSlice;
-		const int stride = mSlice;
-		for (int i = 0; i < n - 1; ++i)
+		const int stride = mSlice + 1;
+		for (int i = 0; i < mStack; ++i)
 		{
 			int offset = i * stride;
 			for (int j = 0; j <= mSlice; ++j)
 			{
 				int a = offset + j;
-				int b = offset + (j + 1) % (mSlice+1);
+				int b = offset + (j + 1) % stride;
 				int c = a + stride;
 				int d = b + stride;
 				mIndex.push_back(a);
