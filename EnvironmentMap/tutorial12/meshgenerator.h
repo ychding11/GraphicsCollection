@@ -165,7 +165,7 @@ public:
         for (int i = 0; i < mStack; ++i)
         {
             int offset = i * stride;
-            for (int j = 0; j <= mSlice; ++j)
+            for (int j = 0; j < mSlice; ++j)
             {
 				int a = offset + j;
 				int b = offset + (j + 1) % stride;
