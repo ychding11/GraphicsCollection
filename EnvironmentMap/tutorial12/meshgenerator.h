@@ -30,10 +30,12 @@ class MeshGenerator
 public:
     int mNumVertex;
     int mNumIndex;
-    std::vector<int> mIndex;
+    int mVertexStride;
 	MeshType mType;
+    void *mVertexBuffer;
+    std::vector<int> mIndex;
 
-    MeshGenerator(MeshType type = TRIANGLE_LIST) : mType(type)
+    MeshGenerator(int stride = 0, MeshType type = TRIANGLE_LIST) : mType(type), mVertexStride(stride), mVertexBuffer(nullptr)
     { }
 	virtual void generate() = 0;
 };
@@ -48,9 +50,10 @@ public:
     std::vector<SphereVertex> mVertex;
 
 	Sphere(int stack = 16, int slice = 32, double radius=1.0)
-		:mRadius(radius),  mStack(stack), mSlice(slice)
+		: MeshGenerator(sizeof(SphereVertex)), mRadius(radius),  mStack(stack), mSlice(slice)
 	{
 		generate();
+        mVertexBuffer = &mVertex[0];
 	}
 
 public:
@@ -128,10 +131,11 @@ public:
 	int    mSlice;
     std::vector<CylinderVertex> mVertex;
 
-	Cylinder(double zmin=0.0, double zmax=0.0, double radius=1.0, double phi=2*PI, int stack = 8, int slice = 16)
-		:mZmin(zmin),mZmax(zmax),mRadius(radius), mPhi(phi), mStack(stack), mSlice(slice)
+	Cylinder(double zmin=-1.0, double zmax=1.0, double radius=1.0, double phi=2*PI, int stack = 16, int slice = 32)
+		: MeshGenerator(sizeof(CylinderVertex)), mZmin(zmin),mZmax(zmax),mRadius(radius), mPhi(phi), mStack(stack), mSlice(slice)
 	{
 		generate();
+        mVertexBuffer = &mVertex[0];
 	}
 
 public:

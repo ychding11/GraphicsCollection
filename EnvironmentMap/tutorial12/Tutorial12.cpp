@@ -59,10 +59,6 @@ ID3DX11EffectVectorVariable*        g_vCameraPosVariable = nullptr;
 ID3DX11EffectScalarVariable*        g_bSpinVariable = nullptr;
 ID3DX11EffectScalarVariable*        g_fShininessVariable = nullptr;
 
-UINT                    g_uNumIndex;
-UINT                    g_uNumVertex;
-MeshType                g_eMeshType;
-
 ID3D11Buffer*           g_pVertexBuffer = nullptr;
 ID3D11Buffer*           g_pBackgroundVertexBuffer = nullptr;
 ID3D11Buffer*           g_pIndexBuffer = nullptr;
@@ -102,6 +98,10 @@ ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
 #define IDC_RENDER_ENVMAP	 (IDC_TOGGLEBACKGROUND + 4) 
 #define IDC_RENDER_SIMPLE	 (IDC_TOGGLEBACKGROUND + 5) 
 
+    MeshGenerator &polyMesh = Cylinder(); // Sphere();
+ UINT     g_uNumIndex  = polyMesh.mNumIndex;
+ UINT     g_uNumVertex = polyMesh.mNumVertex;
+ MeshType g_eMeshType  = polyMesh.mType;
 
 
 enum RENDER_MODE
@@ -246,28 +246,23 @@ HRESULT CALLBACK MyCreateResources( ID3D11Device* pd3dDevice, const DXGI_SURFACE
 {
 	HRESULT  hr;
 
-	//MeshGenerator sphereMesh;
-	Sphere sphereMesh;
-	g_uNumIndex = sphereMesh.mNumIndex;
-	g_uNumVertex = sphereMesh.mNumVertex;
-	g_eMeshType = sphereMesh.mType;
-
+   
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
-	bd.ByteWidth = sizeof(SphereVertex) * sphereMesh.mNumVertex;
+	bd.ByteWidth = polyMesh.mVertexStride * polyMesh.mNumVertex;
 	D3D11_SUBRESOURCE_DATA InitData;
 	ZeroMemory(&InitData, sizeof(InitData));
-	InitData.pSysMem = &(sphereMesh.mVertex[0]);
+	InitData.pSysMem = polyMesh.mVertexBuffer;
 	hr = pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer);
 	if (FAILED(hr)) return hr;
 
-	bd.ByteWidth = sizeof(int) * sphereMesh.mNumIndex;
+	bd.ByteWidth = sizeof(int) * polyMesh.mNumIndex;
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	ZeroMemory(&InitData, sizeof(InitData));
-	InitData.pSysMem = &(sphereMesh.mIndex[0]);
+	InitData.pSysMem = &(polyMesh.mIndex[0]);
 	hr = pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer);
 	if (FAILED(hr)) return hr;
 
@@ -487,7 +482,7 @@ void SimpleRender(ID3D11DeviceContext* pd3dImmediateContext)
 	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
 
 	// Render  Object
-	stride = sizeof(SphereVertex); offset = 0;
+    stride = polyMesh.mVertexStride;  offset = 0;
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     pd3dImmediateContext->IASetInputLayout(g_pSphereVertexLayout);
@@ -514,7 +509,7 @@ void EnvironmentMapRender(ID3D11DeviceContext* pd3dImmediateContext)
 	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
 
 	// Render  Object
-	stride = sizeof(SphereVertex); offset = 0;
+	stride = polyMesh.mVertexStride; offset = 0;
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     pd3dImmediateContext->IASetInputLayout(g_pVertexLayout);
@@ -541,7 +536,7 @@ void PhongRender(ID3D11DeviceContext* pd3dImmediateContext)
 	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
 
 	// Render  Object
-	stride = sizeof(SphereVertex); offset = 0;
+	stride = polyMesh.mVertexStride; offset = 0;
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     pd3dImmediateContext->IASetInputLayout(g_pVertexLayout);
