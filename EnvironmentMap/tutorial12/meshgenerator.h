@@ -129,10 +129,11 @@ public:
 	double mPhi;
 	int    mStack;
 	int    mSlice;
+    bool   mClosed;
     std::vector<CylinderVertex> mVertex;
 
-	Cylinder(double zmin=-1.0, double zmax=1.0, double radius=1.0, double phi=2*PI, int stack = 16, int slice = 32)
-		: MeshGenerator(sizeof(CylinderVertex)), mZmin(zmin),mZmax(zmax),mRadius(radius), mPhi(phi), mStack(stack), mSlice(slice)
+    Cylinder(double zmin = -1.0, double zmax = 1.0, double radius = 1.0, double phi = 1 * PI, int stack = 16, int slice = 32)
+        : MeshGenerator(sizeof(CylinderVertex)), mZmin(zmin), mZmax(zmax), mRadius(radius), mPhi(phi), mStack(stack), mSlice(slice), mClosed(false)
 	{
 		generate();
         mVertexBuffer = &mVertex[0];
@@ -178,6 +179,94 @@ public:
 				mIndex.push_back(d);
 				mIndex.push_back(c);
             }
+        }
+        if (mClosed)
+        {
+
+        }
+		mNumIndex  = mIndex.size();
+		mNumVertex = mVertex.size();
+	}
+};
+
+//Cone
+struct ConeVertex
+{
+    float vertex[3];
+    float normal[3];
+    float tex[2];
+    float color[4];
+    ConeVertex(float x, float y, float z, float nx, float ny, float nz, float tx = 0.5, float ty = 0.5)
+    {
+        vertex[0] = x;  vertex[1] = y;  vertex[2] = z;
+        normal[0] = nx; normal[1] = ny; normal[2] = nz;
+        tex[0] = tx; tex[1] = ty;
+    }
+};
+
+class Cone : public MeshGenerator
+{
+public:
+	double mZmin;
+	double mZmax;
+	double mRadius;
+	double mPhi;
+	int    mStack;
+	int    mSlice;
+    bool   mClosed;
+    std::vector<ConeVertex> mVertex;
+
+    Cone(double zmin = -1.0, double zmax = 1.0, double radius = 1.0, double phi = 2 * PI, int stack = 16, int slice = 32)
+        : MeshGenerator(sizeof(ConeVertex)), mZmin(zmin), mZmax(zmax), mRadius(radius), mPhi(phi), mStack(stack), mSlice(slice), mClosed(false)
+	{
+		generate();
+        mVertexBuffer = &mVertex[0];
+	}
+
+public:
+	void generate() override
+	{
+		mVertex.clear();
+		mIndex.clear();
+		mNumIndex = mNumVertex = 0;
+        for (int i = 0; i <= mStack; ++i)
+        {
+            double v = ((double)i / (double)mStack);
+            double z = mZmin + (mZmax - mZmin) * v;
+            for (int j = 0; j <= mSlice; ++j)
+            {
+                double u = ((double)j / (double)mSlice);
+                double phi = mPhi *  u;
+                double x = mRadius * (1.0 - v) * cos(phi);
+                double y = mRadius * (1.0 - v) * sin(phi);
+                ConeVertex vertex(x, y, z, x, y, 0.0, u, v);
+                mVertex.push_back(vertex);
+            }
+        }
+
+        // index
+		const int stride = mSlice + 1;
+        for (int i = 0; i < mStack; ++i)
+        {
+            int offset = i * stride;
+            for (int j = 0; j < mSlice; ++j)
+            {
+				int a = offset + j;
+				int b = offset + (j + 1) % stride;
+				int c = a + stride;
+				int d = b + stride;
+				mIndex.push_back(a);
+				mIndex.push_back(b);
+				mIndex.push_back(d);
+
+				mIndex.push_back(a);
+				mIndex.push_back(d);
+				mIndex.push_back(c);
+            }
+        }
+        if (mClosed)
+        {
+
         }
 		mNumIndex  = mIndex.size();
 		mNumVertex = mVertex.size();

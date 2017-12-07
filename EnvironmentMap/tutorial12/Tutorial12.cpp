@@ -98,7 +98,7 @@ ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
 #define IDC_RENDER_ENVMAP	 (IDC_TOGGLEBACKGROUND + 4) 
 #define IDC_RENDER_SIMPLE	 (IDC_TOGGLEBACKGROUND + 5) 
 
-    MeshGenerator &polyMesh = Cylinder(); // Sphere();
+    MeshGenerator &polyMesh = Cone();//Cylinder(); // Sphere();
  UINT     g_uNumIndex  = polyMesh.mNumIndex;
  UINT     g_uNumVertex = polyMesh.mNumVertex;
  MeshType g_eMeshType  = polyMesh.mType;
