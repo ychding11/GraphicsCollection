@@ -99,8 +99,8 @@ ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
 #define IDC_RENDER_SIMPLE	 (IDC_TOGGLEBACKGROUND + 5) 
 
  //MeshGenerator &polyMesh = Cone();//Cylinder(); // Sphere();
- MeshGenerator &polyMesh = Cylinder(); // Sphere();
- //MeshGenerator &polyMesh = Sphere();
+ //MeshGenerator &polyMesh = Cylinder(); // Sphere();
+ MeshGenerator &polyMesh = Sphere();
  UINT     g_uNumIndex  = polyMesh.mNumIndex;
  UINT     g_uNumVertex = polyMesh.mNumVertex;
  MeshType g_eMeshType  = polyMesh.mType;
@@ -247,8 +247,6 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 HRESULT CALLBACK MyCreateResources( ID3D11Device* pd3dDevice, const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc, void* pUserContext )
 {
 	HRESULT  hr;
-
-   
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;

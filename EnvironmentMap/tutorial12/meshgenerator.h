@@ -35,7 +35,9 @@ public:
     void *mVertexBuffer;
     std::vector<int> mIndex;
 
-    MeshGenerator(int stride = 0, MeshType type = TRIANGLE_LIST) : mType(type), mVertexStride(stride), mVertexBuffer(nullptr)
+    MeshGenerator(int stride = 0, MeshType type = TRIANGLE_LIST)
+        : mType(type), mVertexStride(stride), mVertexBuffer(nullptr)
+        , mNumIndex(0), mIndex(0)
     { }
 	virtual void generate() = 0;
 };
@@ -45,12 +47,16 @@ class Sphere : public MeshGenerator
 
 public:
 	double mRadius;
+    double mPhiMax;
+    double mThetaMax;
+    double mThetaMin;
 	int    mStack;
 	int    mSlice;
     std::vector<SphereVertex> mVertex;
 
-	Sphere(int stack = 16, int slice = 32, double radius=1.0)
+	Sphere(int stack = 16, int slice = 32, double radius=1.0, double thetaMin=0.0, double thetaMax=0.5 * PI, double phiMax=2 * PI)
 		: MeshGenerator(sizeof(SphereVertex)), mRadius(radius),  mStack(stack), mSlice(slice)
+        , mPhiMax(phiMax), mThetaMin(thetaMin), mThetaMax(thetaMax)
 	{
 		generate();
         mVertexBuffer = &mVertex[0];
@@ -59,24 +65,21 @@ public:
 public:
 	void generate() override
 	{
-		const float Ydet = PI / mStack;
-		const float Xdet = (2.0 * PI) / mSlice;
-		const float r = 1.0;
 		mVertex.clear();
 		mIndex.clear();
 		mNumIndex = mNumVertex = 0;
 		for (int i = 0; i <= mStack; ++i)
 		{
-			float theta = Ydet * i;
-			float z = r * cos(theta);
-			float texY = i * (1.0 / (float)mStack);
+            float v = ((double)i / (double)mStack);
+			float theta = v * (mThetaMax - mThetaMin) + mThetaMin;
+			float z = mRadius * cos(theta);
 			for (int j = 0; j <= mSlice; ++j)
 			{
-				float phi = Xdet * j;
-				float x = r * sin(theta) * cos(phi);
-				float y = r * sin(theta) * sin(phi);
-				float texX = j * (1.0 / (float)mSlice);
-				SphereVertex tmp(x, z, y, texX, texY);
+				float u = ((double)j / (double)mSlice);
+				float phi = mPhiMax * u;
+				float x = mRadius * sin(theta) * cos(phi);
+				float y = mRadius * sin(theta) * sin(phi);
+				SphereVertex tmp(x, z, y, u, v);
 				mVertex.push_back(tmp);
 			}
 		}
@@ -86,7 +89,7 @@ public:
 		for (int i = 0; i < mStack; ++i)
 		{
 			int offset = i * stride;
-			for (int j = 0; j <= mSlice; ++j)
+			for (int j = 0; j < mSlice; ++j)
 			{
 				int a = offset + j;
 				int b = offset + (j + 1) % stride;
