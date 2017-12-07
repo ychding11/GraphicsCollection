@@ -34,6 +34,7 @@ CD3DSettingsDlg                     g_SettingsDlg;          // Device settings d
 CDXUTTextHelper*                    g_pTxtHelper = nullptr;
 CDXUTDialog                         g_HUD;                  // manages the 3D UI
 CDXUTDialog                         g_SampleUI;             // dialog for sample specific controls
+CDXUTComboBox*                      g_ObjectModelSelectCombo;
 
 XMMATRIX                            g_World;
 bool                                g_bSpinning = false;
@@ -59,26 +60,29 @@ ID3DX11EffectVectorVariable*        g_vCameraPosVariable = nullptr;
 ID3DX11EffectScalarVariable*        g_bSpinVariable = nullptr;
 ID3DX11EffectScalarVariable*        g_fShininessVariable = nullptr;
 
-ID3D11Buffer*           g_pVertexBuffer = nullptr;
-ID3D11Buffer*           g_pBackgroundVertexBuffer = nullptr;
-ID3D11Buffer*           g_pIndexBuffer = nullptr;
+ID3D11Buffer*						g_pVertexBuffer = nullptr;
+ID3D11Buffer*						g_pBackgroundVertexBuffer = nullptr;
+ID3D11Buffer*						g_pIndexBuffer = nullptr;
 
 ID3D11RasterizerState*              g_pRasterizerStateWireframe = nullptr;
 ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
 
-    // Define the input layout
-    D3D11_INPUT_ELEMENT_DESC g_ObjectLayout[] =
-    {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    };
+//--------------------------------------------------------------------------------------
+// Layout Object
+//--------------------------------------------------------------------------------------
 
-	// Define the sphere input layout
-	D3D11_INPUT_ELEMENT_DESC g_SimpleLayout[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
+D3D11_INPUT_ELEMENT_DESC g_ObjectLayout[] =
+{
+    { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+};
+
+// Define the sphere input layout
+D3D11_INPUT_ELEMENT_DESC g_SimpleLayout[] =
+{
+	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+};
 
 //--------------------------------------------------------------------------------------
 // UI control IDs
@@ -97,10 +101,12 @@ ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
 #define IDC_RENDER_BLINPHONG (IDC_TOGGLEBACKGROUND + 3) 
 #define IDC_RENDER_ENVMAP	 (IDC_TOGGLEBACKGROUND + 4) 
 #define IDC_RENDER_SIMPLE	 (IDC_TOGGLEBACKGROUND + 5) 
+#define IDC_SELECTED_OBJECT  (IDC_TOGGLEBACKGROUND + 6)
+
 
  //MeshGenerator &polyMesh = Cone();//Cylinder(); // Sphere();
- //MeshGenerator &polyMesh = Cylinder(); // Sphere();
- MeshGenerator &polyMesh = Sphere();
+ MeshGenerator &polyMesh = Cylinder(); // Sphere();
+ //MeshGenerator &polyMesh = Sphere();
  UINT     g_uNumIndex  = polyMesh.mNumIndex;
  UINT     g_uNumVertex = polyMesh.mNumVertex;
  MeshType g_eMeshType  = polyMesh.mType;
@@ -112,6 +118,13 @@ enum RENDER_MODE
 	BLINPHONG_RENDER,
 	ENVMAP_RENDER,
 	SIMPLE_RENDER,
+};
+
+enum OBJECTMODEL
+{
+	SphereModel,
+	CylinderModel,
+	ConeModel,
 };
 
 //--------------------------------------------------------------------------------------
@@ -561,10 +574,9 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 		return;
 	}
 
-	XMVECTORF32 background = { 0.1, 0.1, 0.1, 1.000000000f };
 	// Clear the back buffer & depth stencil
+	XMVECTORF32 background = { 0.1, 0.1, 0.1, 1.000000000f };
 	auto pRTV = DXUTGetD3D11RenderTargetView();
-	//pd3dImmediateContext->ClearRenderTargetView(pRTV, Colors::MidnightBlue);
 	pd3dImmediateContext->ClearRenderTargetView(pRTV, background);
 	auto pDSV = DXUTGetD3D11DepthStencilView();
 	pd3dImmediateContext->ClearDepthStencilView(pDSV, D3D11_CLEAR_DEPTH, 1.0, 0);
@@ -587,7 +599,6 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
     {
         BackgroundRender(pd3dImmediateContext);
     }
-
 	switch (g_iRenderMode)
 	{
 	case PHONG_RENDER:
@@ -760,6 +771,10 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
             g_iRenderMode = SIMPLE_RENDER;
             break;
         }
+		case IDC_SELECTED_OBJECT:
+		{
+			OBJECTMODEL obj = (OBJECTMODEL)PtrToUlong(g_ObjectModelSelectCombo->GetSelectedData());
+		}
     }
 }
 
@@ -838,11 +853,15 @@ void InitApp()
     g_HUD.AddButton( IDC_TOGGLEWARP, L"Toggle WARP (F4)", 0, iY += 26, 170, 22, VK_F4 );
 
     g_SampleUI.SetCallback( OnGUIEvent );
-	iY = 5;
+	iY = 0;
+	g_SampleUI.AddComboBox(IDC_SELECTED_OBJECT, 0, iY += 5, 170, 22, VK_F8, false, &g_ObjectModelSelectCombo);
+	g_ObjectModelSelectCombo->AddItem(L"Sphere Model",ULongToPtr(SphereModel));
+	g_ObjectModelSelectCombo->AddItem(L"Cylinder Model",ULongToPtr(CylinderModel));
+	g_ObjectModelSelectCombo->AddItem(L"Cone Model", ULongToPtr(ConeModel));
 
-    g_SampleUI.AddCheckBox( IDC_TOGGLESPIN,       L"Rotate", 0, iY += 26, 170, 22, g_bSpinning );
-    g_SampleUI.AddCheckBox( IDC_TOGGLEWIREFRAME,  L"Wireframe", 0, iY += 26, 170, 22, g_bWireframe );
-    g_SampleUI.AddCheckBox( IDC_TOGGLEBACKGROUND, L"Background", 0, iY += 26, 170, 22, g_bDrawBackground );
+    g_SampleUI.AddCheckBox( IDC_TOGGLEWIREFRAME,  L"Wireframe Mode", 0, iY += 26, 170, 22, g_bWireframe );
+    g_SampleUI.AddCheckBox( IDC_TOGGLEBACKGROUND, L"Draw Background", 0, iY += 26, 170, 22, g_bDrawBackground );
+    g_SampleUI.AddCheckBox( IDC_TOGGLESPIN,       L"Rotate Background", 0, iY += 26, 170, 22, g_bSpinning );
 
 	iY += 5;
 	g_SampleUI.AddRadioButton(IDC_RENDER_PHONG,     IDC_RENDER_MODE, L"Phong", 0, iY += 26, 170, 22);
