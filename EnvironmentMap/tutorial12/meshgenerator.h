@@ -103,6 +103,20 @@ public:
 	}
 };
 
+struct CylinderVertex
+{
+    float vertex[3];
+    float normal[3];
+    float tex[2];
+    float color[4];
+    CylinderVertex(float x, float y, float z, float nx, float ny, float nz, float tx = 0.5, float ty = 0.5)
+    {
+        vertex[0] = x;  vertex[1] = y;  vertex[2] = z;
+        normal[0] = nx; normal[1] = ny; normal[2] = nz;
+        tex[0] = tx; tex[1] = ty;
+    }
+};
+
 class Cylinder : public MeshGenerator
 {
 public:
@@ -112,7 +126,7 @@ public:
 	double mPhi;
 	int    mStack;
 	int    mSlice;
-    std::vector<SphereVertex> mVertex;
+    std::vector<CylinderVertex> mVertex;
 
 	Cylinder(double zmin=0.0, double zmax=0.0, double radius=1.0, double phi=2*PI, int stack = 8, int slice = 16)
 		:mZmin(zmin),mZmax(zmax),mRadius(radius), mPhi(phi), mStack(stack), mSlice(slice)
@@ -123,6 +137,45 @@ public:
 public:
 	void generate() override
 	{
+		mVertex.clear();
+		mIndex.clear();
+		mNumIndex = mNumVertex = 0;
+        for (int i = 0; i <= mStack; ++i)
+        {
+            double z = mZmin + (mZmax - mZmin) * ((double)i / (double)mStack);
+            double texY = ((double)i / (double)mStack);
+            for (int j = 0; j <= mSlice; ++j)
+            {
+                double phi = mPhi *  ((double)j / (double)mSlice);
+                double texX = ((double)j / (double)mSlice);
+                double x = mRadius * cos(phi);
+                double y = mRadius * sin(phi);
+                CylinderVertex vertex(x, y, z, x, y, 0.0, texX, texY);
+                mVertex.push_back(vertex);
+            }
+        }
 
+        // index
+		const int stride = mSlice + 1;
+        for (int i = 0; i < mStack; ++i)
+        {
+            int offset = i * stride;
+            for (int j = 0; j <= mSlice; ++j)
+            {
+				int a = offset + j;
+				int b = offset + (j + 1) % stride;
+				int c = a + stride;
+				int d = b + stride;
+				mIndex.push_back(a);
+				mIndex.push_back(b);
+				mIndex.push_back(d);
+
+				mIndex.push_back(a);
+				mIndex.push_back(d);
+				mIndex.push_back(c);
+            }
+        }
+		mNumIndex  = mIndex.size();
+		mNumVertex = mVertex.size();
 	}
 };
