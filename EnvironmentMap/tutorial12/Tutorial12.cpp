@@ -103,13 +103,10 @@ D3D11_INPUT_ELEMENT_DESC g_SimpleLayout[] =
 #define IDC_RENDER_SIMPLE	 (IDC_TOGGLEBACKGROUND + 5) 
 #define IDC_SELECTED_OBJECT  (IDC_TOGGLEBACKGROUND + 6)
 
-
- //MeshGenerator &polyMesh = Cone();//Cylinder(); // Sphere();
- MeshGenerator &polyMesh = Cylinder(); // Sphere();
- //MeshGenerator &polyMesh = Sphere();
- UINT     g_uNumIndex  = polyMesh.mNumIndex;
- UINT     g_uNumVertex = polyMesh.mNumVertex;
- MeshType g_eMeshType  = polyMesh.mType;
+UINT     g_uNumIndex;
+UINT     g_uNumVertex;
+UINT     g_uVertexStride;
+MeshType g_eMeshType;
 
 
 enum RENDER_MODE
@@ -127,14 +124,16 @@ enum OBJECTMODEL
 	ConeModel,
 };
 
+OBJECTMODEL g_eObjectModel = SphereModel;
+
 //--------------------------------------------------------------------------------------
 // Forward declarations 
 //--------------------------------------------------------------------------------------
 void RenderText();
 void InitApp();
 
-   void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext);
-HRESULT CALLBACK MyCreateResources(ID3D11Device* pd3dDevice, const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc, void* pUserContext);
+ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext);
+HRESULT MyCreateResources(ID3D11Device* pd3dDevice,MeshGenerator &polyMesh);
 
 
 //--------------------------------------------------------------------------------------
@@ -251,15 +250,17 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     static const XMVECTORF32 s_At  = { 0.0f, 0.0f, 0.0f, 0.f };
     g_Camera.SetViewParams( s_Eye, s_At );
 
-	return  MyCreateResources(pd3dDevice, pBackBufferSurfaceDesc, pUserContext);
-    //return S_OK;
+    return S_OK;
 }
 
 
-//HRESULT MyInit()
-HRESULT CALLBACK MyCreateResources( ID3D11Device* pd3dDevice, const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc, void* pUserContext )
+HRESULT MyCreateResources(ID3D11Device* pd3dDevice,MeshGenerator &polyMesh)
 {
 	HRESULT  hr;
+	g_uNumIndex     = polyMesh.mNumIndex;
+	g_uNumVertex    = polyMesh.mNumVertex;
+	g_uVertexStride = polyMesh.mVertexStride;
+	g_eMeshType  = polyMesh.mType;
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
@@ -269,15 +270,15 @@ HRESULT CALLBACK MyCreateResources( ID3D11Device* pd3dDevice, const DXGI_SURFACE
 	D3D11_SUBRESOURCE_DATA InitData;
 	ZeroMemory(&InitData, sizeof(InitData));
 	InitData.pSysMem = polyMesh.mVertexBuffer;
-	hr = pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer);
-	if (FAILED(hr)) return hr;
+    SAFE_RELEASE( g_pVertexBuffer);
+	V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer));
 
 	bd.ByteWidth = sizeof(int) * polyMesh.mNumIndex;
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	ZeroMemory(&InitData, sizeof(InitData));
 	InitData.pSysMem = &(polyMesh.mIndex[0]);
-	hr = pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer);
-	if (FAILED(hr)) return hr;
+    SAFE_RELEASE( g_pIndexBuffer);
+	V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer));
 
 	return S_OK;
 }
@@ -495,7 +496,7 @@ void SimpleRender(ID3D11DeviceContext* pd3dImmediateContext)
 	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
 
 	// Render  Object
-    stride = polyMesh.mVertexStride;  offset = 0;
+    stride = g_uVertexStride;  offset = 0;
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     pd3dImmediateContext->IASetInputLayout(g_pSphereVertexLayout);
@@ -522,7 +523,7 @@ void EnvironmentMapRender(ID3D11DeviceContext* pd3dImmediateContext)
 	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
 
 	// Render  Object
-	stride = polyMesh.mVertexStride; offset = 0;
+	stride = g_uVertexStride; offset = 0;
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     pd3dImmediateContext->IASetInputLayout(g_pVertexLayout);
@@ -549,7 +550,7 @@ void PhongRender(ID3D11DeviceContext* pd3dImmediateContext)
 	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
 
 	// Render  Object
-	stride = polyMesh.mVertexStride; offset = 0;
+	stride = g_uVertexStride; offset = 0;
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     pd3dImmediateContext->IASetInputLayout(g_pVertexLayout);
@@ -572,6 +573,18 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 	{
 		g_SettingsDlg.OnRender(fElapsedTime);
 		return;
+	}
+	switch (g_eObjectModel)
+	{
+	case SphereModel:
+		MyCreateResources(pd3dDevice, Sphere());
+		break;
+	case CylinderModel:
+		MyCreateResources(pd3dDevice, Cylinder());
+		break;
+	case ConeModel:
+		MyCreateResources(pd3dDevice, Cone());
+		break;
 	}
 
 	// Clear the back buffer & depth stencil
@@ -651,8 +664,8 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_RELEASE( g_pRasterizerStateWireframe);
     SAFE_RELEASE( g_pRasterizerStateSolid);
     SAFE_RELEASE( g_pVertexBuffer);
-    SAFE_RELEASE( g_pBackgroundVertexBuffer);
     SAFE_RELEASE( g_pIndexBuffer);
+    SAFE_RELEASE( g_pBackgroundVertexBuffer);
 }
 
 
@@ -773,7 +786,7 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
         }
 		case IDC_SELECTED_OBJECT:
 		{
-			OBJECTMODEL obj = (OBJECTMODEL)PtrToUlong(g_ObjectModelSelectCombo->GetSelectedData());
+			g_eObjectModel = (OBJECTMODEL)PtrToUlong(g_ObjectModelSelectCombo->GetSelectedData());
 		}
     }
 }
