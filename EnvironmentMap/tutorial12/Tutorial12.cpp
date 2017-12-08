@@ -102,11 +102,18 @@ D3D11_INPUT_ELEMENT_DESC g_SimpleLayout[] =
 #define IDC_RENDER_ENVMAP	 (IDC_TOGGLEBACKGROUND + 4) 
 #define IDC_RENDER_SIMPLE	 (IDC_TOGGLEBACKGROUND + 5) 
 #define IDC_SELECTED_OBJECT  (IDC_TOGGLEBACKGROUND + 6)
+#define IDC_MODEL_THETA_STATIC (IDC_TOGGLEBACKGROUND + 7)
+#define IDC_MODEL_THETA        (IDC_TOGGLEBACKGROUND + 8)
+#define IDC_MODEL_PHI_STATIC   (IDC_TOGGLEBACKGROUND + 9)
+#define IDC_MODEL_PHI          (IDC_TOGGLEBACKGROUND + 10)
 
 UINT     g_uNumIndex;
 UINT     g_uNumVertex;
 UINT     g_uVertexStride;
 MeshType g_eMeshType;
+
+float g_fTheta;
+float g_fPhi;
 
 
 enum RENDER_MODE
@@ -786,6 +793,16 @@ void InitApp()
 	g_ObjectModelSelectCombo->AddItem(L"Sphere Model",ULongToPtr(SphereModel));
 	g_ObjectModelSelectCombo->AddItem(L"Cylinder Model",ULongToPtr(CylinderModel));
 	g_ObjectModelSelectCombo->AddItem(L"Cone Model", ULongToPtr(ConeModel));
+
+
+    WCHAR sz[100];
+    swprintf_s(sz, L"Theta: %2.1f", g_fTheta);
+    g_SampleUI.AddStatic(IDC_MODEL_THETA_STATIC, sz, 0, iY += 20, 170, 6);
+    g_SampleUI.AddSlider(IDC_MODEL_THETA, 0, iY += 20, 170, 10, 0, 100, 100);
+
+    swprintf_s(sz, L"Phi: %2.1f", g_fPhi);
+    g_SampleUI.AddStatic(IDC_MODEL_PHI_STATIC, sz, 10, iY += 10, 170, 6);
+    g_SampleUI.AddSlider(IDC_MODEL_PHI, 0, iY += 20, 170, 10, 0, 100, 100);
 
     g_SampleUI.AddCheckBox( IDC_TOGGLEWIREFRAME,  L"Wireframe Mode", 0, iY += 26, 170, 22, g_bWireframe );
     g_SampleUI.AddCheckBox( IDC_TOGGLEBACKGROUND, L"Draw Background", 0, iY += 26, 170, 22, g_bDrawBackground );
