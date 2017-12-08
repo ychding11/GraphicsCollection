@@ -112,8 +112,8 @@ UINT     g_uNumVertex;
 UINT     g_uVertexStride;
 MeshType g_eMeshType;
 
-float g_fTheta;
-float g_fPhi;
+float g_fTheta = PI;
+float g_fPhi   = PI * 2.0;
 
 
 enum RENDER_MODE
@@ -499,13 +499,13 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 	switch (g_eObjectModel)
 	{
 	case SphereModel:
-		MyCreateResources(pd3dDevice, Sphere());
+		MyCreateResources(pd3dDevice, Sphere(16, 32, 1.0, 0.0, g_fTheta, g_fPhi));
 		break;
 	case CylinderModel:
-		MyCreateResources(pd3dDevice, Cylinder());
+		MyCreateResources(pd3dDevice, Cylinder(16, 32, -1.0, 1.0, 1.0, g_fPhi));
 		break;
 	case ConeModel:
-		MyCreateResources(pd3dDevice, Cone());
+		MyCreateResources(pd3dDevice, Cone(16, 32, -1.0, 1.0, 1.0, g_fPhi));
 		break;
 	}
 
@@ -710,6 +710,24 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		{
 			g_eObjectModel = (OBJECTMODEL)PtrToUlong(g_ObjectModelSelectCombo->GetSelectedData());
 		}
+        case IDC_MODEL_PHI:
+        {
+            g_fPhi = g_SampleUI.GetSlider(IDC_MODEL_PHI)->GetValue() / 100.0f;
+            g_fPhi *= (2.0 * PI);
+
+            WCHAR sz[100];
+            swprintf_s(sz, L"Model  Phi: %2.5f", g_fPhi);
+            g_SampleUI.GetStatic(IDC_MODEL_PHI_STATIC)->SetText(sz);
+        }
+        case IDC_MODEL_THETA:
+        {
+            g_fTheta = g_SampleUI.GetSlider(IDC_MODEL_THETA)->GetValue() / 100.0f;
+            g_fTheta *= PI;
+
+            WCHAR sz[100];
+            swprintf_s(sz, L"Model Theta: %2.5f", g_fTheta);
+            g_SampleUI.GetStatic(IDC_MODEL_THETA_STATIC)->SetText(sz);
+        }
     }
 }
 
@@ -796,12 +814,12 @@ void InitApp()
 
 
     WCHAR sz[100];
-    swprintf_s(sz, L"Theta: %2.1f", g_fTheta);
+    swprintf_s(sz, L"Model Theta: %2.5f", g_fTheta);
     g_SampleUI.AddStatic(IDC_MODEL_THETA_STATIC, sz, 0, iY += 20, 170, 6);
     g_SampleUI.AddSlider(IDC_MODEL_THETA, 0, iY += 20, 170, 10, 0, 100, 100);
 
-    swprintf_s(sz, L"Phi: %2.1f", g_fPhi);
-    g_SampleUI.AddStatic(IDC_MODEL_PHI_STATIC, sz, 10, iY += 10, 170, 6);
+    swprintf_s(sz, L"Model   Phi: %2.5f", g_fPhi);
+    g_SampleUI.AddStatic(IDC_MODEL_PHI_STATIC, sz, 0, iY += 10, 170, 6);
     g_SampleUI.AddSlider(IDC_MODEL_PHI, 0, iY += 20, 170, 10, 0, 100, 100);
 
     g_SampleUI.AddCheckBox( IDC_TOGGLEWIREFRAME,  L"Wireframe Mode", 0, iY += 26, 170, 22, g_bWireframe );

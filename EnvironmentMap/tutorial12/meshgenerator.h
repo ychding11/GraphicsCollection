@@ -54,7 +54,7 @@ public:
 	int    mSlice;
     std::vector<SphereVertex> mVertex;
 
-	Sphere(int stack = 16, int slice = 32, double radius=1.0, double thetaMin=0.0, double thetaMax=0.5 * PI, double phiMax=2 * PI)
+	Sphere(int stack = 16, int slice = 32, double radius=1.0, double thetaMin=0.0, double thetaMax= PI, double phiMax=2 * PI)
 		: MeshGenerator(sizeof(SphereVertex)), mRadius(radius),  mStack(stack), mSlice(slice)
         , mPhiMax(phiMax), mThetaMin(thetaMin), mThetaMax(thetaMax)
 	{
@@ -135,7 +135,7 @@ public:
     bool   mClosed;
     std::vector<CylinderVertex> mVertex;
 
-    Cylinder(double zmin = -1.0, double zmax = 1.0, double radius = 1.0, double phi = 1 * PI, int stack = 16, int slice = 32)
+    Cylinder(int stack = 16, int slice = 32, double zmin = -1.0, double zmax = 1.0, double radius = 1.0, double phi = 2 * PI)
         : MeshGenerator(sizeof(CylinderVertex)), mZmin(zmin), mZmax(zmax), mRadius(radius), mPhi(phi), mStack(stack), mSlice(slice), mClosed(false)
 	{
 		generate();
@@ -219,7 +219,7 @@ public:
     bool   mClosed;
     std::vector<ConeVertex> mVertex;
 
-    Cone(double zmin = -1.0, double zmax = 1.0, double radius = 1.0, double phi = 2 * PI, int stack = 16, int slice = 32)
+    Cone(int stack = 16, int slice = 32, double zmin = -1.0, double zmax = 1.0, double radius = 1.0, double phi = 2 * PI )
         : MeshGenerator(sizeof(ConeVertex)), mZmin(zmin), mZmax(zmax), mRadius(radius), mPhi(phi), mStack(stack), mSlice(slice), mClosed(false)
 	{
 		generate();
