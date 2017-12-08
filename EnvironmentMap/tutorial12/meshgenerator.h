@@ -275,3 +275,85 @@ public:
 		mNumVertex = mVertex.size();
 	}
 };
+
+
+//Torus
+struct TorusVertex
+{
+    float vertex[3];
+    float normal[3];
+    float tex[2];
+    float color[4];
+    TorusVertex(float x, float y, float z, float nx, float ny, float nz, float tx = 0.5, float ty = 0.5)
+    {
+        vertex[0] = x;  vertex[1] = y;  vertex[2] = z;
+        normal[0] = nx; normal[1] = ny; normal[2] = nz;
+        tex[0] = tx; tex[1] = ty;
+    }
+};
+
+class Torus : public MeshGenerator
+{
+public:
+	double mRingRadius;
+	double mRadius;
+	double mTheta;
+	double mPhi;
+	int    mStack;
+	int    mSlice;
+    std::vector<TorusVertex> mVertex;
+
+    Torus(int stack = 16, int slice = 32, double ringradius = 0.25, double radius = 1.0, double theta = 2.0 * PI, double phi = 2.0 * PI )
+        : MeshGenerator(sizeof(TorusVertex)), mRingRadius(ringradius), mTheta(theta), mRadius(radius), mPhi(phi), mStack(stack), mSlice(slice)
+	{
+		generate();
+        mVertexBuffer = &mVertex[0];
+	}
+
+public:
+	void generate() override
+	{
+		mVertex.clear();
+		mIndex.clear();
+		mNumIndex = mNumVertex = 0;
+        for (int i = 0; i <= mStack; ++i)
+        {
+            double v = ((double)i / (double)mStack);
+            for (int j = 0; j <= mSlice; ++j)
+            {
+                double u = ((double)j / (double)mSlice);
+                double z = mRingRadius * sin(u * mPhi);
+                double phi = mPhi *  u;
+                double x = (mRadius + cos(mPhi * u) * mRingRadius ) * cos(v * mTheta);
+                double y = (mRadius + cos(mPhi * u) * mRingRadius ) * sin(v * mTheta);
+
+                //TorusVertex vertex(x, y, z, x-mRadius*cos(u*mPhi), y-mRadius*sin(u*mPhi), z-mRingRadius, u, v);
+                TorusVertex vertex(x, y, z, x, y, z-mRingRadius, u, v);
+                mVertex.push_back(vertex);
+            }
+        }
+
+        // index
+		const int stride = mSlice + 1;
+        for (int i = 0; i < mStack; ++i)
+        {
+            int offset = i * stride;
+            for (int j = 0; j < mSlice; ++j)
+            {
+				int a = offset + j;
+				int b = offset + (j + 1) % stride;
+				int c = a + stride;
+				int d = b + stride;
+				mIndex.push_back(a);
+				mIndex.push_back(b);
+				mIndex.push_back(d);
+
+				mIndex.push_back(a);
+				mIndex.push_back(d);
+				mIndex.push_back(c);
+            }
+        }
+		mNumIndex  = mIndex.size();
+		mNumVertex = mVertex.size();
+	}
+};

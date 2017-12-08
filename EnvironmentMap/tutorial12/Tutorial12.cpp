@@ -129,6 +129,7 @@ enum OBJECTMODEL
 	SphereModel,
 	CylinderModel,
 	ConeModel,
+	TorusModel,
 };
 
 OBJECTMODEL g_eObjectModel = SphereModel;
@@ -507,6 +508,9 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 	case ConeModel:
 		MyCreateResources(pd3dDevice, Cone(16, 32, -1.0, 1.0, 1.0, g_fPhi));
 		break;
+	case TorusModel:
+		MyCreateResources(pd3dDevice, Torus(32, 64, 0.25, 1.0, 2.0 * g_fTheta, g_fPhi));
+		break;
 	}
 
 	// Clear the back buffer & depth stencil
@@ -811,6 +815,7 @@ void InitApp()
 	g_ObjectModelSelectCombo->AddItem(L"Sphere Model",ULongToPtr(SphereModel));
 	g_ObjectModelSelectCombo->AddItem(L"Cylinder Model",ULongToPtr(CylinderModel));
 	g_ObjectModelSelectCombo->AddItem(L"Cone Model", ULongToPtr(ConeModel));
+	g_ObjectModelSelectCombo->AddItem(L"Torus Model", ULongToPtr(TorusModel));
 
 
     WCHAR sz[100];
