@@ -327,8 +327,8 @@ public:
                 double x = (mRadius + cos(mPhi * u) * mRingRadius ) * cos(v * mTheta);
                 double y = (mRadius + cos(mPhi * u) * mRingRadius ) * sin(v * mTheta);
 
-                //TorusVertex vertex(x, y, z, x-mRadius*cos(u*mPhi), y-mRadius*sin(u*mPhi), z-mRingRadius, u, v);
-                TorusVertex vertex(x, y, z, x, y, z-mRingRadius, u, v);
+                TorusVertex vertex(x, y, z, x-mRadius*cos(u*mPhi), y-mRadius*sin(u*mPhi), z-mRingRadius, u, v);
+                //TorusVertex vertex(x, y, z, x, y, 0, u, v);
                 mVertex.push_back(vertex);
             }
         }

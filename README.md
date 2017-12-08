@@ -10,6 +10,7 @@ I keep the project name unchanged if it is adapted.
 ![half cylinder phong intel](./demo/half-cylinder-phong-intel.png)
 ![half cone phong intel](./demo/half-cone-phong-intel.png)
 ![Torus phong error normalintel](./demo/torus-phong-err-intel.png)
+![Torus phong intel](./demo/torus-phong-intel.png)
 
 ---
 ![teapot](./demo/teapot-phong.png)
