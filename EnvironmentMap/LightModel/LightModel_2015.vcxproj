@@ -375,10 +375,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LightModel.cpp" />
+    <ClCompile Include="tiny_obj_loader\tiny_obj_loader.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="meshgenerator.h" />
     <CLInclude Include="resource.h" />
+    <ClInclude Include="tiny_obj_loader\tiny_obj_loader.h" />
     <ResourceCompile Include="Tutorial12.rc" />
   </ItemGroup>
   <ItemGroup>

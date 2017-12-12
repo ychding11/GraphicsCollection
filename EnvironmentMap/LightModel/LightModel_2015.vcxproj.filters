@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LightModel.cpp" />
+    <ClCompile Include="tiny_obj_loader\tiny_obj_loader.cc" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
@@ -29,5 +30,6 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
     <ClInclude Include="meshgenerator.h" />
+    <ClInclude Include="tiny_obj_loader\tiny_obj_loader.h" />
   </ItemGroup>
 </Project>

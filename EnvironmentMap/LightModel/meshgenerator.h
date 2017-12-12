@@ -1,6 +1,6 @@
 #include <vector>
 #include <iostream>
-
+#include "./tiny_obj_loader/tiny_obj_loader.h"
 
 #define PI 3.1415926f
 
@@ -353,6 +353,91 @@ public:
 				mIndex.push_back(c);
             }
         }
+		mNumIndex  = mIndex.size();
+		mNumVertex = mVertex.size();
+	}
+};
+
+//Obj Model
+struct ObjVertex
+{
+    float vertex[3];
+    float normal[3];
+    float tex[2];
+    float color[4];
+    ObjVertex(float x, float y, float z, float nx, float ny, float nz, float tx = 0.5, float ty = 0.5)
+    {
+        vertex[0] = x;  vertex[1] = y;  vertex[2] = z;
+        normal[0] = nx; normal[1] = ny; normal[2] = nz;
+        tex[0] = tx; tex[1] = ty;
+    }
+};
+
+class Obj : public MeshGenerator
+{
+public:
+	std::string mObjPath;
+    std::vector<ObjVertex> mVertex;
+
+    Obj(std::string objpath = "dragon.obj" )
+        : MeshGenerator(sizeof(ObjVertex)), mObjPath(objpath)
+	{
+		generate();
+        mVertexBuffer = &mVertex[0];
+	}
+
+public:
+	void generate() override
+	{
+		mVertex.clear();
+		mIndex.clear();
+		mNumIndex = mNumVertex = 0;
+
+		tinyobj::attrib_t attrib;
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;
+
+		std::string err;
+		bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, mObjPath.c_str());
+
+		if (!err.empty())
+		{
+			std::cerr << err << std::endl;
+		}
+		if (!ret)
+		{
+			exit(1);
+		}
+
+		// Loop over shapes
+		for (size_t s = 0; s < shapes.size(); s++)
+		{
+			// Loop over faces(polygon)
+			size_t index_offset = 0;
+
+			for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
+			{
+				int fv = shapes[s].mesh.num_face_vertices[f];
+				// Loop over vertices in the face.
+				for (size_t v = 0; v < fv; v++)
+				{
+					// access to vertex
+					tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+					tinyobj::real_t vx = attrib.vertices[3 * idx.vertex_index + 0];
+					tinyobj::real_t vy = attrib.vertices[3 * idx.vertex_index + 1];
+					tinyobj::real_t vz = attrib.vertices[3 * idx.vertex_index + 2];
+					tinyobj::real_t nx = attrib.normals[3 * idx.normal_index + 0];
+					tinyobj::real_t ny = attrib.normals[3 * idx.normal_index + 1];
+					tinyobj::real_t nz = attrib.normals[3 * idx.normal_index + 2];
+					//tinyobj::real_t tx = attrib.texcoords[2 * idx.texcoord_index + 0];
+					//tinyobj::real_t ty = attrib.texcoords[2 * idx.texcoord_index + 1];
+					mVertex.push_back( ObjVertex(vx,vy,vz, nx,ny,nz ) );
+					mIndex.push_back(idx.vertex_index);
+				}
+				index_offset += fv;
+			}
+		}
+
 		mNumIndex  = mIndex.size();
 		mNumVertex = mVertex.size();
 	}
