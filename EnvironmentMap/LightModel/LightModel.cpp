@@ -88,7 +88,7 @@ D3D11_INPUT_ELEMENT_DESC g_ObjModelLayout[] =
 {
     { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    //{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 };
 
 // Define the sphere input layout
@@ -511,6 +511,33 @@ void EnvironmentMapRender(ID3D11DeviceContext* pd3dImmediateContext)
         else if (g_eMeshType == TRIANGLE_LIST)
             pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         g_pTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
+        pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
+    }
+}
+
+void ObjModelRender(ID3D11DeviceContext* pd3dImmediateContext)
+{
+	D3DX11_TECHNIQUE_DESC techDesc;
+	HRESULT hr;
+	ID3D11Buffer*  buffers[2] = { g_pPositionBuffer, g_pNormalBuffer};
+	UINT stride[2] = { 3 * sizeof(float), 3 * sizeof(float) };
+	UINT offset[2] = { 0 };
+
+	if (g_bWireframe) pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
+	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
+
+	// Render  Object
+	pd3dImmediateContext->IASetVertexBuffers(0, 1, buffers, stride, offset);
+	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    pd3dImmediateContext->IASetInputLayout(g_pObjModelLayout);
+    V(g_pPhongTechnique->GetDesc(&techDesc));
+    for (UINT p = 0; p < techDesc.Passes; ++p)
+    {
+        if (g_eMeshType == LINE_LIST)
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+        else if (g_eMeshType == TRIANGLE_LIST)
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        g_pPhongTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
         pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
     }
 }

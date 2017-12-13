@@ -407,14 +407,28 @@ private:
 			exit(1);
 		}
 
-		mPostionBuffer  = &(attrib.vertices[0]);
-		mNormalBuffer   = &(attrib.normals[0]);
-		mTexCoordBuffer = &(attrib.texcoords[0]);
-		mColorBuffer    = &(attrib.colors[0]);
-        mSizePositionBuffer = attrib.vertices.size() * sizeof(tinyobj::real_t);
-        mSizeNormalBuffer   = attrib.normals.size() * sizeof(tinyobj::real_t);
-        mSizeTexCoordBuffer = attrib.texcoords.size() * sizeof(tinyobj::real_t);
-        mSizeColorBuffer    = attrib.colors.size() * sizeof(tinyobj::real_t);
+		if (!attrib.vertices.empty())
+		{
+			mPostionBuffer  = &(attrib.vertices[0]);
+			mSizePositionBuffer = attrib.vertices.size() * sizeof(tinyobj::real_t);
+		}
+		if (!attrib.normals.empty())
+		{
+			mNormalBuffer   = &(attrib.normals[0]);
+			mSizeNormalBuffer   = attrib.normals.size() * sizeof(tinyobj::real_t);
+		}
+
+		if (!attrib.texcoords.empty())
+		{
+			mTexCoordBuffer = &(attrib.texcoords[0]);
+			mSizeTexCoordBuffer = attrib.texcoords.size() * sizeof(tinyobj::real_t);
+		}
+
+		if (!attrib.colors.empty())
+		{
+			mColorBuffer    = &(attrib.colors[0]);
+            mSizeColorBuffer    = attrib.colors.size() * sizeof(tinyobj::real_t);
+		}
 
 		// Loop over shapes
 		for (size_t s = 0; s < shapes.size(); s++)

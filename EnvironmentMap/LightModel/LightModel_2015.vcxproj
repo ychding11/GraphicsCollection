@@ -381,7 +381,7 @@
     <ClInclude Include="meshgenerator.h" />
     <CLInclude Include="resource.h" />
     <ClInclude Include="tiny_obj_loader\tiny_obj_loader.h" />
-    <ResourceCompile Include="Tutorial12.rc" />
+    <ResourceCompile Include="LightModel.rc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\DXUT\Core\DXUT_2015.vcxproj">
