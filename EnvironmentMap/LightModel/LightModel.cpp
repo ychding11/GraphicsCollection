@@ -42,14 +42,17 @@ bool                                g_bWireframe = false;
 bool                                g_bDrawBackground = false;
 int                                 g_iRenderMode = 0;
 ID3DX11Effect*                      g_pEffect = nullptr;
+
 ID3D11InputLayout*                  g_pVertexLayout = nullptr;
 ID3D11InputLayout*                  g_pSphereVertexLayout = nullptr;
 ID3D11InputLayout*                  g_pBackgroundVertexLayout = nullptr;
+ID3D11InputLayout*                  g_pObjModelLayout = nullptr;
+
 ID3DX11EffectTechnique*             g_pTechnique = nullptr;
 ID3DX11EffectTechnique*             g_pSimpleTechnique = nullptr;
 ID3DX11EffectTechnique*             g_pPhongTechnique = nullptr;
 ID3DX11EffectTechnique*             g_pBackgroundTechnique = nullptr;
-CDXUTSDKMesh                        g_Mesh;
+
 ID3D11ShaderResourceView*           g_pEnvMapSRV;
 ID3DX11EffectShaderResourceVariable* g_ptxDiffuseVariable = nullptr;
 ID3DX11EffectMatrixVariable*        g_pWorldVariable = nullptr;
@@ -63,6 +66,9 @@ ID3DX11EffectScalarVariable*        g_fShininessVariable = nullptr;
 ID3D11Buffer*						g_pVertexBuffer = nullptr;
 ID3D11Buffer*						g_pBackgroundVertexBuffer = nullptr;
 ID3D11Buffer*						g_pIndexBuffer = nullptr;
+ID3D11Buffer*						g_pPositionBuffer = nullptr;
+ID3D11Buffer*						g_pNormalBuffer = nullptr;
+ID3D11Buffer*						g_pTexCoordBuffer = nullptr;
 
 ID3D11RasterizerState*              g_pRasterizerStateWireframe = nullptr;
 ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
@@ -76,6 +82,13 @@ D3D11_INPUT_ELEMENT_DESC g_ObjectLayout[] =
     { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+};
+
+D3D11_INPUT_ELEMENT_DESC g_ObjModelLayout[] =
+{
+    { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    //{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 };
 
 // Define the sphere input layout
@@ -237,6 +250,11 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	V_RETURN(g_pBackgroundTechnique->GetPassByIndex(0)->GetDesc(&PassDesc));
 	V_RETURN(pd3dDevice->CreateInputLayout(g_SimpleLayout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pBackgroundVertexLayout));
 
+	numElements = ARRAYSIZE(g_ObjModelLayout);
+	V_RETURN(g_pTechnique->GetPassByIndex(0)->GetDesc(&PassDesc));
+	V_RETURN(pd3dDevice->CreateInputLayout(g_ObjModelLayout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pObjModelLayout));
+
+
 	// Create solid and wireframe rasterizer state objects
 	D3D11_RASTERIZER_DESC RasterDesc;
 	ZeroMemory(&RasterDesc, sizeof(D3D11_RASTERIZER_DESC));
@@ -260,6 +278,39 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     g_Camera.SetViewParams( s_Eye, s_At );
 
     return S_OK;
+}
+
+
+HRESULT MyCreateObjVertexBuffer(ID3D11Device* pd3dDevice, Obj &objModel)
+{
+	HRESULT  hr;
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage          = D3D11_USAGE_DEFAULT;
+	bd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA InitData;
+	ZeroMemory(&InitData, sizeof(InitData));
+
+    bd.ByteWidth     = objModel.mSizePositionBuffer;
+    InitData.pSysMem = objModel.mPostionBuffer;
+    SAFE_RELEASE( g_pPositionBuffer);
+	V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &g_pPositionBuffer));
+
+    bd.ByteWidth     = objModel.mSizeNormalBuffer;
+    InitData.pSysMem = objModel.mNormalBuffer;
+    SAFE_RELEASE( g_pNormalBuffer);
+	V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &g_pNormalBuffer));
+
+	bd.ByteWidth = objModel.mSizeIndexBuffer;
+	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ZeroMemory(&InitData, sizeof(InitData));
+	InitData.pSysMem = &(objModel.mIndexBuffer[0]);
+    SAFE_RELEASE( g_pIndexBuffer);
+	V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer));
+
+	return S_OK;
 }
 
 
@@ -291,6 +342,7 @@ HRESULT MyCreateResources(ID3D11Device* pd3dDevice,MeshGenerator &polyMesh)
 
 	return S_OK;
 }
+
 //--------------------------------------------------------------------------------------
 // Create any D3D11 resources that depend on the back buffer
 //--------------------------------------------------------------------------------------
@@ -513,7 +565,7 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 		MyCreateResources(pd3dDevice, Torus(32, 64, 0.25, 1.0, 2.0 * g_fTheta, g_fPhi));
 		break;
 	case ObjModel:
-		MyCreateResources(pd3dDevice, Obj());
+        MyCreateObjVertexBuffer(pd3dDevice, Obj());
 		break;
 	}
 
@@ -542,23 +594,31 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
     {
         BackgroundRender(pd3dImmediateContext);
     }
-	switch (g_iRenderMode)
-	{
-	case PHONG_RENDER:
-        PhongRender(pd3dImmediateContext);
-		break;
-	case BLINPHONG_RENDER:
-		break;
-	case ENVMAP_RENDER:
-        EnvironmentMapRender(pd3dImmediateContext);
-		break;
-	case SIMPLE_RENDER:
-        SimpleRender(pd3dImmediateContext);
-		break;
-	default:
-		break;
 
-	}
+    if (g_eObjectModel == ObjModel)
+    {
+
+    }
+    else
+    {
+        switch (g_iRenderMode)
+        {
+        case PHONG_RENDER:
+            PhongRender(pd3dImmediateContext);
+            break;
+        case BLINPHONG_RENDER:
+            break;
+        case ENVMAP_RENDER:
+            EnvironmentMapRender(pd3dImmediateContext);
+            break;
+        case SIMPLE_RENDER:
+            SimpleRender(pd3dImmediateContext);
+            break;
+        default:
+            break;
+
+        }
+    }
 
 	g_HUD.OnRender(fElapsedTime);
 	g_SampleUI.OnRender(fElapsedTime);
@@ -584,8 +644,6 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     DXUTGetGlobalResourceCache().OnDestroyDevice();
     SAFE_DELETE( g_pTxtHelper );
 
-    g_Mesh.Destroy();
-
     SAFE_RELEASE( g_pVertexLayout );
     SAFE_RELEASE( g_pSphereVertexLayout );
     SAFE_RELEASE( g_pBackgroundVertexLayout );
@@ -596,6 +654,7 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_RELEASE( g_pVertexBuffer);
     SAFE_RELEASE( g_pIndexBuffer);
     SAFE_RELEASE( g_pBackgroundVertexBuffer);
+    SAFE_RELEASE( g_pObjModelLayout );
 }
 
 
