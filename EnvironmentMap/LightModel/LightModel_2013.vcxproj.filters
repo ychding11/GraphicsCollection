@@ -19,15 +19,19 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tutorial12.cpp" />
+    <ClCompile Include="LightModel.cpp" />
+    <ClCompile Include="tiny_obj_loader\tiny_obj_loader.cc" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
       <Filter>Resource Files</Filter>
     </CLInclude>
-    <ResourceCompile Include="Tutorial12.rc">
+    <ClInclude Include="meshgenerator.h" />
+    <ClInclude Include="tiny_obj_loader\tiny_obj_loader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="LightModel.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-    <ClInclude Include="meshgenerator.h" />
   </ItemGroup>
 </Project>
