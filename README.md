@@ -14,3 +14,4 @@ I keep the project name unchanged if it is adapted.
 
 ---
 ![teapot](./demo/teapot-phong.png)
+![teapot-wireframe](./demo/teapot-wireframe.png)
