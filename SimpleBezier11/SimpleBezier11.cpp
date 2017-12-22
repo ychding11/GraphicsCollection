@@ -182,7 +182,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     InitApp();
     DXUTInit( true, true ); // Parse the command line, show msgboxes on error, and an extra cmd line param to force REF for now
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
-    DXUTCreateWindow( L"SimpleBezier11" );
+    DXUTCreateWindow( L"Tessellation on D3D11" );
     DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0,  true, 1280, 1024 );
     DXUTMainLoop(); // Enter into the DXUT render loop
 
@@ -728,7 +728,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     updateMaterail(pd3dImmediateContext);
 
     MobiusStripRender(pd3dImmediateContext);
-    MyRenderTeapot(pd3dImmediateContext);
+    //MyRenderTeapot(pd3dImmediateContext);
 
     // Render the HUD
     DXUT_BeginPerfEvent( DXUT_PERFEVENTCOLOR, L"HUD / Stats" );
