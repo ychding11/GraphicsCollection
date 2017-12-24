@@ -106,6 +106,14 @@ enum E_PARTITION_MODE
 
 E_PARTITION_MODE                    g_iPartitionMode = PARTITION_INTEGER;
 
+enum E_Model_TYPE
+{
+  E_TEAPOT,
+  E_MOBIUS_STRIP,
+};
+
+E_Model_TYPE g_eModelType = E_TEAPOT;
+
 //--------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
@@ -593,8 +601,8 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     g_HUD.SetLocation( pBackBufferSurfaceDesc->Width - 170, 0 );
     g_HUD.SetSize( 170, 170 );
-    g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 200, pBackBufferSurfaceDesc->Height - 500 );
-    g_SampleUI.SetSize( 170, 400 );
+    g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 200, pBackBufferSurfaceDesc->Height - 600 );
+    g_SampleUI.SetSize( 200, 500 );
 
     return S_OK;
 }
@@ -727,8 +735,16 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     updateCamera(pd3dImmediateContext);
     updateMaterail(pd3dImmediateContext);
 
-    MobiusStripRender(pd3dImmediateContext);
-    //MyRenderTeapot(pd3dImmediateContext);
+    switch (g_eModelType)
+    {
+    case E_TEAPOT:
+        MyRenderTeapot(pd3dImmediateContext);
+        break;
+    case E_MOBIUS_STRIP:
+        MobiusStripRender(pd3dImmediateContext);
+        break;
+
+    }
 
     // Render the HUD
     DXUT_BeginPerfEvent( DXUT_PERFEVENTCOLOR, L"HUD / Stats" );
