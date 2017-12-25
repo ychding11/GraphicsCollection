@@ -130,6 +130,9 @@ E_Model_TYPE g_eModelType = E_TEAPOT;
 #define IDC_PARTITION_FRAC_ODD    11
 #define IDC_SINGLE_PATCH          12
 #define IDC_TRI_DOMAIN            13
+#define IDC_SELECTED_OBJECT       14
+
+CDXUTComboBox*        g_ObjectModelSelectCombo;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -214,6 +217,10 @@ void InitApp()
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 22, VK_F2 );
 
     g_SampleUI.SetCallback( OnGUIEvent ); iY = 0;
+
+    g_SampleUI.AddComboBox(IDC_SELECTED_OBJECT, 0, iY += 5, 170, 22, VK_F8, false, &g_ObjectModelSelectCombo);
+    g_ObjectModelSelectCombo->AddItem(L"Teapot      ", ULongToPtr(E_TEAPOT));
+    g_ObjectModelSelectCombo->AddItem(L"Mobius Strip", ULongToPtr(E_MOBIUS_STRIP));
 
     WCHAR sz[100];
     iY += 10;
@@ -378,6 +385,10 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
         case IDC_PARTITION_FRAC_ODD:
             g_iPartitionMode = PARTITION_FRACTIONAL_ODD;
             break;
+        case IDC_SELECTED_OBJECT:
+        {
+            g_eModelType = (E_Model_TYPE)PtrToUlong(g_ObjectModelSelectCombo->GetSelectedData());
+        }
     }
 }
 
