@@ -52,6 +52,7 @@ ID3DX11EffectTechnique*             g_pTechnique = nullptr;
 ID3DX11EffectTechnique*             g_pSimpleTechnique = nullptr;
 ID3DX11EffectTechnique*             g_pPhongTechnique = nullptr;
 ID3DX11EffectTechnique*             g_pBackgroundTechnique = nullptr;
+ID3DX11EffectTechnique*             g_p3DScanModelTechnique = nullptr;
 
 ID3D11ShaderResourceView*           g_pEnvMapSRV;
 ID3DX11EffectShaderResourceVariable* g_ptxDiffuseVariable = nullptr;
@@ -147,6 +148,7 @@ enum OBJECTMODEL
 };
 
 OBJECTMODEL g_eObjectModel = SphereModel;
+//Obj g_3DscanModel;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -154,8 +156,9 @@ OBJECTMODEL g_eObjectModel = SphereModel;
 void RenderText();
 void InitApp();
 
- void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext);
+void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext);
 HRESULT MyCreateResources(ID3D11Device* pd3dDevice,MeshGenerator &polyMesh);
+HRESULT MyCreateObjVertexBuffer(ID3D11Device* pd3dDevice, Obj &objModel);
 
 
 //--------------------------------------------------------------------------------------
@@ -221,10 +224,11 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 #endif
 
     // Obtain the technique
-    g_pTechnique                = g_pEffect->GetTechniqueByName( "EnvMapRender" );
-    g_pSimpleTechnique          = g_pEffect->GetTechniqueByName( "SimpleRender" );
-    g_pPhongTechnique          = g_pEffect->GetTechniqueByName( "PhongRender" );
-    g_pBackgroundTechnique      = g_pEffect->GetTechniqueByName( "BackgroundRender" );
+    g_pTechnique              = g_pEffect->GetTechniqueByName( "EnvMapRender" );
+    g_pSimpleTechnique        = g_pEffect->GetTechniqueByName( "SimpleRender" );
+    g_pPhongTechnique         = g_pEffect->GetTechniqueByName( "PhongRender" );
+    g_pBackgroundTechnique    = g_pEffect->GetTechniqueByName( "BackgroundRender" );
+    g_p3DScanModelTechnique   = g_pEffect->GetTechniqueByName( "ThreeDScanModelRender" );
 
     // Obtain the variables
     g_pWorldVariable      = g_pEffect->GetVariableByName( "World" )->AsMatrix();
@@ -276,7 +280,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     static const XMVECTORF32 s_Eye = { 0.0f, 3.0f, -10.0f, 0.f };
     static const XMVECTORF32 s_At  = { 0.0f, 0.0f, 0.0f, 0.f };
     g_Camera.SetViewParams( s_Eye, s_At );
-
+    //MyCreateObjVertexBuffer(pd3dDevice, g_3DscanModel);
     return S_OK;
 }
 
@@ -542,6 +546,33 @@ void ObjModelRender(ID3D11DeviceContext* pd3dImmediateContext)
     }
 }
 
+void ThreeDScanModelRender(ID3D11DeviceContext* pd3dImmediateContext)
+{
+	UINT stride = 0;
+	UINT offset = 0;
+	D3DX11_TECHNIQUE_DESC techDesc;
+	HRESULT hr;
+
+	if (g_bWireframe) pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
+	else              pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
+
+	// Render  Object
+	stride = g_uVertexStride; offset = 0;
+	pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
+	pd3dImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    pd3dImmediateContext->IASetInputLayout(g_pVertexLayout);
+    V(g_p3DScanModelTechnique->GetDesc(&techDesc));
+    for (UINT p = 0; p < techDesc.Passes; ++p)
+    {
+        if (g_eMeshType == LINE_LIST)
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+        else if (g_eMeshType == TRIANGLE_LIST)
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        g_p3DScanModelTechnique->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
+        pd3dImmediateContext->DrawIndexed(g_uNumIndex, 0, 0);
+    }
+}
+
 void PhongRender(ID3D11DeviceContext* pd3dImmediateContext)
 {
 	UINT stride = 0;
@@ -592,7 +623,7 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 		MyCreateResources(pd3dDevice, Torus(32, 64, 0.25, 1.0, 2.0 * g_fTheta, g_fPhi));
 		break;
 	case ObjModel:
-        MyCreateObjVertexBuffer(pd3dDevice, Obj());
+       // MyCreateObjVertexBuffer(pd3dDevice, g_3DscanModel);
 		break;
 	}
 
@@ -624,7 +655,7 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 
     if (g_eObjectModel == ObjModel)
     {
-
+        ThreeDScanModelRender(pd3dImmediateContext);
     }
     else
     {
@@ -906,7 +937,7 @@ void InitApp()
 	g_ObjectModelSelectCombo->AddItem(L"Cylinder Model",ULongToPtr(CylinderModel));
 	g_ObjectModelSelectCombo->AddItem(L"Cone Model", ULongToPtr(ConeModel));
 	g_ObjectModelSelectCombo->AddItem(L"Torus Model", ULongToPtr(TorusModel));
-	g_ObjectModelSelectCombo->AddItem(L"Obj Model", ULongToPtr(ObjModel));
+	//g_ObjectModelSelectCombo->AddItem(L"Obj Model", ULongToPtr(ObjModel));
 
 
     WCHAR sz[100];

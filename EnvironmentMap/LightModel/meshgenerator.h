@@ -373,6 +373,10 @@ public:
     int mSizeColorBuffer;
     int mSizeIndexBuffer;
 
+private:
+	tinyobj::attrib_t attrib;
+
+public:
     Obj(std::string objpath = "dragon.obj" )
         : mObjPath(objpath)
         , mPostionBuffer(nullptr)
@@ -389,9 +393,9 @@ public:
 	}
 
 private:
-	void generate()
+	int generate()
 	{
-		tinyobj::attrib_t attrib;
+		//tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
 
@@ -409,25 +413,35 @@ private:
 
 		if (!attrib.vertices.empty())
 		{
-			mPostionBuffer  = &(attrib.vertices[0]);
+			mPostionBuffer      = &(attrib.vertices[0]);
 			mSizePositionBuffer = attrib.vertices.size() * sizeof(tinyobj::real_t);
 		}
+        else
+        {
+            printf("- No position attribute of Verte, Not supported.\n");
+            return 1;
+        }
 		if (!attrib.normals.empty())
 		{
-			mNormalBuffer   = &(attrib.normals[0]);
-			mSizeNormalBuffer   = attrib.normals.size() * sizeof(tinyobj::real_t);
+			mNormalBuffer     = &(attrib.normals[0]);
+			mSizeNormalBuffer = attrib.normals.size() * sizeof(tinyobj::real_t);
 		}
+        else
+        {
+            printf("- No normal attribute of Verte, Not supported.\n");
+            return 1;
+        }
 
 		if (!attrib.texcoords.empty())
 		{
-			mTexCoordBuffer = &(attrib.texcoords[0]);
+			mTexCoordBuffer     = &(attrib.texcoords[0]);
 			mSizeTexCoordBuffer = attrib.texcoords.size() * sizeof(tinyobj::real_t);
 		}
 
 		if (!attrib.colors.empty())
 		{
-			mColorBuffer    = &(attrib.colors[0]);
-            mSizeColorBuffer    = attrib.colors.size() * sizeof(tinyobj::real_t);
+			mColorBuffer     = &(attrib.colors[0]);
+            mSizeColorBuffer = attrib.colors.size() * sizeof(tinyobj::real_t);
 		}
 
 		// Loop over shapes
@@ -449,5 +463,6 @@ private:
 		}
 
 		mSizeIndexBuffer  = mIndexBuffer.size() * sizeof(int);
+        return 0;
 	}
 };

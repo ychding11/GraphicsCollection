@@ -287,3 +287,82 @@ technique11 BackgroundRender
         //SetBlendState( NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ), 0xFFFFFFFF );
     }
 }
+
+//==========================================================//
+struct ThreeDScanModel_VS_INPUT
+{
+    float3 Pos          : POSITION;         //position
+    float3 Norm         : NORMAL;           //normal
+};
+
+struct ThreeDScanModel_PS_INPUT
+{
+    float4 Pos       : SV_POSITION;
+    float3 WorldPos  : POSITION;
+    float3 Normal    : TEXCOORD0;
+};
+
+// Vertex Shader
+ThreeDScanModel_PS_INPUT ThreeDScanModel_VS(ThreeDScanModel_VS_INPUT input)
+{
+    ThreeDScanModel_PS_INPUT output;
+    float4 temp = mul(float4(input.Pos, 1.0f), World);
+    output.WorldPos = temp.xyz;
+    output.Pos = temp;
+    output.Pos = mul(output.Pos, View);
+    output.Pos = mul(output.Pos, Projection);
+    output.Normal = mul(input.Norm, (float3x3)World);
+
+    return output;
+}
+
+
+// Pixel Shader
+float4 ThreeDScanModel_PS(ThreeDScanModel_PS_INPUT Input) : SV_Target
+{
+    float3 N = normalize(Input.Normal);
+    float3 V = normalize(CameraPosWorld - Input.WorldPos);
+    float3 L = normalize(Lpos - Input.WorldPos);
+    float3 R = normalize(2 * dot(L, N) * N - L);
+
+    float3 color = max(pow(dot(R, V), Shininess), 0.0) * Kspecular * Lintensity + Kdiffuse * Lintensity * max(dot(N, L), 0.0f) + Kambient * Lambient;
+    float3 lpos = float3(1.512, 1.123, 0.132);
+    float3 ll = float3(0.125, 0.643, 0.6423);
+    L = normalize(lpos - Input.WorldPos);
+    R = normalize(2 * dot(L, N) * N - L);
+    color += max(pow(dot(R, V), Shininess), 0.0) * Kspecular * ll + Kdiffuse * ll * max(dot(N, L), 0.0f);
+
+    lpos = float3(-1.512, -1.1123, -1.312);
+    ll   = float3(0.123, 0.6236, 0.623);
+    L = normalize(lpos - Input.WorldPos);
+    R = normalize(2 * dot(L, N) * N - L);
+    color += max(pow(dot(R, V), Shininess), 0.0) * Kspecular * ll + Kdiffuse * ll * max(dot(N, L), 0.0f);
+
+    lpos = float3(-1.512, 1.1123, -1.312);
+    ll   = float3(0.123, 0.6236, 0.623);
+    L = normalize(lpos - Input.WorldPos);
+    R = normalize(2 * dot(L, N) * N - L);
+    color += max(pow(dot(R, V), Shininess), 0.0) * Kspecular * ll + Kdiffuse * ll * max(dot(N, L), 0.0f);
+
+    lpos = float3(1.512, -1.1123, -1.112);
+    ll   = float3(0.123, 0.6236, 0.623);
+    L = normalize(lpos - Input.WorldPos);
+    R = normalize(2 * dot(L, N) * N - L);
+    color += max(pow(dot(R, V), Shininess), 0.0) * Kspecular * ll + Kdiffuse * ll * max(dot(N, L), 0.0f);
+    return float4(color, 1.0);
+}
+
+technique11 ThreeDScanModelRender
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0,ThreeDScanModel_VS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, ThreeDScanModel_PS() ) );
+
+        SetDepthStencilState( EnableDepth, 0 );
+        SetBlendState( NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ), 0xFFFFFFFF );
+    }
+}
+
+//==========================================================//
