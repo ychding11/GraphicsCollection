@@ -76,10 +76,11 @@ PSInput VS( VSInput input )
 {
     PSInput output = (PSInput)0;
     
-    output.Pos    = mul( float4(input.Pos,1.0), World );
-    output.Pos.x += Waviness * sin( output.Pos.y * 0.1f + Time );
-    output.Pos = mul( output.Pos, View );
-    output.Pos = mul( output.Pos, Projection );
+    output.Pos = float4(input.Pos, 1.0);
+    //output.Pos    = mul( float4(input.Pos,1.0), World );
+    //output.Pos.x += Waviness * sin( output.Pos.y * 0.1f + Time );
+    //output.Pos = mul( output.Pos, View );
+    //output.Pos = mul( output.Pos, Projection );
 
     output.Norm = mul( input.Norm, World );
     output.Tex = input.Tex;
@@ -94,9 +95,9 @@ PSInput VS( VSInput input )
 float4 PS( PSInput input) : SV_Target
 {
     // Calculate lighting assuming light color is <1,1,1,1>
-    float fLighting = saturate( dot( input.Norm, vLightDir ) );
-    float4 outputColor = g_txDiffuse.Sample( samLinear, input.Tex ) * fLighting;
-    outputColor.a = 1;
+    //float fLighting = saturate( dot( input.Norm, vLightDir ) );
+    //float4 outputColor = g_txDiffuse.Sample( samLinear, input.Tex ) * fLighting;
+    float4 outputColor = float4(0,1,0,1);
     return outputColor;
 }
 

@@ -17,6 +17,7 @@
 #include "SDKmisc.h"
 #include "SDKmesh.h"
 #include "DDSTextureLoader.h"
+#include "PlaneMesh.h"
 
 #include <d3dx11effect.h>
 
@@ -52,6 +53,9 @@ float                               g_fModelWaviness = 0.0f;
 
 ID3D11RasterizerState*              g_pRasterizerStateWireframe = nullptr;
 ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
+
+ID3D11Buffer*						g_pPlaneIndexBuffer  = nullptr;
+ID3D11Buffer*						g_pPlaneVertexBuffer = nullptr;
 //--------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
@@ -183,7 +187,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateSolid);
 
     // Setup the camera's view parameters
-    static const XMVECTORF32 s_Eye = { 0.0f, 3.0f, -800.0f, 0.f };
+    static const XMVECTORF32 s_Eye = { 0.0f, 1.0f, -5.0f, 0.f };
     static const XMVECTORF32 s_At  = { 0.0f, 1.0f, 0.0f, 0.f };
     g_Camera.SetViewParams( s_Eye, s_At );
 
@@ -204,7 +208,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     // Setup the camera's projection parameters
     float fAspectRatio = pBackBufferSurfaceDesc->Width / ( FLOAT )pBackBufferSurfaceDesc->Height;
-    g_Camera.SetProjParams( XM_PI / 4, fAspectRatio, 0.1f, 50000.0f );
+    g_Camera.SetProjParams( XM_PI / 3, fAspectRatio, 0.1f, 500.0f );
     g_Camera.SetWindow( pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height );
     g_Camera.SetButtonMasks( MOUSE_LEFT_BUTTON, MOUSE_WHEEL, MOUSE_MIDDLE_BUTTON );
 
@@ -295,6 +299,94 @@ void ModelRender( ID3D11DeviceContext* pd3dImmediateContext )
 
 }
 
+//--------------------------------------------------------------------------------------
+// CreateAndUpdatePlaneMeshBuffer, create buffer every frame.
+//--------------------------------------------------------------------------------------
+HRESULT CreateAndUpdatePlaneMeshBuffer(ID3D11Device* pd3dDevice, PlaneMesh &plane)
+{
+    HRESULT  hr;
+    D3D11_BUFFER_DESC bd;
+    ZeroMemory(&bd, sizeof(bd));
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.CPUAccessFlags = 0;
+
+    struct SimpleVertex
+    {
+        XMFLOAT3 pos;
+        XMFLOAT3 normal;
+        XMFLOAT2 tex;
+    };
+
+    SimpleVertex vertices[] =
+    {
+        { XMFLOAT3(0.0f, 0.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(0.0f, 1.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(0.0f, 1.0f) },
+        { XMFLOAT3(1.0f, 0.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(1.0f, 0.0f) },
+        { XMFLOAT3(1.0f, 1.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(1.0f, 1.0f) },
+    };
+
+    D3D11_SUBRESOURCE_DATA InitData;
+    ZeroMemory(&InitData, sizeof(InitData));
+
+    //bd.ByteWidth = plane.mVertexBuffer.size() * sizeof(PlaneVertex);
+    //InitData.pSysMem = &(plane.mVertexBuffer[0]);
+    bd.ByteWidth = sizeof(vertices);
+    InitData.pSysMem = vertices;
+    SAFE_RELEASE(g_pPlaneVertexBuffer);
+    V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &g_pPlaneVertexBuffer));
+
+    int indices[] =
+    {
+        0, 2, 3,
+        0, 3, 1,
+    };
+
+    bd.ByteWidth = sizeof(indices);
+    bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    //bd.ByteWidth = plane.mIndexBuffer.size() * sizeof(int);
+    //bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    ZeroMemory(&InitData, sizeof(InitData));
+    //InitData.pSysMem = &(plane.mIndexBuffer[0]);
+    InitData.pSysMem = indices;
+    SAFE_RELEASE(g_pPlaneIndexBuffer);
+    V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &g_pPlaneIndexBuffer));
+
+    return S_OK;
+}
+
+//--------------------------------------------------------------------------------------
+// Render the Plane Mesh 
+//--------------------------------------------------------------------------------------
+void RenderPlaneMesh(ID3D11DeviceContext* pd3dImmediateContext, PlaneMesh &plane)
+{
+    //
+    // Set the Vertex Layout
+    //
+    pd3dImmediateContext->IASetInputLayout( g_pVertexLayout );
+
+    //
+    // Render the mesh
+    //
+    UINT Strides[1] = { 0 };
+    UINT Offsets[1] = { 0 };
+    ID3D11Buffer* pVB[1] = { g_pPlaneVertexBuffer };
+    pd3dImmediateContext->IASetVertexBuffers( 0, 1, pVB, Strides, Offsets );
+    pd3dImmediateContext->IASetIndexBuffer(g_pPlaneIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    D3DX11_TECHNIQUE_DESC techDesc;
+    HRESULT hr;
+    V( g_pTechnique->GetDesc( &techDesc ) );
+
+    for( UINT p = 0; p < techDesc.Passes; ++p )
+    {
+        pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        g_pTechnique->GetPassByIndex( p )->Apply( 0, pd3dImmediateContext );
+        pd3dImmediateContext->DrawIndexed(plane.mIndexBuffer.size() , 0, 0);
+    }
+}
+
+PlaneMesh g_plane(2,2);
 
 //--------------------------------------------------------------------------------------
 // Render the scene using the D3D11 device
@@ -313,13 +405,16 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     // Clear the back buffer
     //
     auto pRTV = DXUTGetD3D11RenderTargetView();
-    pd3dImmediateContext->ClearRenderTargetView( pRTV, Colors::MidnightBlue );
+    //pd3dImmediateContext->ClearRenderTargetView( pRTV, Colors::MidnightBlue );
+    float bk[] = { 0.0, 0.0, 0.0f, 1.000000000f };
+    pd3dImmediateContext->ClearRenderTargetView( pRTV, bk);
+    
 
     //
     // Clear the depth stencil
     //
-    auto pDSV = DXUTGetD3D11DepthStencilView();
-    pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
+    //auto pDSV = DXUTGetD3D11DepthStencilView();
+    //pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
 
     XMMATRIX mView = g_Camera.GetViewMatrix();
     XMMATRIX mProj = g_Camera.GetProjMatrix();
@@ -340,7 +435,10 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     //
     // Render the Object
     //
-    ModelRender(pd3dImmediateContext);
+    //ModelRender(pd3dImmediateContext);
+
+    CreateAndUpdatePlaneMeshBuffer(pd3dDevice, g_plane);
+    RenderPlaneMesh(pd3dImmediateContext, g_plane);
 
     //
     // Render the UI
@@ -376,6 +474,8 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_RELEASE( g_pEffect );
     SAFE_RELEASE( g_pRasterizerStateWireframe );
     SAFE_RELEASE( g_pRasterizerStateSolid );
+    SAFE_RELEASE( g_pPlaneIndexBuffer);
+    SAFE_RELEASE( g_pPlaneVertexBuffer);
 }
 
 

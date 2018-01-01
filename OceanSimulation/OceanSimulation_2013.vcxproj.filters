@@ -25,6 +25,7 @@
     <ResourceCompile Include="Tutorial11.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+    <ClInclude Include="PlaneMesh.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OceanSimulation.cpp" />

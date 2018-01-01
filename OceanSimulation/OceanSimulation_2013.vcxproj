@@ -387,6 +387,7 @@
     <None Include="oceanSimulation.fx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="PlaneMesh.h" />
     <CLInclude Include="resource.h" />
     <ResourceCompile Include="Tutorial11.rc" />
   </ItemGroup>
