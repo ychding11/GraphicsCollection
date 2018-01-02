@@ -144,10 +144,12 @@ enum OBJECTMODEL
 	CylinderModel,
 	ConeModel,
 	TorusModel,
-	ObjModel,
+    PlaneModel,
+	ThreeDScanModel,
 };
 
-OBJECTMODEL g_eObjectModel = SphereModel;
+//OBJECTMODEL g_eObjectModel = SphereModel;
+OBJECTMODEL g_eObjectModel = PlaneModel;
 //Obj g_3DscanModel;
 
 //--------------------------------------------------------------------------------------
@@ -156,9 +158,9 @@ OBJECTMODEL g_eObjectModel = SphereModel;
 void RenderText();
 void InitApp();
 
-void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext);
-HRESULT MyCreateResources(ID3D11Device* pd3dDevice,MeshGenerator &polyMesh);
-HRESULT MyCreateObjVertexBuffer(ID3D11Device* pd3dDevice, Obj &objModel);
+void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext);
+HRESULT CreateMeshBuffers(ID3D11Device* pd3dDevice,MeshGenerator &polyMesh);
+HRESULT CreateSeperateBuffers(ID3D11Device* pd3dDevice, ThreeDScanObject &objModel);
 
 
 //--------------------------------------------------------------------------------------
@@ -255,7 +257,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	V_RETURN(pd3dDevice->CreateInputLayout(g_SimpleLayout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pBackgroundVertexLayout));
 
 	numElements = ARRAYSIZE(g_ObjModelLayout);
-	V_RETURN(g_pTechnique->GetPassByIndex(0)->GetDesc(&PassDesc));
+    V_RETURN(g_p3DScanModelTechnique->GetPassByIndex(0)->GetDesc(&PassDesc));
 	V_RETURN(pd3dDevice->CreateInputLayout(g_ObjModelLayout, numElements, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &g_pObjModelLayout));
 
 
@@ -280,12 +282,11 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     static const XMVECTORF32 s_Eye = { 0.0f, 3.0f, -10.0f, 0.f };
     static const XMVECTORF32 s_At  = { 0.0f, 0.0f, 0.0f, 0.f };
     g_Camera.SetViewParams( s_Eye, s_At );
-    //MyCreateObjVertexBuffer(pd3dDevice, g_3DscanModel);
+    //CreateSeperateBuffers(pd3dDevice, g_3DscanModel);
     return S_OK;
 }
 
-
-HRESULT MyCreateObjVertexBuffer(ID3D11Device* pd3dDevice, Obj &objModel)
+HRESULT CreateSeperateBuffers(ID3D11Device* pd3dDevice, ThreeDScanObject &objModel)
 {
 	HRESULT  hr;
 	D3D11_BUFFER_DESC bd;
@@ -318,19 +319,21 @@ HRESULT MyCreateObjVertexBuffer(ID3D11Device* pd3dDevice, Obj &objModel)
 }
 
 
-HRESULT MyCreateResources(ID3D11Device* pd3dDevice,MeshGenerator &polyMesh)
+HRESULT CreateMeshBuffers(ID3D11Device* pd3dDevice, MeshGenerator &polyMesh)
 {
 	HRESULT  hr;
 	g_uNumIndex     = polyMesh.mNumIndex;
 	g_uNumVertex    = polyMesh.mNumVertex;
 	g_uVertexStride = polyMesh.mVertexStride;
-	g_eMeshType  = polyMesh.mType;
+	g_eMeshType     = polyMesh.mType;
+
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 	bd.ByteWidth = polyMesh.mVertexStride * polyMesh.mNumVertex;
+
 	D3D11_SUBRESOURCE_DATA InitData;
 	ZeroMemory(&InitData, sizeof(InitData));
 	InitData.pSysMem = polyMesh.mVertexBuffer;
@@ -340,7 +343,7 @@ HRESULT MyCreateResources(ID3D11Device* pd3dDevice,MeshGenerator &polyMesh)
 	bd.ByteWidth = sizeof(int) * polyMesh.mNumIndex;
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	ZeroMemory(&InitData, sizeof(InitData));
-	InitData.pSysMem = &(polyMesh.mIndex[0]);
+	InitData.pSysMem = &(polyMesh.mIndexBuffer[0]);
     SAFE_RELEASE( g_pIndexBuffer);
 	V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer));
 
@@ -367,7 +370,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
     g_HUD.SetLocation( pBackBufferSurfaceDesc->Width - 170, 0 );
     g_HUD.SetSize( 170, 170 );
     g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 200, pBackBufferSurfaceDesc->Height - 400 );
-    g_SampleUI.SetSize( 200, 400 );
+    g_SampleUI.SetSize( 200, 300 );
 
     // background vertex buffer.
     // Map texels to pixels 
@@ -456,7 +459,7 @@ void BackgroundRender(ID3D11DeviceContext* pd3dImmediateContext)
     pd3dImmediateContext->IASetVertexBuffers(0, 1, &g_pBackgroundVertexBuffer, &stride, &offset);
     pd3dImmediateContext->RSSetState(g_pRasterizerStateSolid);
     pd3dImmediateContext->IASetInputLayout(g_pBackgroundVertexLayout);
-    V(g_pTechnique->GetDesc(&techDesc));
+    V(g_pBackgroundTechnique->GetDesc(&techDesc));
     for (UINT p = 0; p < techDesc.Passes; ++p)
     {
         pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -546,7 +549,7 @@ void ObjModelRender(ID3D11DeviceContext* pd3dImmediateContext)
     }
 }
 
-void ThreeDScanModelRender(ID3D11DeviceContext* pd3dImmediateContext)
+void RenderThreeDScanModel(ID3D11DeviceContext* pd3dImmediateContext)
 {
 	UINT stride = 0;
 	UINT offset = 0;
@@ -600,7 +603,7 @@ void PhongRender(ID3D11DeviceContext* pd3dImmediateContext)
     }
 }
 
-void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext)
+void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext)
 {
 	// If the settings dialog is being shown, then render it instead of rendering the app's scene
 	if (g_SettingsDlg.IsActive())
@@ -611,19 +614,22 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
 	switch (g_eObjectModel)
 	{
 	case SphereModel:
-		MyCreateResources(pd3dDevice, Sphere(16, 32, 1.0, 0.0, g_fTheta, g_fPhi));
+        CreateMeshBuffers(pd3dDevice, Sphere(16, 32, 1.0, 0.0, g_fTheta, g_fPhi));
 		break;
 	case CylinderModel:
-		MyCreateResources(pd3dDevice, Cylinder(16, 32, -1.0, 1.0, 1.0, g_fPhi));
+        CreateMeshBuffers(pd3dDevice, Cylinder(16, 32, -1.0, 1.0, 1.0, g_fPhi));
 		break;
 	case ConeModel:
-		MyCreateResources(pd3dDevice, Cone(16, 32, -1.0, 1.0, 1.0, g_fPhi));
+        CreateMeshBuffers(pd3dDevice, Cone(16, 32, -1.0, 1.0, 1.0, g_fPhi));
 		break;
 	case TorusModel:
-		MyCreateResources(pd3dDevice, Torus(32, 64, 0.25, 1.0, 2.0 * g_fTheta, g_fPhi));
+        CreateMeshBuffers(pd3dDevice, Torus(32, 64, 0.25, 1.0, 2.0 * g_fTheta, g_fPhi));
 		break;
-	case ObjModel:
-       // MyCreateObjVertexBuffer(pd3dDevice, g_3DscanModel);
+	case PlaneModel:
+        CreateMeshBuffers(pd3dDevice, PlaneMesh());
+		break;
+	case ThreeDScanModel:
+       // CreateSeperateBuffers(pd3dDevice, g_3DscanModel);
 		break;
 	}
 
@@ -653,9 +659,9 @@ void CALLBACK MyRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmedi
         BackgroundRender(pd3dImmediateContext);
     }
 
-    if (g_eObjectModel == ObjModel)
+    if (g_eObjectModel == ThreeDScanModel)
     {
-        ThreeDScanModelRender(pd3dImmediateContext);
+        RenderThreeDScanModel(pd3dImmediateContext);
     }
     else
     {
@@ -890,8 +896,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     DXUTSetCallbackD3D11DeviceAcceptable( IsD3D11DeviceAcceptable );
     DXUTSetCallbackD3D11DeviceCreated( OnD3D11CreateDevice );
     DXUTSetCallbackD3D11SwapChainResized( OnD3D11ResizedSwapChain );
-    //DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender );
-    DXUTSetCallbackD3D11FrameRender( MyRender );
+    DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender );
     DXUTSetCallbackD3D11SwapChainReleasing( OnD3D11ReleasingSwapChain );
     DXUTSetCallbackD3D11DeviceDestroyed( OnD3D11DestroyDevice );
 
@@ -937,6 +942,7 @@ void InitApp()
 	g_ObjectModelSelectCombo->AddItem(L"Cylinder Model",ULongToPtr(CylinderModel));
 	g_ObjectModelSelectCombo->AddItem(L"Cone Model", ULongToPtr(ConeModel));
 	g_ObjectModelSelectCombo->AddItem(L"Torus Model", ULongToPtr(TorusModel));
+	g_ObjectModelSelectCombo->AddItem(L"Plane Model", ULongToPtr(PlaneModel));
 	//g_ObjectModelSelectCombo->AddItem(L"Obj Model", ULongToPtr(ObjModel));
 
 
@@ -954,10 +960,10 @@ void InitApp()
     g_SampleUI.AddCheckBox( IDC_TOGGLESPIN,       L"Rotate Background", 0, iY += 26, 170, 22, g_bSpinning );
 
 	iY += 5;
-	g_SampleUI.AddRadioButton(IDC_RENDER_PHONG,     IDC_RENDER_MODE, L"Phong", 0, iY += 26, 170, 22);
-	g_SampleUI.AddRadioButton(IDC_RENDER_BLINPHONG, IDC_RENDER_MODE, L"Bllin-Phong", 0, iY += 26, 170, 22);
-	g_SampleUI.AddRadioButton(IDC_RENDER_ENVMAP,    IDC_RENDER_MODE, L"Env Map", 0, iY += 26, 170, 22);
-	g_SampleUI.AddRadioButton(IDC_RENDER_SIMPLE,    IDC_RENDER_MODE, L"Simple", 0, iY += 26, 170, 22);
+	g_SampleUI.AddRadioButton(IDC_RENDER_PHONG,     IDC_RENDER_MODE, L"Phong Render", 0, iY += 26, 170, 22);
+	g_SampleUI.AddRadioButton(IDC_RENDER_BLINPHONG, IDC_RENDER_MODE, L"Bllin-Phong Render", 0, iY += 26, 170, 22);
+	g_SampleUI.AddRadioButton(IDC_RENDER_ENVMAP,    IDC_RENDER_MODE, L"Env-Map Render", 0, iY += 26, 170, 22);
+	g_SampleUI.AddRadioButton(IDC_RENDER_SIMPLE,    IDC_RENDER_MODE, L"Simple Render", 0, iY += 26, 170, 22);
 	g_SampleUI.GetRadioButton(IDC_RENDER_PHONG)->SetChecked(true);
 
 }

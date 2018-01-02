@@ -33,11 +33,11 @@ public:
     int mVertexStride;
 	MeshType mType;
     void *mVertexBuffer;
-    std::vector<int> mIndex;
+    std::vector<int> mIndexBuffer;
 
     MeshGenerator(int stride = 0, MeshType type = TRIANGLE_LIST)
         : mType(type), mVertexStride(stride), mVertexBuffer(nullptr)
-        , mNumIndex(0), mIndex(0)
+        , mNumIndex(0), mIndexBuffer(0)
     { }
 	virtual void generate() = 0;
 };
@@ -66,7 +66,7 @@ public:
 	void generate() override
 	{
 		mVertex.clear();
-		mIndex.clear();
+		mIndexBuffer.clear();
 		mNumIndex = mNumVertex = 0;
 		for (int i = 0; i <= mStack; ++i)
 		{
@@ -95,16 +95,16 @@ public:
 				int b = offset + (j + 1) % stride;
 				int c = a + stride;
 				int d = b + stride;
-				mIndex.push_back(a);
-				mIndex.push_back(b);
-				mIndex.push_back(d);
+				mIndexBuffer.push_back(a);
+				mIndexBuffer.push_back(b);
+				mIndexBuffer.push_back(d);
 
-				mIndex.push_back(a);
-				mIndex.push_back(d);
-				mIndex.push_back(c);
+				mIndexBuffer.push_back(a);
+				mIndexBuffer.push_back(d);
+				mIndexBuffer.push_back(c);
 			}
 		}
-		mNumIndex  = mIndex.size();
+		mNumIndex  = mIndexBuffer.size();
 		mNumVertex = mVertex.size();
 	}
 };
@@ -146,7 +146,7 @@ public:
 	void generate() override
 	{
 		mVertex.clear();
-		mIndex.clear();
+		mIndexBuffer.clear();
 		mNumIndex = mNumVertex = 0;
         for (int i = 0; i <= mStack; ++i)
         {
@@ -174,20 +174,20 @@ public:
 				int b = offset + (j + 1) % stride;
 				int c = a + stride;
 				int d = b + stride;
-				mIndex.push_back(a);
-				mIndex.push_back(b);
-				mIndex.push_back(d);
+				mIndexBuffer.push_back(a);
+				mIndexBuffer.push_back(b);
+				mIndexBuffer.push_back(d);
 
-				mIndex.push_back(a);
-				mIndex.push_back(d);
-				mIndex.push_back(c);
+				mIndexBuffer.push_back(a);
+				mIndexBuffer.push_back(d);
+				mIndexBuffer.push_back(c);
             }
         }
         if (mClosed)
         {
 
         }
-		mNumIndex  = mIndex.size();
+		mNumIndex  = mIndexBuffer.size();
 		mNumVertex = mVertex.size();
 	}
 };
@@ -230,7 +230,7 @@ public:
 	void generate() override
 	{
 		mVertex.clear();
-		mIndex.clear();
+		mIndexBuffer.clear();
 		mNumIndex = mNumVertex = 0;
         for (int i = 0; i <= mStack; ++i)
         {
@@ -258,20 +258,20 @@ public:
 				int b = offset + (j + 1) % stride;
 				int c = a + stride;
 				int d = b + stride;
-				mIndex.push_back(a);
-				mIndex.push_back(b);
-				mIndex.push_back(d);
+				mIndexBuffer.push_back(a);
+				mIndexBuffer.push_back(b);
+				mIndexBuffer.push_back(d);
 
-				mIndex.push_back(a);
-				mIndex.push_back(d);
-				mIndex.push_back(c);
+				mIndexBuffer.push_back(a);
+				mIndexBuffer.push_back(d);
+				mIndexBuffer.push_back(c);
             }
         }
         if (mClosed)
         {
 
         }
-		mNumIndex  = mIndex.size();
+		mNumIndex  = mIndexBuffer.size();
 		mNumVertex = mVertex.size();
 	}
 };
@@ -314,7 +314,7 @@ public:
 	void generate() override
 	{
 		mVertex.clear();
-		mIndex.clear();
+		mIndexBuffer.clear();
 		mNumIndex = mNumVertex = 0;
         for (int i = 0; i <= mStack; ++i)
         {
@@ -344,21 +344,84 @@ public:
 				int b = offset + (j + 1) % stride;
 				int c = a + stride;
 				int d = b + stride;
-				mIndex.push_back(a);
-				mIndex.push_back(b);
-				mIndex.push_back(d);
+				mIndexBuffer.push_back(a);
+				mIndexBuffer.push_back(b);
+				mIndexBuffer.push_back(d);
 
-				mIndex.push_back(a);
-				mIndex.push_back(d);
-				mIndex.push_back(c);
+				mIndexBuffer.push_back(a);
+				mIndexBuffer.push_back(d);
+				mIndexBuffer.push_back(c);
             }
         }
-		mNumIndex  = mIndex.size();
+		mNumIndex  = mIndexBuffer.size();
 		mNumVertex = mVertex.size();
 	}
 };
 
-class Obj
+struct PlaneVertex
+{
+    float x, y, z;
+    float nx, ny, nz;
+    float tx, ty;
+
+    PlaneVertex(float p1 = 0.0, float p2 = 0, float p3 = 0, float n1 = 0, float n2 = 0, float n3 = 0, float t1 = 0, float t2 = 0)
+        : x(p1), y(p2), z(p3), nx(n1), ny(n2), nz(n3), tx(t1), ty(t2)
+    { }
+};
+
+class PlaneMesh : public MeshGenerator
+{
+public:
+    std::vector<PlaneVertex> mVertex;
+    //std::vector<int> mIndexBuffer;
+    int mXDivision;
+    int mYDivision;
+
+public:
+    PlaneMesh(int xv = 16, int yv = 16)
+        : MeshGenerator(sizeof(PlaneVertex)), mXDivision(xv), mYDivision(yv)
+    {
+        generate();
+        mVertexBuffer = &mVertex[0];
+    }
+
+private:
+    void generate() override
+    {
+        //generate vertex buffer
+        for (int i = 0; i < mYDivision; ++i)
+        {
+            for (int j = 0; j < mXDivision; ++j)
+            {
+                PlaneVertex vertex(j * (1.0 / mXDivision), 0, i * (1.0 / mYDivision), 0, 1, 0, (float)j / (float)mXDivision, (float)i / (float)mYDivision);
+                mVertex.push_back(vertex);
+            }
+        }
+
+        //generate index buffer
+        for (int i = 0; i < mYDivision - 1; ++i)
+        {
+            for (int j = 0; j < mXDivision - 1; ++j)
+            {
+                int a = i * mXDivision + j;
+                int b = (i + 1) * mXDivision + j;
+                int c = b + 1;
+                int d = a + 1;
+                mIndexBuffer.push_back(a);
+                mIndexBuffer.push_back(b);
+                mIndexBuffer.push_back(c);
+
+                mIndexBuffer.push_back(a);
+                mIndexBuffer.push_back(c);
+                mIndexBuffer.push_back(d);
+            }
+        }
+        mNumIndex = mIndexBuffer.size();
+        mNumVertex = mVertex.size();
+    }
+};
+
+class ThreeDScanObject
 {
 public:
 	const std::string mObjPath;
@@ -377,7 +440,7 @@ private:
 	tinyobj::attrib_t attrib;
 
 public:
-    Obj(std::string objpath = "dragon.obj" )
+    ThreeDScanObject(std::string objpath = "dragon.obj")
         : mObjPath(objpath)
         , mPostionBuffer(nullptr)
         , mNormalBuffer(nullptr)

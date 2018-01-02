@@ -17,6 +17,18 @@
     <None Include="EnvMap.fx">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="simpleRender.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="BackgroundRender.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="3DScanModelRender.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="PhongRender.fx">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LightModel.cpp" />
