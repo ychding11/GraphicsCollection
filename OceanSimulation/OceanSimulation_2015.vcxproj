@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>Tutorial11</ProjectName>
+    <ProjectName>OceanSimulation</ProjectName>
     <ProjectGuid>{737DD02A-4DE5-4DC6-B8E5-D2792354826D}</ProjectGuid>
     <RootNamespace>Tutorial11</RootNamespace>
     <Keyword>Win32Proj</Keyword>
@@ -128,12 +128,12 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <AdditionalIncludeDirectories>..\..\Effects11\inc;..\..\DXUT\Core;..\..\DXUT\Optional;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Effects11\inc;..\DXUT\Core;..\DXUT\Optional;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>WIN32;_DEBUG;DEBUG;PROFILE;_WINDOWS;USE_DIRECT3D11_2;_WIN32_WINNT=0x0600;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>DXUT.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -374,30 +374,24 @@
     <None Include="..\..\DXUT\Optional\directx.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tutorial11.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="OceanSimulation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Tutorial11.fx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="PlaneMesh.h" />
     <CLInclude Include="resource.h" />
     <ResourceCompile Include="Tutorial11.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\DXUT\Core\DXUT_2015.vcxproj">
+    <ProjectReference Include="..\DXUT\Core\DXUT_2015.vcxproj">
       <Project>{85344b7f-5aa0-4e12-a065-d1333d11f6ca}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\DXUT\Optional\DXUTOpt_2015.vcxproj">
+    <ProjectReference Include="..\DXUT\Optional\DXUTOpt_2015.vcxproj">
       <Project>{61b333c2-c4f7-4cc1-a9bf-83f6d95588eb}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\Effects11\Effects11_2015.vcxproj">
+    <ProjectReference Include="..\Effects11\Effects11_2015.vcxproj">
       <Project>{df460eab-570d-4b50-9089-2e2fc801bf38}</Project>
     </ProjectReference>
   </ItemGroup>
