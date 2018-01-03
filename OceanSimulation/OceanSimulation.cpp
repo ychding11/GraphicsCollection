@@ -157,8 +157,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+       // { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+       // { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
     UINT numElements = ARRAYSIZE( layout );
 
@@ -187,8 +187,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateSolid);
 
     // Setup the camera's view parameters
-    static const XMVECTORF32 s_Eye = { 0.0f, 1.0f, -5.0f, 0.f };
-    static const XMVECTORF32 s_At  = { 0.0f, 1.0f, 0.0f, 0.f };
+    static const XMVECTORF32 s_Eye = { 0.0f, 3.0f, -10.0f, 0.f };
+    static const XMVECTORF32 s_At  = { 0.0f, 0.0f, 0.0f, 0.f };
     g_Camera.SetViewParams( s_Eye, s_At );
 
     return S_OK;
@@ -208,7 +208,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     // Setup the camera's projection parameters
     float fAspectRatio = pBackBufferSurfaceDesc->Width / ( FLOAT )pBackBufferSurfaceDesc->Height;
-    g_Camera.SetProjParams( XM_PI / 3, fAspectRatio, 0.1f, 500.0f );
+    g_Camera.SetProjParams( XM_PI / 4, fAspectRatio, 0.01f, 5000.0f );
     g_Camera.SetWindow( pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height );
     g_Camera.SetButtonMasks( MOUSE_LEFT_BUTTON, MOUSE_WHEEL, MOUSE_MIDDLE_BUTTON );
 
@@ -235,9 +235,9 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
     }
     else
     {
-       // g_World = XMMatrixRotationY( XMConvertToRadians( 180.f ) );
+        //g_World = XMMatrixRotationY( XMConvertToRadians( 180.f ) );
     }
-
+	g_World = g_Camera.GetWorldMatrix(); // update world matrix from model camera
 }
 
 
@@ -314,16 +314,21 @@ HRESULT CreateAndUpdatePlaneMeshBuffer(ID3D11Device* pd3dDevice, PlaneMesh &plan
     struct SimpleVertex
     {
         XMFLOAT3 pos;
-        XMFLOAT3 normal;
-        XMFLOAT2 tex;
+        //XMFLOAT3 normal;
+        //XMFLOAT2 tex;
     };
 
     SimpleVertex vertices[] =
     {
-        { XMFLOAT3(0.0f, 0.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(0.0f, 0.0f) },
-        { XMFLOAT3(0.0f, 1.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, 0.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(1.0f, 0.0f) },
-        { XMFLOAT3(1.0f, 1.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(1.0f, 1.0f) },
+//        { XMFLOAT3(0.0f, 0.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(0.0f, 0.0f) },
+//        { XMFLOAT3(0.0f, 1.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(0.0f, 1.0f) },
+//        { XMFLOAT3(1.0f, 0.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(1.0f, 0.0f) },
+//        { XMFLOAT3(1.0f, 1.0f, 0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(1.0f, 1.0f) },
+
+        { XMFLOAT3(0.0f, 0.0f, 0.5f)  },
+        { XMFLOAT3(0.0f, 1.0f, 0.5f)  },
+        { XMFLOAT3(1.0f, 0.0f, 0.5f)  },
+        { XMFLOAT3(1.0f, 1.0f, 0.5f)  },
     };
 
     D3D11_SUBRESOURCE_DATA InitData;

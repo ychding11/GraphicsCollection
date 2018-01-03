@@ -1,11 +1,4 @@
 //--------------------------------------------------------------------------------------
-// File: Tutorial11.fx
-//
-// Copyright (c) Microsoft Corporation. All rights reserved.
-//--------------------------------------------------------------------------------------
-
-
-//--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
 Texture2D g_txDiffuse;
@@ -57,16 +50,16 @@ BlendState NoBlending
 //--------------------------------------------------------------------------------------
 struct VSInput
 {
-    float3 Pos          : POSITION;        
-    float3 Norm         : NORMAL;          
-    float2 Tex          : TEXCOORD0;       
+    float3 Pos        : POSITION;        
+    //float3 Norm       : NORMAL;          
+    //float2 Tex        : TEXCOORD0;       
 };
 
 struct PSInput
 {
     float4 Pos  : SV_POSITION;
-    float3 Norm : TEXCOORD0;
-    float2 Tex  : TEXCOORD1;
+    //float3 Norm : TEXCOORD0;
+    //float2 Tex  : TEXCOORD1;
 };
 
 //--------------------------------------------------------------------------------------
@@ -77,13 +70,13 @@ PSInput VS( VSInput input )
     PSInput output = (PSInput)0;
     
     output.Pos = float4(input.Pos, 1.0);
-    //output.Pos    = mul( float4(input.Pos,1.0), World );
+  //  output.Pos    = mul( float4(input.Pos,1.0), World );
     //output.Pos.x += Waviness * sin( output.Pos.y * 0.1f + Time );
-    //output.Pos = mul( output.Pos, View );
+   // output.Pos = mul( output.Pos, View );
     //output.Pos = mul( output.Pos, Projection );
 
-    output.Norm = mul( input.Norm, World );
-    output.Tex = input.Tex;
+   // output.Norm = mul( input.Norm, World );
+   // output.Tex = input.Tex;
     
     return output;
 }

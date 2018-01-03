@@ -14,14 +14,12 @@
     <None Include="..\..\DXUT\Optional\directx.ico">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="oceanSimulation.fx">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OceanSimulation.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Tutorial11.fx">
-      <Filter>Shaders</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
