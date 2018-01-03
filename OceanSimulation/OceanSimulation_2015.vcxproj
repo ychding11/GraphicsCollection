@@ -382,7 +382,7 @@
   <ItemGroup>
     <ClInclude Include="PlaneMesh.h" />
     <CLInclude Include="resource.h" />
-    <ResourceCompile Include="Tutorial11.rc" />
+    <ResourceCompile Include="OceanSimulation.rc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DXUT\Core\DXUT_2015.vcxproj">
