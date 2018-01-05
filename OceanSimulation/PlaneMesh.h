@@ -35,7 +35,7 @@ private:
         {
             for (int j = 0; j < mXDivision; ++j)
             {
-                PlaneVertex vertex(j * (1.0/mXDivision), 0, i * (1.0 / mYDivision), 0, 1, 0, (float)j / (float)mXDivision, (float)i / (float)mYDivision );
+                PlaneVertex vertex(j * (1.0/mXDivision), i * (1.0 / mYDivision), 0.2, 0, 1, 0, (float)j / (float)mXDivision, (float)i / (float)mYDivision );
                 mVertexBuffer.push_back(vertex);
             }
         }
