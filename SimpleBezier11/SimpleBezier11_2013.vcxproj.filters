@@ -18,6 +18,7 @@
   <ItemGroup>
     <ClCompile Include="SimpleBezier11.cpp" />
     <CLInclude Include="MobiusStrip.h" />
+    <ClCompile Include="BezierSurface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SimpleBezier11.hlsl">
@@ -31,6 +32,7 @@
     <ResourceCompile Include="SimpleBezier11.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+    <ClInclude Include="BezierSurface.h" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

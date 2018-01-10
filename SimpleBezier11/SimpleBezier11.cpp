@@ -431,9 +431,9 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 
     // This macro is used to compile the hull shader with different partition modes
     // Please see the partitioning mode attribute for the hull shader for more information
-    D3D_SHADER_MACRO integerPartitioning[] = { { "BEZIER_HS_PARTITION", "\"integer\"" }, { 0 } };
+    D3D_SHADER_MACRO integerPartitioning[]  = { { "BEZIER_HS_PARTITION", "\"integer\"" }, { 0 } };
     D3D_SHADER_MACRO fracEvenPartitioning[] = { { "BEZIER_HS_PARTITION", "\"fractional_even\"" }, { 0 } };
-    D3D_SHADER_MACRO fracOddPartitioning[] = { { "BEZIER_HS_PARTITION", "\"fractional_odd\"" }, { 0 } };
+    D3D_SHADER_MACRO fracOddPartitioning[]  = { { "BEZIER_HS_PARTITION", "\"fractional_odd\"" }, { 0 } };
 
     V_RETURN( DXUTCompileFromFile( L"SimpleBezier11.hlsl", nullptr, "BezierVS", "vs_5_0",
                                    D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobVS ) );
