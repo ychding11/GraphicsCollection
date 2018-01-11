@@ -1,7 +1,6 @@
 #include "DXUT.h"
 #include "DXUTcamera.h"
 #include "SDKmisc.h"
-#include "SDKmesh.h"
 #include "DDSTextureLoader.h"
 #include "PlaneMesh.h"
 
@@ -30,14 +29,23 @@ public:
     XMMATRIX                mmProjection;
     XMMATRIX                mmInvView;
     XMMATRIX                mmInvProjection;
+    XMVECTOR mUpper;
+    XMVECTOR mLow;
+    XMVECTOR mBase;
+
     ID3D11VertexShader*     mpVertexShader = nullptr;
     ID3D11PixelShader*      mpPixelShader = nullptr;
-    ID3D11InputLayout*      mpVertexLayout      = nullptr;
+    ID3D11InputLayout*      mpVertexLayout = nullptr;
     ID3D11Buffer*			mpIndexBuffer  = nullptr;
     ID3D11Buffer*			mpVertexBuffer = nullptr;
     ID3D11Buffer*           mpCBChangesEveryFrame = nullptr;
     PlaneMesh               mPlane;
     LPCWSTR                 mEffects;
+
+    float mFOV;
+    float mAspect;
+    XMVECTOR points[24];
+    int nPoints = 0;
 public:
     OceanSurface()
         : mPlane(32, 32)
@@ -64,6 +72,7 @@ public:
         SAFE_RELEASE( mpVertexShader);
         SAFE_RELEASE( mpPixelShader);
     }
+
 public:
     HRESULT Init(ID3D11Device* pd3dDevice, void* pUserContext)
     {
@@ -204,6 +213,9 @@ public:
         pd3dImmediateContext->DrawIndexed( mPlane.mIndexBuffer.size(), 0, 0);
     }
 
+
+    bool IntersectionTest(const CBaseCamera &renderCamera);
+    void GetIntersectionRange(const CBaseCamera &renderCamera);
 };
 
 
