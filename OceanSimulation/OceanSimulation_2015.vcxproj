@@ -375,8 +375,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OceanSimulation.cpp" />
+    <ClCompile Include="OceaSurface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="OceanSurface.h" />
     <ClInclude Include="PlaneMesh.h" />
     <CLInclude Include="resource.h" />
     <ResourceCompile Include="OceanSimulation.rc" />

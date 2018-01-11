@@ -20,12 +20,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OceanSimulation.cpp" />
+    <ClCompile Include="OceaSurface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
       <Filter>Resource Files</Filter>
     </CLInclude>
     <ClInclude Include="PlaneMesh.h" />
+    <ClInclude Include="OceanSurface.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OceanSimulation.rc">

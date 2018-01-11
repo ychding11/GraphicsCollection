@@ -29,9 +29,6 @@ public:
     XMMATRIX                mmProjection;
     XMMATRIX                mmInvView;
     XMMATRIX                mmInvProjection;
-    XMVECTOR mUpper;
-    XMVECTOR mLow;
-    XMVECTOR mBase;
 
     ID3D11VertexShader*     mpVertexShader = nullptr;
     ID3D11PixelShader*      mpPixelShader = nullptr;
@@ -42,10 +39,16 @@ public:
     PlaneMesh               mPlane;
     LPCWSTR                 mEffects;
 
+    XMVECTOR points[24];
+    XMVECTOR mUpper;
+    XMVECTOR mLow;
+    XMVECTOR mBase;
+    int nPoints = 0;
     float mFOV;
     float mAspect;
-    XMVECTOR points[24];
-    int nPoints = 0;
+	float mXspan;
+	float mYspan;
+
 public:
     OceanSurface()
         : mPlane(32, 32)
