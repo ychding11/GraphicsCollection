@@ -123,5 +123,5 @@ void OceanSurface::GetIntersectionRange(const CBaseCamera &renderCamra)
 		XMFLOAT2(maxX, minY),
 		XMFLOAT2(minX, maxY),
 		XMFLOAT2(maxX, maxY),
-	}
+	};
 }
