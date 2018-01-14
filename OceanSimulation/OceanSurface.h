@@ -51,6 +51,9 @@ public:
     std::vector<SurfaceVertex> mSurfaceVertex;
     std::vector<int> mSurfaceIndex;
 
+// for debug        
+    XMFLOAT3 frustumVertex[8];
+    
 public:
     OceanSurface()
         : mEffectsFile(L"oceanSimulation.fx")
@@ -92,6 +95,7 @@ public:
 private:
 
     HRESULT CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice);
+    HRESULT CreateFrustumBuffer(ID3D11Device* pd3dDevice);
     XMVECTOR getWorldGridConer(XMFLOAT2 coner, const CBaseCamera &renderCamra, const XMMATRIX &invViewprojMat);
     bool IntersectionTest(const CBaseCamera &renderCamera);
     void GetSurfaceRange(const CBaseCamera &renderCamera);
@@ -124,6 +128,26 @@ public:
         pd3dImmediateContext->DrawIndexed( mSurfaceIndex.size(), 0, 0);
     }
 
+    void ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const CBaseCamera &observeCamera, const CBaseCamera &renderCamera)
+    {
+        IntersectionTest(renderCamera);
+        CreateFrustumBuffer(pd3dDevice);
+        UpdateParameters(pd3dImmediateContext, observeCamera);
+
+        // Render the mesh
+        UINT Strides[1] = { 12 };
+        UINT Offsets[1] = { 0 };
+        ID3D11Buffer* pVB[1] = { mpVertexBuffer };
+        // Set the Vertex Layout
+        pd3dImmediateContext->IASetInputLayout(mpVertexLayout);
+        pd3dImmediateContext->IASetVertexBuffers(0, 1, pVB, Strides, Offsets);
+        pd3dImmediateContext->IASetIndexBuffer(mpIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+        pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+        pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
+        pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
+        pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
+        pd3dImmediateContext->DrawIndexed(24, 0, 0);
+    }
 };
 
 

@@ -15,6 +15,7 @@ OceanSurface oceansurface;
 // Global Variables
 //--------------------------------------------------------------------------------------
 CModelViewerCamera                  g_Camera;               // A model viewing camera
+CModelViewerCamera                  g_ObserveCamera;
 //CDXUTDialogResourceManager          g_DialogResourceManager; // manager for shared resources of dialogs
 //CDXUTTextHelper*                    g_pTxtHelper = nullptr;
 
@@ -95,11 +96,15 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateSolid);
 
     // Initialize the view matrix
-    static const XMVECTORF32 s_Eye = { 0.0f, 30.f, -6.0f, 0.f };
-    static const XMVECTORF32 s_At = { 0.0f, -1.0f, 0.0f, 0.f };
+    static const XMVECTORF32 s_Eye = { 0.0f, 0.f, -1.0f, 0.f };
+    static const XMVECTORF32 s_At = { 0.0f, 0.0f, 0.0f, 0.f };
     static const XMVECTORF32 s_Up = { 0.0f, 1.0f, 0.0f, 0.f };
     g_View = XMMatrixLookAtLH( s_Eye, s_At, s_Up );
     g_Camera.SetViewParams(s_Eye, s_At);
+
+    const XMVECTORF32 Eye = { 400.0f, 0.f, 0.0f, 0.f };
+    const XMVECTORF32 At = { 0.0f, 1.0f, 0.0f, 0.f };
+    g_ObserveCamera.SetViewParams(Eye, At);
 
     oceansurface.CreateConstBuffer(pd3dDevice);
     oceansurface.CreateEffects(pd3dDevice, pUserContext);
@@ -119,7 +124,9 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
     
     // Setup the camera's projection parameters
     float fAspectRatio = pBackBufferSurfaceDesc->Width / (FLOAT)pBackBufferSurfaceDesc->Height;
-    g_Camera.SetProjParams(XM_PI / 4, fAspectRatio, 0.01f, 5000.0f);
+    g_Camera.SetProjParams(XM_PI / 2, fAspectRatio, 10.f, 100.0f);
+    g_ObserveCamera.SetProjParams(XM_PI / 2, fAspectRatio, 0.01f, 5000.0f);
+    
     g_Camera.SetWindow(pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height);
     g_Camera.SetButtonMasks(MOUSE_LEFT_BUTTON, MOUSE_WHEEL, MOUSE_MIDDLE_BUTTON);
 
@@ -163,7 +170,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     // set Rasterizer state
     pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
 
-    oceansurface.Render(pd3dDevice, pd3dImmediateContext, g_Camera);
+    //oceansurface.Render(pd3dDevice, pd3dImmediateContext, g_Camera);
+    oceansurface.ObserveRenderCameraFrustum(pd3dDevice, pd3dImmediateContext, g_ObserveCamera, g_Camera);
 }
 
 

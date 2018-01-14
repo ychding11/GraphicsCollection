@@ -33,6 +33,7 @@ struct PSInput
 PSInput VS( VSInput input )
 {
     PSInput output = (PSInput)0;
+    output.Pos = float4(input.Pos, 1.0);
     //output.Pos = mul( float4(input.Pos, 1.0), mInvProjectionView);
    // output.Pos = mul( input.Pos, mInvProjectionView);
     output.Pos = mul( output.Pos, WorldViewProj );

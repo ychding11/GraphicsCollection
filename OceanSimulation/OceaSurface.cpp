@@ -19,14 +19,15 @@ bool OceanSurface::IntersectionTest(const CBaseCamera &renderCamera)
     0, 4, 2, 6, 3, 7, 1, 5,
     4, 6, 4, 5, 5, 7, 6, 7 };
 
-    XMVECTOR worldFrustum[8];
     XMMATRIX viewMat = renderCamera.GetViewMatrix();
     XMMATRIX projMat = renderCamera.GetProjMatrix();
     XMMATRIX viewprojMat = viewMat * projMat;
     XMMATRIX invViewprojMat = XMMatrixInverse(nullptr, viewprojMat);
+    XMVECTOR worldFrustum[8];
 
     //for (int i = 0; i < 8; ++i) XMStoreFloat3( &frustum[i], XMLoadFloat3(&frustum[i]) * renderCamera.GetFarClip() );
     for (int i = 0; i < 8; ++i) worldFrustum[i] = XMVector3TransformCoord(XMLoadFloat3(&frustum[i]), invViewprojMat);
+    for (int i = 0; i < 8; ++i) XMStoreFloat3( &frustumVertex[i], worldFrustum[i] );
 
     mIntersectionPoints.clear();
     for (int i = 0; i < 12; ++i)
@@ -236,6 +237,37 @@ HRESULT OceanSurface::CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice 
     bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
     ZeroMemory(&InitData, sizeof(InitData));
     InitData.pSysMem = &(mSurfaceIndex[0]);
+    SAFE_RELEASE(mpIndexBuffer);
+    V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &mpIndexBuffer));
+
+    return S_OK;
+}
+
+HRESULT OceanSurface::CreateFrustumBuffer(ID3D11Device* pd3dDevice)
+{
+    HRESULT  hr;
+    D3D11_BUFFER_DESC bd;
+    ZeroMemory(&bd, sizeof(bd));
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.CPUAccessFlags = 0;
+    bd.ByteWidth = 8 * 12;
+
+    D3D11_SUBRESOURCE_DATA InitData;
+    ZeroMemory(&InitData, sizeof(InitData));
+    InitData.pSysMem = frustumVertex;
+    SAFE_RELEASE(mpVertexBuffer);
+    V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &mpVertexBuffer));
+
+    int frustumIndex[24] = {
+        0, 1, 0, 2, 2, 3, 1, 3,
+        0, 4, 2, 6, 3, 7, 1, 5,
+        4, 6, 4, 5, 5, 7, 6, 7 };
+
+    bd.ByteWidth = 24 * sizeof(int);
+    bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    ZeroMemory(&InitData, sizeof(InitData));
+    InitData.pSysMem = frustumIndex;
     SAFE_RELEASE(mpIndexBuffer);
     V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &mpIndexBuffer));
 
