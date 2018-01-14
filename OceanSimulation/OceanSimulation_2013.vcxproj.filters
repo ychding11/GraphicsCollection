@@ -32,5 +32,6 @@
   <ItemGroup>
     <ClCompile Include="OceanSimulation.cpp" />
     <ClCompile Include="OceanSurface.h" />
+    <ClCompile Include="OceaSurface.cpp" />
   </ItemGroup>
 </Project>

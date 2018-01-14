@@ -395,6 +395,7 @@
   <ItemGroup>
     <ClCompile Include="OceanSimulation.cpp" />
     <ClCompile Include="OceanSurface.h" />
+    <ClCompile Include="OceaSurface.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

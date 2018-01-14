@@ -9,7 +9,7 @@
 
 using namespace DirectX;
 
-OceanSurface ocean;
+OceanSurface oceansurface;
 
 //--------------------------------------------------------------------------------------
 // Global Variables
@@ -95,14 +95,14 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateSolid);
 
     // Initialize the view matrix
-    static const XMVECTORF32 s_Eye = { 0.0f, 3.0f, -6.0f, 0.f };
-    static const XMVECTORF32 s_At = { 0.0f, 1.0f, 0.0f, 0.f };
+    static const XMVECTORF32 s_Eye = { 0.0f, 30.f, -6.0f, 0.f };
+    static const XMVECTORF32 s_At = { 0.0f, -1.0f, 0.0f, 0.f };
     static const XMVECTORF32 s_Up = { 0.0f, 1.0f, 0.0f, 0.f };
     g_View = XMMatrixLookAtLH( s_Eye, s_At, s_Up );
-
     g_Camera.SetViewParams(s_Eye, s_At);
 
-    ocean.Init(pd3dDevice, pUserContext);
+    oceansurface.CreateConstBuffer(pd3dDevice);
+    oceansurface.CreateEffects(pd3dDevice, pUserContext);
     return S_OK;
 }
 
@@ -119,9 +119,11 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
     
     // Setup the camera's projection parameters
     float fAspectRatio = pBackBufferSurfaceDesc->Width / (FLOAT)pBackBufferSurfaceDesc->Height;
-    g_Camera.SetProjParams(XM_PI / 4, fAspectRatio, 0.01f, 50000.0f);
+    g_Camera.SetProjParams(XM_PI / 4, fAspectRatio, 0.01f, 5000.0f);
     g_Camera.SetWindow(pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height);
     g_Camera.SetButtonMasks(MOUSE_LEFT_BUTTON, MOUSE_WHEEL, MOUSE_MIDDLE_BUTTON);
+
+   // oceansurface.setSize(pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height);
 
     return S_OK;
 }
@@ -161,8 +163,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     // set Rasterizer state
     pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
 
-    ocean.UpdateParameters(g_Camera);
-    ocean.Render(pd3dImmediateContext);
+    oceansurface.Render(pd3dDevice, pd3dImmediateContext, g_Camera);
 }
 
 
@@ -182,7 +183,7 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_RELEASE( g_pSamplerLinear );
     SAFE_RELEASE( g_pRasterizerStateWireframe );
     SAFE_RELEASE( g_pRasterizerStateSolid );
-    ocean.Destroy();
+    oceansurface.Destroy();
 }
 
 
