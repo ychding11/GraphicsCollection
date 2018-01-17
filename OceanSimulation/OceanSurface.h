@@ -35,7 +35,6 @@ public:
 
     int mXSize;
     int mYSize;
-    float fAspect;
 
     ID3D11VertexShader*     mpVertexShader = nullptr;
     ID3D11PixelShader*      mpPixelShader = nullptr;
@@ -56,14 +55,17 @@ public:
     std::vector<SurfaceVertex> mSurfaceVertex;
     std::vector<int> mSurfaceIndex;
 
+private:
 // for debug        
     XMFLOAT3 frustumVertex[8];
-    
+    Camera mObserveCamera;
+
 public:
     OceanSurface()
         : mEffectsFile(L"oceanSimulation.fx")
         , mXSize(8), mYSize(8)
         , mvMeshColor(0.0, 1.0, 0.0, 1.0)
+        , mObserveCamera(XMFLOAT3(400, 0.0, 0.0), XMFLOAT3(0,0,0), XM_PI * 0.25f, 1.78, 0.1f, 10000.0f)
     {
         mmWorld = XMMatrixIdentity();
         mNormal = XMLoadFloat4(&XMFLOAT4(0, 1, 0, 0));
@@ -102,21 +104,24 @@ public:
     {
         this->mvMeshColor = color;
     }
-
+    void setWindowAspect(float aspect)
+    {
+        mObserveCamera.UpdateAspect(aspect);
+    }
 private:
 
     HRESULT CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice);
-    HRESULT CreateFrustumBuffer(ID3D11Device* pd3dDevice, const CBaseCamera &observeCamera, const CBaseCamera &renderCamera);
-    XMVECTOR getWorldGridConer(XMFLOAT2 coner,  const XMMATRIX &invViewprojMat);
+    HRESULT CreateFrustumBuffer(ID3D11Device* pd3dDevice,  const Camera &renderCamera);
 
-    bool IntersectionTest(const CBaseCamera &renderCamera);
-    void GetSurfaceRange(const CBaseCamera &renderCamera);
-    void TessellateSurfaceMesh(const CBaseCamera &renderCamera);
-    void UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, const CBaseCamera &renderCamera);
+    bool IntersectionTest(const Camera &renderCamera);
+    void GetSurfaceRange(const Camera &renderCamera);
+    void TessellateSurfaceMesh(const Camera &renderCamera);
+    void UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera);
+    XMVECTOR getWorldGridConer(XMFLOAT2 coner,  const XMMATRIX &invViewprojMat);
     
 public:
 
-    void Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const CBaseCamera &renderCamera)
+    void Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
     {
         if (!IntersectionTest(renderCamera)) return;
         GetSurfaceRange(renderCamera);
@@ -140,11 +145,10 @@ public:
         pd3dImmediateContext->DrawIndexed( mSurfaceIndex.size(), 0, 0);
     }
 
-    void ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const CBaseCamera &observeCamera, const CBaseCamera &renderCamera)
+    void ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
     {
-        IntersectionTest(renderCamera);
-        CreateFrustumBuffer(pd3dDevice, observeCamera, renderCamera);
-        UpdateParameters(pd3dImmediateContext, observeCamera);
+        CreateFrustumBuffer(pd3dDevice, renderCamera);
+        UpdateParameters(pd3dImmediateContext, mObserveCamera);
 
         // Render the mesh
         UINT Strides[1] = { 16 };

@@ -2,7 +2,7 @@
 #include "SDKmisc.h"
 //#include "DDSTextureLoader.h"
 
-bool OceanSurface::IntersectionTest(const CBaseCamera &renderCamera)
+bool OceanSurface::IntersectionTest(const Camera &renderCamera)
 {
     XMFLOAT3 frustum[8] = {
             XMFLOAT3(-1, -1, 0),                                   
@@ -19,10 +19,7 @@ bool OceanSurface::IntersectionTest(const CBaseCamera &renderCamera)
     0, 4, 2, 6, 3, 7, 1, 5,
     4, 6, 4, 5, 5, 7, 6, 7 };
 
-    XMMATRIX viewMat = renderCamera.GetViewMatrix();
-    XMMATRIX projMat = renderCamera.GetProjMatrix();
-    XMMATRIX viewprojMat = viewMat * projMat;
-    XMMATRIX invViewprojMat = XMMatrixInverse(nullptr, viewprojMat);
+    XMMATRIX invViewprojMat = renderCamera.GetInvViewProjMatrix();
     XMVECTOR worldFrustum[8];
 
     //for (int i = 0; i < 8; ++i) XMStoreFloat3( &frustum[i], XMLoadFloat3(&frustum[i]) * renderCamera.GetFarClip() );
@@ -64,18 +61,16 @@ bool OceanSurface::IntersectionTest(const CBaseCamera &renderCamera)
     return mIntersectionPoints.size() > 0;
 }
 
-void OceanSurface::GetSurfaceRange(const CBaseCamera &renderCamera)
+void OceanSurface::GetSurfaceRange(const Camera &renderCamera)
 {
-    XMVECTOR eyePos    = renderCamera.GetEyePt();
-    XMVECTOR eyeTarget = renderCamera.GetLookAtPt();
+    XMVECTOR eyePos =  XMLoadFloat3( &renderCamera.GetEyePt());
+    XMVECTOR viewDir = XMVector3Normalize( XMLoadFloat3( &renderCamera.GetViewDir()) );
     XMVECTOR projectorPos = eyePos;
     XMVECTOR aimPoint1, aimPoint2;
-    XMVECTOR viewDir = XMVector3Normalize(eyeTarget - eyePos);
     float eyeHeiht2Low  = XMPlaneDotCoord(mLow, eyePos).m128_f32[0];
     float eyeHeiht2Base = XMPlaneDotCoord(mBase, eyePos).m128_f32[0];
     float cosTheta      = XMPlaneDotNormal(mBase, viewDir).m128_f32[0];
 
-    assert( eyeTarget.m128_f32[3] == 0.0);
     assert( projectorPos.m128_f32[3] == 0.0);
     assert( viewDir.m128_f32[3] == 0.0);
 
@@ -109,9 +104,6 @@ void OceanSurface::GetSurfaceRange(const CBaseCamera &renderCamera)
     XMMATRIX viewMat = XMMatrixLookAtLH(projectorPos, aimPoint, up);
     XMMATRIX projMat = renderCamera.GetProjMatrix();
     XMMATRIX viewprojMat = viewMat * projMat;
-    //XMMATRIX viewMat = renderCamera.GetViewMatrix();
-    //XMMATRIX projMat = renderCamera.GetProjMatrix();
-    //XMMATRIX viewprojMat = viewMat * projMat;
 
 	float minX = 1.0f, maxX = 0.0f, minY = 1.0f, maxY = 0.0f;
 	// projector space
@@ -121,8 +113,6 @@ void OceanSurface::GetSurfaceRange(const CBaseCamera &renderCamera)
         XMVECTOR point = mIntersectionPoints[i];
 		float height2Base = XMPlaneDotCoord(mBase, point).m128_f32[0];
         point = point - mNormal * height2Base; 
-        //point = XMVector3TransformCoord(point, viewMat);
-        //point = XMVector3TransformCoord(point, projMat);
         point = XMVector3TransformCoord(point, viewprojMat);
 		float x = point.m128_f32[0];
 		float y = point.m128_f32[1];
@@ -159,17 +149,14 @@ void OceanSurface::GetSurfaceRange(const CBaseCamera &renderCamera)
 
 }
 
-void OceanSurface::TessellateSurfaceMesh(const CBaseCamera &renderCamera)
+void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
 {
-    XMMATRIX viewMat = renderCamera.GetViewMatrix();
-    XMMATRIX projMat = renderCamera.GetProjMatrix();
-    XMMATRIX viewprojMat = viewMat * projMat;
-
     int sizeX = mXSize;
     int sizeY = mYSize;
     float u = 0.0f, v = 0.0f;
     float du = 1.0 / float(sizeX - 1), dv = 1.0 / float(sizeY - 1);
     XMFLOAT3  grid[4];
+    XMMATRIX viewprojMat = renderCamera.GetViewProjMatrix();
 
     XMStoreFloat3( &grid[0], mGridConer[0] );
     XMStoreFloat3( &grid[1], mGridConer[1] );
@@ -200,11 +187,6 @@ void OceanSurface::TessellateSurfaceMesh(const CBaseCamera &renderCamera)
         }
         v += dv;
     }
-
-    //mGridConer[0] = XMVector4Transform(mGridConer[0], viewprojMat);
-    //mGridConer[1] = XMVector4Transform(mGridConer[1], viewprojMat);
-    //mGridConer[2] = XMVector4Transform(mGridConer[2], viewprojMat);
-    //mGridConer[3] = XMVector4Transform(mGridConer[3], viewprojMat);
 
     mSurfaceIndex.clear();
     for (int i = 0; i < sizeY - 1; ++i)
@@ -237,7 +219,7 @@ XMVECTOR OceanSurface::getWorldGridConer(XMFLOAT2 coner,  const XMMATRIX &invVie
     return ret;
 }
 
-void OceanSurface::UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, const CBaseCamera &renderCamera)
+void OceanSurface::UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
 {
     HRESULT hr;
     XMMATRIX mView = renderCamera.GetViewMatrix();
@@ -280,23 +262,14 @@ HRESULT OceanSurface::CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice 
     return S_OK;
 }
 
-HRESULT OceanSurface::CreateFrustumBuffer(ID3D11Device* pd3dDevice, const CBaseCamera &observeCamera, const CBaseCamera &renderCamera)
+HRESULT OceanSurface::CreateFrustumBuffer(ID3D11Device* pd3dDevice,  const Camera &renderCamera)
 {
     HRESULT  hr;
     D3D11_BUFFER_DESC bd;
 
-    XMMATRIX viewMat = renderCamera.GetViewMatrix();
-    XMMATRIX projMat = renderCamera.GetProjMatrix();
-    XMMATRIX viewprojMat = viewMat * projMat;
-    XMMATRIX invViewprojMat = XMMatrixInverse(nullptr, viewprojMat);
-    // Initialize the view matrix
-    static const XMVECTORF32 s_Eye = { 400.0f, 0.f, 0.0f, 0.f };
-    static const XMVECTORF32 s_At  = { 0.0f, 0.0f, 0.0f, 0.f };
-    static const XMVECTORF32 s_Up  = { 0.0f, 1.0f, 0.0f, 0.f };
+    XMMATRIX invViewprojMat = renderCamera.GetInvViewProjMatrix();
+    XMMATRIX mViewProj      = mObserveCamera.GetViewProjMatrix();
 
-    XMMATRIX mView = XMMatrixLookAtLH(s_Eye, s_At, s_Up);
-    XMMATRIX mProjection = XMMatrixPerspectiveFovLH(XM_PI * 0.25f, fAspect, 0.1f, 10000.0f);
-    XMMATRIX mViewProj = mView * mProjection;
     XMFLOAT3 frustum[8] = {
         XMFLOAT3(-1, -1, 0),
         XMFLOAT3(+1, -1, 0),
@@ -305,8 +278,12 @@ HRESULT OceanSurface::CreateFrustumBuffer(ID3D11Device* pd3dDevice, const CBaseC
         XMFLOAT3(-1, -1, +1),
         XMFLOAT3(+1, -1, +1),
         XMFLOAT3(-1, +1, +1),
-        XMFLOAT3(+1, +1, +1)
-    };
+        XMFLOAT3(+1, +1, +1) };
+    int frustumIndex[24] = {
+        0, 1, 0, 2, 2, 3, 1, 3,
+        0, 4, 2, 6, 3, 7, 1, 5,
+        4, 6, 4, 5, 5, 7, 6, 7 };
+
     XMFLOAT4 frustum4[8];
 
     for (int i = 0; i < 8; ++i)
@@ -314,7 +291,6 @@ HRESULT OceanSurface::CreateFrustumBuffer(ID3D11Device* pd3dDevice, const CBaseC
         XMStoreFloat4(&frustum4[i], XMVector3Transform(XMLoadFloat3(&frustum[i]), invViewprojMat) );
         XMStoreFloat4(&frustum4[i], XMLoadFloat4(&frustum4[i]) / frustum4[i].w);
     }
-
     for (int i = 0; i < 8; ++i)
     {
         XMStoreFloat4(&frustum4[i], XMVector4Transform(XMLoadFloat4(&frustum4[i]), mViewProj) );
@@ -331,11 +307,6 @@ HRESULT OceanSurface::CreateFrustumBuffer(ID3D11Device* pd3dDevice, const CBaseC
     InitData.pSysMem = frustum4;
     SAFE_RELEASE(mpVertexBuffer);
     V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &mpVertexBuffer));
-
-    int frustumIndex[24] = {
-        0, 1, 0, 2, 2, 3, 1, 3,
-        0, 4, 2, 6, 3, 7, 1, 5,
-        4, 6, 4, 5, 5, 7, 6, 7 };
 
     bd.ByteWidth = 24 * sizeof(int);
     bd.BindFlags = D3D11_BIND_INDEX_BUFFER;

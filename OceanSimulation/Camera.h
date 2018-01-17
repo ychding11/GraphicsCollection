@@ -33,7 +33,7 @@ public:
         this->fov = fov; this->aspect = aspect; this->znear = nearz; this->zfar = farz;
     }
 
-    Camera(XMFLOAT3 pos, XMFLOAT3 target, float fov, float aspect, float nearz, float farz)
+    Camera(XMFLOAT3 pos, XMFLOAT3 target, float fov = XM_PI * 0.25, float aspect = 1.78, float nearz = 0.1, float farz = 50.0)
     {
         this->position = pos;
         this->rotx = rotx; this->roty = roty; this->rotz = rotz;
@@ -58,18 +58,22 @@ public:
     ~Camera()
     { }
 
-    XMMATRIX GetInvViewMatrix()
+    XMMATRIX GetInvViewMatrix() const
     { return this->invview; }
-    XMMATRIX GetInvProjMatrix()
+    XMMATRIX GetInvProjMatrix() const
     { return this->invproj; }
-    XMMATRIX GetViewMatrix()
+    XMMATRIX GetViewMatrix() const
     { return this->view; }
-    XMMATRIX GetProjMatrix()
+    XMMATRIX GetProjMatrix() const
     { return this->proj; }
-    XMMATRIX GetViewProjMatrix()
+    XMMATRIX GetViewProjMatrix() const
     { return this->viewproj; }
-    XMMATRIX GetInvViewProjMatrix()
+    XMMATRIX GetInvViewProjMatrix() const
     { return this->invviewproj; }
+    XMFLOAT3 GetEyePt() const
+    { return  this->position; }
+    XMFLOAT3 GetViewDir() const
+    { return  this->forward; }
 
     void UpdateAspect(float aspect)
     {
