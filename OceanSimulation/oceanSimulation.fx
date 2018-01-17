@@ -6,8 +6,9 @@ SamplerState samLinear : register( s0 );
 
 cbuffer cbChangesEveryFrame : register( b0 )
 {
-    matrix WorldViewProj;
     matrix World;
+    matrix View;
+    matrix Proj;
     float4 vMeshColor;
 };
 
@@ -15,7 +16,7 @@ cbuffer cbChangesEveryFrame : register( b0 )
 //--------------------------------------------------------------------------------------
 struct VSInput
 {
-    float3 Pos    : POSITION;
+    float4 Pos    : POSITION;
     //float3 Normal : NORMAL;
     //float2 Tex    : TEXCOORD;
 };
@@ -33,10 +34,12 @@ struct PSInput
 PSInput VS( VSInput input )
 {
     PSInput output = (PSInput)0;
-    output.Pos = float4(input.Pos, 1.0);
+    //output.Pos = float4(input.Pos, 1.0);
+    output.Pos = input.Pos;
+   // output.Pos = mul( input.Pos, View);
+   // output.Pos = mul( input.Pos, mInvProjectionView);
     //output.Pos = mul( float4(input.Pos, 1.0), mInvProjectionView);
    // output.Pos = mul( input.Pos, mInvProjectionView);
-    output.Pos = mul( output.Pos, WorldViewProj );
    // output.Tex = input.Tex;
     
     return output;
@@ -48,6 +51,5 @@ PSInput VS( VSInput input )
 //--------------------------------------------------------------------------------------
 float4 PS( PSInput input) : SV_Target
 {
-    //return txDiffuse.Sample( samLinear, input.Tex ) * vMeshColor;
-    return  float4(1.0, 0, 0, 1.0);
+    return  vMeshColor;
 }

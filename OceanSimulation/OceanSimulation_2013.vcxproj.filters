@@ -23,6 +23,7 @@
       <Filter>Resource Files</Filter>
     </CLInclude>
     <ClInclude Include="PlaneMesh.h" />
+    <ClInclude Include="Camera.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OceanSimulation.rc">
@@ -33,5 +34,6 @@
     <ClCompile Include="OceanSimulation.cpp" />
     <ClCompile Include="OceanSurface.h" />
     <ClCompile Include="OceaSurface.cpp" />
+    <ClCompile Include="Camera.cpp" />
   </ItemGroup>
 </Project>

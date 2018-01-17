@@ -377,6 +377,7 @@
     <None Include="oceanSimulation.fx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="PlaneMesh.h" />
     <CLInclude Include="resource.h" />
     <ResourceCompile Include="OceanSimulation.rc" />
@@ -393,6 +394,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="OceanSimulation.cpp" />
     <ClCompile Include="OceanSurface.h" />
     <ClCompile Include="OceaSurface.cpp" />

@@ -26,7 +26,12 @@ bool OceanSurface::IntersectionTest(const CBaseCamera &renderCamera)
     XMVECTOR worldFrustum[8];
 
     //for (int i = 0; i < 8; ++i) XMStoreFloat3( &frustum[i], XMLoadFloat3(&frustum[i]) * renderCamera.GetFarClip() );
-    for (int i = 0; i < 8; ++i) worldFrustum[i] = XMVector3TransformCoord(XMLoadFloat3(&frustum[i]), invViewprojMat);
+    for (int i = 0; i < 8; ++i)
+    {
+        worldFrustum[i] = XMVector3TransformCoord(XMLoadFloat3(&frustum[i]), invViewprojMat);
+       // XMStoreFloat4(&frustum4[i], XMLoadFloat4(&frustum4[i]) / frustum4[i].w);
+    }
+
     for (int i = 0; i < 8; ++i) XMStoreFloat3( &frustumVertex[i], worldFrustum[i] );
 
     mIntersectionPoints.clear();
@@ -103,8 +108,12 @@ void OceanSurface::GetSurfaceRange(const CBaseCamera &renderCamera)
     XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.f };
     XMMATRIX viewMat = XMMatrixLookAtLH(projectorPos, aimPoint, up);
     XMMATRIX projMat = renderCamera.GetProjMatrix();
+    XMMATRIX viewprojMat = viewMat * projMat;
+    //XMMATRIX viewMat = renderCamera.GetViewMatrix();
+    //XMMATRIX projMat = renderCamera.GetProjMatrix();
+    //XMMATRIX viewprojMat = viewMat * projMat;
 
-	float minX = 0.0f, maxX = 0.0f, minY = 0.0f, maxY = 0.0f;
+	float minX = 1.0f, maxX = 0.0f, minY = 1.0f, maxY = 0.0f;
 	// projector space
     int nPoints = mIntersectionPoints.size();
     for (int i = 0; i < nPoints; ++i)
@@ -112,8 +121,9 @@ void OceanSurface::GetSurfaceRange(const CBaseCamera &renderCamera)
         XMVECTOR point = mIntersectionPoints[i];
 		float height2Base = XMPlaneDotCoord(mBase, point).m128_f32[0];
         point = point - mNormal * height2Base; 
-        point = XMVector3TransformCoord(point, viewMat);
-        point = XMVector3TransformCoord(point, projMat);
+        //point = XMVector3TransformCoord(point, viewMat);
+        //point = XMVector3TransformCoord(point, projMat);
+        point = XMVector3TransformCoord(point, viewprojMat);
 		float x = point.m128_f32[0];
 		float y = point.m128_f32[1];
 		if (x < minX) minX = x;
@@ -122,24 +132,38 @@ void OceanSurface::GetSurfaceRange(const CBaseCamera &renderCamera)
 		if (y > maxY) maxY = y;
     }
 
+    float xrange = maxX - minX;
+    float yrange = maxY - minY;
+   // if (xrange >= 2.0) xrange = 1.9999;
+   // if (yrange >= 2.0) yrange = 1.9999;
+    XMMATRIX pack( xrange, 0,      0, minX,
+                   0,      yrange, 0, minY,
+                   0,      0,      1, 0,
+                   0,      0,      0, 1);
+    pack = XMMatrixTranspose(pack);
+
+
 	XMFLOAT2 gridConer[4] = {
-		XMFLOAT2(minX, minY),
-		XMFLOAT2(maxX, minY),
-		XMFLOAT2(minX, maxY),
-		XMFLOAT2(maxX, maxY),
+		XMFLOAT2(0, 0),
+		XMFLOAT2(1, 0),
+		XMFLOAT2(0, 1),
+		XMFLOAT2(1, 1),
 	};
 
-	XMMATRIX viewprojMat = viewMat * projMat;
-	XMMATRIX invViewprojMat = XMMatrixInverse(nullptr, viewprojMat);
-    mGridConer[0] = getWorldGridConer(gridConer[0], renderCamera, invViewprojMat );
-    mGridConer[1] = getWorldGridConer(gridConer[1], renderCamera, invViewprojMat );
-    mGridConer[2] = getWorldGridConer(gridConer[2], renderCamera, invViewprojMat );
-    mGridConer[3] = getWorldGridConer(gridConer[3], renderCamera, invViewprojMat );
+	
+	XMMATRIX invViewprojMat = pack * XMMatrixInverse(nullptr, viewprojMat);
+    mGridConer[0] = getWorldGridConer(gridConer[0], invViewprojMat );
+    mGridConer[1] = getWorldGridConer(gridConer[1], invViewprojMat );
+    mGridConer[2] = getWorldGridConer(gridConer[2], invViewprojMat );
+    mGridConer[3] = getWorldGridConer(gridConer[3], invViewprojMat );
 
 }
 
-void OceanSurface::TessellateSurfaceMesh(void)
+void OceanSurface::TessellateSurfaceMesh(const CBaseCamera &renderCamera)
 {
+    XMMATRIX viewMat = renderCamera.GetViewMatrix();
+    XMMATRIX projMat = renderCamera.GetProjMatrix();
+    XMMATRIX viewprojMat = viewMat * projMat;
 
     int sizeX = mXSize;
     int sizeY = mYSize;
@@ -152,47 +176,60 @@ void OceanSurface::TessellateSurfaceMesh(void)
     XMStoreFloat3( &grid[2], mGridConer[2] );
     XMStoreFloat3( &grid[3], mGridConer[3] );
 
-    mSurfaceIndex.clear();
     mSurfaceVertex.clear();
     for (int i = 0; i < sizeY; ++i)
     {
         u = 0.0f;
         for (int j = 0; j < sizeX; ++j)
         {
-            float x = (1.0f - v) * ( (1.0f - u) * grid[0].x + u * grid[1].x) + v * (u * grid[2].x + (1.0 -u) * grid[3].x );
-            float z = (1.0f - v) * ( (1.0f - u) * grid[0].z + u * grid[1].z) + v * (u * grid[2].z + (1.0 -u) * grid[3].z );
+            
+            XMVECTOR xx = (1.0f - v) * ( (1.0f - u) * mGridConer[0] + u * mGridConer[1]) + v * ( (1.0 - u) * mGridConer[2] + u * mGridConer[3] );
+
+            float x = (1.0f - v) * ( (1.0f - u) * grid[0].x + u * grid[1].x) + v * ( (1.0 - u) * grid[2].x + u * grid[3].x );
+            float z = (1.0f - v) * ( (1.0f - u) * grid[0].z + u * grid[1].z) + v * ( (1.0 - u) * grid[2].z + u * grid[3].z );
+            //float x = (1.0f - v) * ( (1.0f - u) * 0.0 + u * 1.0) + v * (u * 0.0 + (1.0 -u) * 1.0 );
+            //float y = (1.0f - v) * ( (1.0f - u) * 0.0 + u * 1.0) + v * (u * 0.0 + (1.0 -u) * 1.0 );
             float y = 0.0f;
-            SurfaceVertex vertex = {x, y, z};
+            float w = 1.0f;
+            XMFLOAT4 temp(x, y, z, w);
+           // XMStoreFloat4(&temp, XMVector4Transform(XMLoadFloat4(&temp), viewprojMat ));
+            XMStoreFloat4(&temp, XMVector4Transform(xx, viewprojMat ));
+            SurfaceVertex vertex = {temp.x, temp.y, temp.z, temp.w };
             mSurfaceVertex.push_back(vertex);
             u += du;
         }
         v += dv;
     }
 
+    //mGridConer[0] = XMVector4Transform(mGridConer[0], viewprojMat);
+    //mGridConer[1] = XMVector4Transform(mGridConer[1], viewprojMat);
+    //mGridConer[2] = XMVector4Transform(mGridConer[2], viewprojMat);
+    //mGridConer[3] = XMVector4Transform(mGridConer[3], viewprojMat);
+
+    mSurfaceIndex.clear();
     for (int i = 0; i < sizeY - 1; ++i)
     {
         for (int j = 0; j < sizeX - 1; ++j)
         {
             int a = sizeX * i + j;
             int b = sizeX * (i + 1) + j;
-            int c = a + 1;
-            int d = b + 1;
+            int c = b + 1;
+            int d = a + 1;
             
             mSurfaceIndex.push_back(a);
             mSurfaceIndex.push_back(b);
             mSurfaceIndex.push_back(c);
 
-            mSurfaceIndex.push_back(a);
             mSurfaceIndex.push_back(c);
             mSurfaceIndex.push_back(d);
+            mSurfaceIndex.push_back(a);
         }
     }
 }
 
-XMVECTOR OceanSurface::getWorldGridConer(XMFLOAT2 coner, const CBaseCamera &renderCamera, const XMMATRIX &invViewprojMat)
+XMVECTOR OceanSurface::getWorldGridConer(XMFLOAT2 coner,  const XMMATRIX &invViewprojMat)
 {
-    float farPlane = renderCamera.GetFarClip();
-    XMVECTORF32 point1 = {coner.x, coner.y, 0, 1.0};
+    XMVECTORF32 point1 = {coner.x, coner.y, 0.0, 1.0};
     XMVECTORF32 point2 = {coner.x, coner.y, 1.0, 1.0};
     XMVECTOR start = XMVector3TransformCoord(point1, invViewprojMat);
     XMVECTOR end   = XMVector3TransformCoord(point2, invViewprojMat);
@@ -205,15 +242,15 @@ void OceanSurface::UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, c
     HRESULT hr;
     XMMATRIX mView = renderCamera.GetViewMatrix();
     XMMATRIX mProjection = renderCamera.GetProjMatrix();
-    XMMATRIX mWorldViewProjection = mmWorld * mView * mProjection;
 
     // Update constant buffer that changes once per frame
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     V(pd3dImmediateContext->Map(mpCBChangesEveryFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
     auto pCB = reinterpret_cast<CBChangesEveryFrame*>(MappedResource.pData);
-    XMStoreFloat4x4(&pCB->mWorldViewProj, XMMatrixTranspose(mWorldViewProjection));
     XMStoreFloat4x4(&pCB->mWorld, XMMatrixTranspose(mmWorld));
-    //pCB->vMeshColor = mvMeshColor;
+    XMStoreFloat4x4(&pCB->mView, XMMatrixTranspose(mView));
+    XMStoreFloat4x4(&pCB->mProj, XMMatrixTranspose(mProjection));
+    pCB->vMeshColor = mvMeshColor;
     pd3dImmediateContext->Unmap(mpCBChangesEveryFrame, 0);
 }
 
@@ -243,19 +280,55 @@ HRESULT OceanSurface::CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice 
     return S_OK;
 }
 
-HRESULT OceanSurface::CreateFrustumBuffer(ID3D11Device* pd3dDevice)
+HRESULT OceanSurface::CreateFrustumBuffer(ID3D11Device* pd3dDevice, const CBaseCamera &observeCamera, const CBaseCamera &renderCamera)
 {
     HRESULT  hr;
     D3D11_BUFFER_DESC bd;
+
+    XMMATRIX viewMat = renderCamera.GetViewMatrix();
+    XMMATRIX projMat = renderCamera.GetProjMatrix();
+    XMMATRIX viewprojMat = viewMat * projMat;
+    XMMATRIX invViewprojMat = XMMatrixInverse(nullptr, viewprojMat);
+    // Initialize the view matrix
+    static const XMVECTORF32 s_Eye = { 400.0f, 0.f, 0.0f, 0.f };
+    static const XMVECTORF32 s_At  = { 0.0f, 0.0f, 0.0f, 0.f };
+    static const XMVECTORF32 s_Up  = { 0.0f, 1.0f, 0.0f, 0.f };
+
+    XMMATRIX mView = XMMatrixLookAtLH(s_Eye, s_At, s_Up);
+    XMMATRIX mProjection = XMMatrixPerspectiveFovLH(XM_PI * 0.25f, fAspect, 0.1f, 10000.0f);
+    XMMATRIX mViewProj = mView * mProjection;
+    XMFLOAT3 frustum[8] = {
+        XMFLOAT3(-1, -1, 0),
+        XMFLOAT3(+1, -1, 0),
+        XMFLOAT3(-1, +1, 0),
+        XMFLOAT3(+1, +1, 0),
+        XMFLOAT3(-1, -1, +1),
+        XMFLOAT3(+1, -1, +1),
+        XMFLOAT3(-1, +1, +1),
+        XMFLOAT3(+1, +1, +1)
+    };
+    XMFLOAT4 frustum4[8];
+
+    for (int i = 0; i < 8; ++i)
+    {
+        XMStoreFloat4(&frustum4[i], XMVector3Transform(XMLoadFloat3(&frustum[i]), invViewprojMat) );
+        XMStoreFloat4(&frustum4[i], XMLoadFloat4(&frustum4[i]) / frustum4[i].w);
+    }
+
+    for (int i = 0; i < 8; ++i)
+    {
+        XMStoreFloat4(&frustum4[i], XMVector4Transform(XMLoadFloat4(&frustum4[i]), mViewProj) );
+    }
+
     ZeroMemory(&bd, sizeof(bd));
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bd.CPUAccessFlags = 0;
-    bd.ByteWidth = 8 * 12;
+    bd.ByteWidth = 8 * 16;
 
     D3D11_SUBRESOURCE_DATA InitData;
     ZeroMemory(&InitData, sizeof(InitData));
-    InitData.pSysMem = frustumVertex;
+    InitData.pSysMem = frustum4;
     SAFE_RELEASE(mpVertexBuffer);
     V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &mpVertexBuffer));
 
@@ -315,7 +388,7 @@ HRESULT OceanSurface::CreateEffects(ID3D11Device* pd3dDevice, void* pUserContext
     // Create the input layout
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
        // { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
        // { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };

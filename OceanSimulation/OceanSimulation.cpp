@@ -25,8 +25,8 @@ CModelViewerCamera                  g_ObserveCamera;
 //--------------------------------------------------------------------------------------
 ID3D11SamplerState*         g_pSamplerLinear = nullptr;
 XMMATRIX                    g_World;
-XMMATRIX                    g_View;
-XMMATRIX                    g_Projection;
+//XMMATRIX                    g_View;
+//XMMATRIX                    g_Projection;
 XMFLOAT4                    g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
 
 bool                                g_bWireframe = true;
@@ -96,10 +96,10 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateSolid);
 
     // Initialize the view matrix
-    static const XMVECTORF32 s_Eye = { 0.0f, 0.f, -1.0f, 0.f };
+    static const XMVECTORF32 s_Eye = { 0.0f, 10.f, -10.0f, 0.f };
     static const XMVECTORF32 s_At = { 0.0f, 0.0f, 0.0f, 0.f };
     static const XMVECTORF32 s_Up = { 0.0f, 1.0f, 0.0f, 0.f };
-    g_View = XMMatrixLookAtLH( s_Eye, s_At, s_Up );
+    //g_View = XMMatrixLookAtLH( s_Eye, s_At, s_Up );
     g_Camera.SetViewParams(s_Eye, s_At);
 
     const XMVECTORF32 Eye = { 400.0f, 0.f, 0.0f, 0.f };
@@ -120,11 +120,12 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 {
     // Setup the projection parameters
     float fAspect = static_cast<float>( pBackBufferSurfaceDesc->Width ) / static_cast<float>( pBackBufferSurfaceDesc->Height );
-    g_Projection = XMMatrixPerspectiveFovLH( XM_PI * 0.25f, fAspect, 0.1f, 100.0f );
+    //g_Projection = XMMatrixPerspectiveFovLH( XM_PI * 0.25f, fAspect, 0.1f, 100.0f );
     
+    oceansurface.fAspect = fAspect;
     // Setup the camera's projection parameters
     float fAspectRatio = pBackBufferSurfaceDesc->Width / (FLOAT)pBackBufferSurfaceDesc->Height;
-    g_Camera.SetProjParams(XM_PI / 2, fAspectRatio, 10.f, 100.0f);
+    g_Camera.SetProjParams(XM_PI / 4, fAspectRatio, 0.1f, 50.0f);
     g_ObserveCamera.SetProjParams(XM_PI / 2, fAspectRatio, 0.01f, 5000.0f);
     
     g_Camera.SetWindow(pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height);
@@ -170,8 +171,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     // set Rasterizer state
     pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
 
-    //oceansurface.Render(pd3dDevice, pd3dImmediateContext, g_Camera);
-    oceansurface.ObserveRenderCameraFrustum(pd3dDevice, pd3dImmediateContext, g_ObserveCamera, g_Camera);
+    oceansurface.Render(pd3dDevice, pd3dImmediateContext, g_Camera);
+    //oceansurface.ObserveRenderCameraFrustum(pd3dDevice, pd3dImmediateContext, g_ObserveCamera, g_Camera);
 }
 
 

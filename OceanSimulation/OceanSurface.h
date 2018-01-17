@@ -1,6 +1,7 @@
 #include "DXUT.h"
 #include "DXUTcamera.h"
 //#include "PlaneMesh.h"
+#include "Camera.h"
 #include <vector>
 
 #pragma warning( disable : 4100 )
@@ -16,8 +17,9 @@ class OceanSurface
 public:
     struct CBChangesEveryFrame
     {
-        XMFLOAT4X4 mWorldViewProj;
         XMFLOAT4X4 mWorld;
+        XMFLOAT4X4 mView;
+        XMFLOAT4X4 mProj;
         XMFLOAT4   vMeshColor;
     };
 
@@ -26,12 +28,14 @@ public:
         float x;
         float y;
         float z;
+        float w;
     };
 
 public:
 
     int mXSize;
     int mYSize;
+    float fAspect;
 
     ID3D11VertexShader*     mpVertexShader = nullptr;
     ID3D11PixelShader*      mpPixelShader = nullptr;
@@ -47,6 +51,7 @@ public:
     XMVECTOR mNormal;
     XMVECTOR mGridConer[4];
     XMMATRIX mmWorld;
+    XMFLOAT4 mvMeshColor;
     std::vector<XMVECTOR> mIntersectionPoints;
     std::vector<SurfaceVertex> mSurfaceVertex;
     std::vector<int> mSurfaceIndex;
@@ -57,7 +62,8 @@ public:
 public:
     OceanSurface()
         : mEffectsFile(L"oceanSimulation.fx")
-        , mXSize(4), mYSize(4)
+        , mXSize(8), mYSize(8)
+        , mvMeshColor(0.0, 1.0, 0.0, 1.0)
     {
         mmWorld = XMMatrixIdentity();
         mNormal = XMLoadFloat4(&XMFLOAT4(0, 1, 0, 0));
@@ -92,14 +98,20 @@ public:
     HRESULT CreateEffects(ID3D11Device* pd3dDevice, void* pUserContext);
     HRESULT CreateConstBuffer(ID3D11Device* pd3dDevice);
 
+    void SetMeshColor(XMFLOAT4 color)
+    {
+        this->mvMeshColor = color;
+    }
+
 private:
 
     HRESULT CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice);
-    HRESULT CreateFrustumBuffer(ID3D11Device* pd3dDevice);
-    XMVECTOR getWorldGridConer(XMFLOAT2 coner, const CBaseCamera &renderCamra, const XMMATRIX &invViewprojMat);
+    HRESULT CreateFrustumBuffer(ID3D11Device* pd3dDevice, const CBaseCamera &observeCamera, const CBaseCamera &renderCamera);
+    XMVECTOR getWorldGridConer(XMFLOAT2 coner,  const XMMATRIX &invViewprojMat);
+
     bool IntersectionTest(const CBaseCamera &renderCamera);
     void GetSurfaceRange(const CBaseCamera &renderCamera);
-    void TessellateSurfaceMesh(void);
+    void TessellateSurfaceMesh(const CBaseCamera &renderCamera);
     void UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, const CBaseCamera &renderCamera);
     
 public:
@@ -108,7 +120,7 @@ public:
     {
         if (!IntersectionTest(renderCamera)) return;
         GetSurfaceRange(renderCamera);
-        TessellateSurfaceMesh();
+        TessellateSurfaceMesh(renderCamera);
         CreateAndUpdateSurfaceMeshBuffer(pd3dDevice);
         UpdateParameters(pd3dImmediateContext, renderCamera);
 
@@ -131,11 +143,11 @@ public:
     void ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const CBaseCamera &observeCamera, const CBaseCamera &renderCamera)
     {
         IntersectionTest(renderCamera);
-        CreateFrustumBuffer(pd3dDevice);
+        CreateFrustumBuffer(pd3dDevice, observeCamera, renderCamera);
         UpdateParameters(pd3dImmediateContext, observeCamera);
 
         // Render the mesh
-        UINT Strides[1] = { 12 };
+        UINT Strides[1] = { 16 };
         UINT Offsets[1] = { 0 };
         ID3D11Buffer* pVB[1] = { mpVertexBuffer };
         // Set the Vertex Layout
