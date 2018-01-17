@@ -192,7 +192,7 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
                           bool* pbNoFurtherProcessing, void* pUserContext )
 {
     // Pass all remaining windows messages to camera so it can respond to user input
-    g_Camera.HandleMessages(hWnd, uMsg, wParam, lParam);
+    g_renderCamera.HandleMessages(hWnd, uMsg, wParam, lParam);
     return 0;
 }
 

@@ -2,6 +2,7 @@
 #define _c_camera_
 
 #include <DirectXMath.h>
+#include <windows.h>
 
 using namespace DirectX;
 
@@ -11,6 +12,7 @@ private:
     float fov, aspect, znear, zfar;
     float rotx, roty, rotz;
     XMFLOAT3 position;
+    XMFLOAT3 target;
     XMFLOAT3 forward, up, right;
     XMMATRIX view, invview, proj, invproj, viewproj, invviewproj;
 
@@ -26,16 +28,18 @@ public:
 
     }
 
+private:
     Camera(XMFLOAT3 pos, float rotx, float roty, float rotz, float fov, float aspect, float nearz, float farz)
     {
         this->position = pos;
         this->rotx = rotx; this->roty = roty; this->rotz = rotz;
         this->fov = fov; this->aspect = aspect; this->znear = nearz; this->zfar = farz;
     }
-
+public:
     Camera(XMFLOAT3 pos, XMFLOAT3 target, float fov = XM_PI * 0.25, float aspect = 1.78, float nearz = 0.1, float farz = 50.0)
     {
         this->position = pos;
+        this->target = target;
         this->rotx = rotx; this->roty = roty; this->rotz = rotz;
         this->fov = fov; this->aspect = aspect; this->znear = nearz; this->zfar = farz;
         view = XMMatrixLookAtLH( XMLoadFloat3(&position), XMLoadFloat3(&target), XMLoadFloat3(&XMFLOAT3(0, 1, 0)) );
@@ -78,10 +82,37 @@ public:
     void UpdateAspect(float aspect)
     {
         this->aspect = aspect;
-        proj = XMMatrixPerspectiveFovLH(this->fov, this->aspect, this->znear, this->zfar);
+        UpdateProj();
+    }
 
-        viewproj = view * proj;
+    void UpdateCamera(XMFLOAT3 eyePos)
+    {
+        this->position = eyePos;
+        UpdateViewByPos();
+    }
+
+    LRESULT HandleMessages(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
+
+private:
+
+    void UpdateViewByPos()
+    {
+        view = XMMatrixLookAtLH(XMLoadFloat3(&this->position), XMLoadFloat3(&this->target), XMLoadFloat3(&XMFLOAT3(0, 1, 0)));
+        invview = XMMatrixInverse(nullptr, view);
+        viewproj = view*proj;
+        invviewproj = XMMatrixInverse(nullptr, viewproj);
+
+        // update the direction vectors
+        XMStoreFloat3(&forward, XMVector3TransformNormal(XMLoadFloat3(&XMFLOAT3(0, 0, 1)), invview));
+        XMStoreFloat3(&up, XMVector3TransformNormal(XMLoadFloat3(&XMFLOAT3(0, 1, 0)), invview));
+        XMStoreFloat3(&right, XMVector3TransformNormal(XMLoadFloat3(&XMFLOAT3(1, 0, 0)), invview));
+
+    }
+    void UpdateProj()
+    {
+        proj = XMMatrixPerspectiveFovLH(this->fov, this->aspect, this->znear, this->zfar);
         invproj = XMMatrixInverse(nullptr, proj);
+        viewproj = view * proj;
         invviewproj = XMMatrixInverse(nullptr, viewproj);
     }
 
