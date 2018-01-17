@@ -57,13 +57,12 @@ public:
 
 private:
 // for debug        
-    XMFLOAT3 frustumVertex[8];
     Camera mObserveCamera;
 
 public:
     OceanSurface()
         : mEffectsFile(L"oceanSimulation.fx")
-        , mXSize(8), mYSize(8)
+        , mXSize(32), mYSize(32)
         , mvMeshColor(0.0, 1.0, 0.0, 1.0)
         , mObserveCamera(XMFLOAT3(400, 0.0, 0.0), XMFLOAT3(0,0,0), XM_PI * 0.25f, 1.78, 0.1f, 10000.0f)
     {

@@ -19,17 +19,14 @@ bool OceanSurface::IntersectionTest(const Camera &renderCamera)
     0, 4, 2, 6, 3, 7, 1, 5,
     4, 6, 4, 5, 5, 7, 6, 7 };
 
-    XMMATRIX invViewprojMat = renderCamera.GetInvViewProjMatrix();
     XMVECTOR worldFrustum[8];
+    XMMATRIX invViewprojMat = renderCamera.GetInvViewProjMatrix();
 
-    //for (int i = 0; i < 8; ++i) XMStoreFloat3( &frustum[i], XMLoadFloat3(&frustum[i]) * renderCamera.GetFarClip() );
     for (int i = 0; i < 8; ++i)
     {
+        // divide w already
         worldFrustum[i] = XMVector3TransformCoord(XMLoadFloat3(&frustum[i]), invViewprojMat);
-       // XMStoreFloat4(&frustum4[i], XMLoadFloat4(&frustum4[i]) / frustum4[i].w);
     }
-
-    for (int i = 0; i < 8; ++i) XMStoreFloat3( &frustumVertex[i], worldFrustum[i] );
 
     mIntersectionPoints.clear();
     for (int i = 0; i < 12; ++i)
@@ -155,13 +152,14 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
     int sizeY = mYSize;
     float u = 0.0f, v = 0.0f;
     float du = 1.0 / float(sizeX - 1), dv = 1.0 / float(sizeY - 1);
-    XMFLOAT3  grid[4];
     XMMATRIX viewprojMat = renderCamera.GetViewProjMatrix();
 
-    XMStoreFloat3( &grid[0], mGridConer[0] );
-    XMStoreFloat3( &grid[1], mGridConer[1] );
-    XMStoreFloat3( &grid[2], mGridConer[2] );
-    XMStoreFloat3( &grid[3], mGridConer[3] );
+#if 1
+    assert( mGridConer[0].m128_f32[1] == 0.0 && mGridConer[0].m128_f32[3] == 1.0 );
+    assert( mGridConer[1].m128_f32[1] == 0.0 && mGridConer[1].m128_f32[3] == 1.0 );
+    assert( mGridConer[2].m128_f32[1] == 0.0 && mGridConer[2].m128_f32[3] == 1.0 );
+    assert( mGridConer[0].m128_f32[1] == 0.0 && mGridConer[3].m128_f32[3] == 1.0 );
+#endif
 
     mSurfaceVertex.clear();
     for (int i = 0; i < sizeY; ++i)
@@ -169,17 +167,8 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
         u = 0.0f;
         for (int j = 0; j < sizeX; ++j)
         {
-            
             XMVECTOR xx = (1.0f - v) * ( (1.0f - u) * mGridConer[0] + u * mGridConer[1]) + v * ( (1.0 - u) * mGridConer[2] + u * mGridConer[3] );
-
-            float x = (1.0f - v) * ( (1.0f - u) * grid[0].x + u * grid[1].x) + v * ( (1.0 - u) * grid[2].x + u * grid[3].x );
-            float z = (1.0f - v) * ( (1.0f - u) * grid[0].z + u * grid[1].z) + v * ( (1.0 - u) * grid[2].z + u * grid[3].z );
-            //float x = (1.0f - v) * ( (1.0f - u) * 0.0 + u * 1.0) + v * (u * 0.0 + (1.0 -u) * 1.0 );
-            //float y = (1.0f - v) * ( (1.0f - u) * 0.0 + u * 1.0) + v * (u * 0.0 + (1.0 -u) * 1.0 );
-            float y = 0.0f;
-            float w = 1.0f;
-            XMFLOAT4 temp(x, y, z, w);
-           // XMStoreFloat4(&temp, XMVector4Transform(XMLoadFloat4(&temp), viewprojMat ));
+            XMFLOAT4 temp;
             XMStoreFloat4(&temp, XMVector4Transform(xx, viewprojMat ));
             SurfaceVertex vertex = {temp.x, temp.y, temp.z, temp.w };
             mSurfaceVertex.push_back(vertex);
