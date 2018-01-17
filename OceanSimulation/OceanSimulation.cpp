@@ -206,8 +206,26 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
     {
         switch( nChar )
         {
-            case VK_F1: // Change as needed                
+            case VK_F1:
+            {
+                int x = oceansurface.mXSize;
+                int y = oceansurface.mYSize;
+                x = x + 4 > 64 ? 64 : x + 4;
+                y = x;
+                oceansurface.mXSize = x;
+                oceansurface.mYSize = y;
                 break;
+            }
+            case VK_F2:
+            {
+                int x = oceansurface.mXSize;
+                int y = oceansurface.mYSize;
+                x = x - 4 < 4 ? 4 : x - 4;
+                y = x;
+                oceansurface.mXSize = x;
+                oceansurface.mYSize = y;
+                break;
+            }
         }
     }
 }

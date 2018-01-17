@@ -154,7 +154,7 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
     float du = 1.0 / float(sizeX - 1), dv = 1.0 / float(sizeY - 1);
     XMMATRIX viewprojMat = renderCamera.GetViewProjMatrix();
 
-#if 1
+#if 0
     assert( mGridConer[0].m128_f32[1] == 0.0 && mGridConer[0].m128_f32[3] == 1.0 );
     assert( mGridConer[1].m128_f32[1] == 0.0 && mGridConer[1].m128_f32[3] == 1.0 );
     assert( mGridConer[2].m128_f32[1] == 0.0 && mGridConer[2].m128_f32[3] == 1.0 );

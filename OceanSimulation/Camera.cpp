@@ -1,5 +1,7 @@
 #include "Camera.h"
 
+//using namespace DirectX;
+
 static bool	keys[256] = { false };
 LRESULT Camera::HandleMessages(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam)
 {
@@ -7,94 +9,98 @@ LRESULT Camera::HandleMessages(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wPara
     {
         case WM_KEYDOWN:							// Is A Key Being Held Down?
         {
-            keys[wParam] = TRUE;					// If So, Mark It As TRUE
-            // preset handling
+            XMVECTOR detPosition = XMLoadFloat3(&this->position);
+            keys[wParam] = true;					// If So, Mark It As TRUE
             if (keys['1'])
             {
                 return 0;
             }
-            if (keys['2'])
+#if 0
+            else if (keys['2'])
             {
                 return 0;
             }
-            if (keys['3'])
+            else if (keys['3'])
             {
                 return 0;
             }
-            if (keys['4'])
+            else if (keys['T'])
             {
                 return 0;
             }
-            if (keys['5'])
+            else if (keys[VK_TAB])
             {
                 return 0;
             }
-            if (keys['6'])
+            else if (keys['C'])
             {
                 return 0;
             }
-            if (keys['T'])
+            else if (keys['E'])
             {
                 return 0;
             }
-            // other keys
-            if (keys[VK_TAB])
+            else if (keys['0'])
             {
                 return 0;
             }
-            if (keys['C'])
+            else if (keys[VK_PRIOR])
             {
                 return 0;
             }
-            if (keys['E'])
+            else if (keys[VK_NEXT])
             {
                 return 0;
             }
-            if (keys['0'])
+            else if (keys[VK_HOME])
             {
                 return 0;
+            }
+            else if (keys[VK_LEFT])
+            {
+                return 0;
+            }
+            else if (keys[VK_RIGHT])
+            {
+                return 0;
+            }
+            else if (keys[VK_UP])
+            {
+                return 0;
+            }
+            else if (keys[VK_DOWN])
+            {
+                return 0;
+            }
+#endif
+            else if (keys['A'])
+            {
+                detPosition -= this->movespeed * XMLoadFloat3( &this->right);
+            }
+            else if (keys['D'])
+            {
+                detPosition  += this->movespeed * XMLoadFloat3( &this->right);
+            }
+            else if (keys['W'])
+            {
+                detPosition += this->movespeed * XMLoadFloat3( &this->forward);
+            }
+            else if (keys['S'])
+            {
+                detPosition -= this->movespeed * XMLoadFloat3( &this->forward);
+            }
+            else if (keys['Q'])
+            {
+                detPosition += this->movespeed * XMLoadFloat3( &this->up);
+            }
+            else if (keys['Z'])
+            {
+                detPosition -= this->movespeed * XMLoadFloat3( &this->up);
             }
 
-            if (keys[VK_PRIOR])
+            if (keys['Z'] || keys['Q'] || keys['S'] || keys['W'] || keys['D'] || keys['A'])
             {
-                return 0;
-            }
-            if (keys[VK_NEXT])
-            {
-                return 0;
-            }
-            if (keys[VK_HOME])
-            {
-                return 0;
-            }
-            if (keys[VK_END])
-            {
-                return 0;
-            }
-            if (keys[VK_SUBTRACT])
-            {
-                return 0;
-            }
-            if (keys[VK_ADD])
-            {
-                return 0;
-            }
-
-            if (keys[VK_LEFT])
-            {
-                return 0;
-            }
-            if (keys[VK_RIGHT])
-            {
-                return 0;
-            }
-            if (keys[VK_UP])
-            {
-                return 0;
-            }
-            if (keys[VK_DOWN])
-            {
-                return 0;
+                this->UpdateCameraByPos(detPosition);
             }
 
             return 0;								// Jump Back
@@ -102,7 +108,7 @@ LRESULT Camera::HandleMessages(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wPara
 
         case WM_KEYUP:								// Has A Key Been Released?
         {
-            keys[wParam] = FALSE;					// If So, Mark It As FALSE
+            keys[wParam] = false;					// If So, Mark It As FALSE
             return 0;								// Jump Back
         }
 

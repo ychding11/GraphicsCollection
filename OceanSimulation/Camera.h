@@ -16,14 +16,14 @@ private:
     XMFLOAT3 forward, up, right;
     XMMATRIX view, invview, proj, invproj, viewproj, invviewproj;
 
+    float movespeed;
 public:
     Camera()
         : fov(XM_PI * 0.25), aspect(1.78), znear(0.01), zfar(1000)
         , rotx(0), roty(0), rotz(0)
-        , position(0, 0, 0) 
-        , forward(0, 0, 1)
-        , right(1, 0, 0)
-        , up(0, 1, 0)
+        , position(0, 0, 0), forward(0, 0, 1)
+        , right(1, 0, 0), up(0, 1, 0)
+        , movespeed(1.0)
     {
 
     }
@@ -37,6 +37,7 @@ private:
     }
 public:
     Camera(XMFLOAT3 pos, XMFLOAT3 target, float fov = XM_PI * 0.25, float aspect = 1.78, float nearz = 0.1, float farz = 50.0)
+        : movespeed(1.0)
     {
         this->position = pos;
         this->target = target;
@@ -62,6 +63,8 @@ public:
     ~Camera()
     { }
 
+    LRESULT HandleMessages(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
+
     XMMATRIX GetInvViewMatrix() const
     { return this->invview; }
     XMMATRIX GetInvProjMatrix() const
@@ -85,15 +88,13 @@ public:
         UpdateProj();
     }
 
-    void UpdateCamera(XMFLOAT3 eyePos)
+private:
+
+    void UpdateCameraByPos(XMVECTOR eyePos)
     {
-        this->position = eyePos;
+        XMStoreFloat3(&this->position, eyePos);
         UpdateViewByPos();
     }
-
-    LRESULT HandleMessages(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
-
-private:
 
     void UpdateViewByPos()
     {
@@ -108,6 +109,7 @@ private:
         XMStoreFloat3(&right, XMVector3TransformNormal(XMLoadFloat3(&XMFLOAT3(1, 0, 0)), invview));
 
     }
+    
     void UpdateProj()
     {
         proj = XMMatrixPerspectiveFovLH(this->fov, this->aspect, this->znear, this->zfar);
