@@ -25,6 +25,8 @@
     <ClInclude Include="PlaneMesh.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="PerlinNoise.h" />
+    <ClInclude Include="ParameterSet.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OceanSimulation.rc">
@@ -37,5 +39,7 @@
     <ClCompile Include="OceaSurface.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="PerlinNoise.cpp" />
+    <ClCompile Include="ParameterSet.cpp" />
   </ItemGroup>
 </Project>

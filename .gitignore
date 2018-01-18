@@ -17,6 +17,9 @@
 *.lastbuildstate
 *.ilk
 *.VC.db
+*.ppm
+log.txt
+*.txt
 .vs
 Bin
 ipch

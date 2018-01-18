@@ -1,4 +1,6 @@
 #include "OceanSurface.h"
+
+
 #include "SDKmisc.h"
 //#include "DDSTextureLoader.h"
 
@@ -89,7 +91,7 @@ void OceanSurface::GetSurfaceRange(const Camera &renderCamera)
     }
     else
     {
-        XMVECTOR mirror = viewDir - 2.0 * cosTheta * mNormal;
+        XMVECTOR mirror = viewDir - 2.0f * cosTheta * mNormal;
         aimPoint1 = XMPlaneIntersectLine(mBase, eyePos, eyePos + mirror *  1000);
     }
 
@@ -153,7 +155,7 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
     float u = 0.0f, v = 0.0f;
     float du = 1.0 / float(sizeX - 1), dv = 1.0 / float(sizeY - 1);
     XMMATRIX viewprojMat = renderCamera.GetViewProjMatrix();
-
+    
 #if 0
     assert( mGridConer[0].m128_f32[1] == 0.0 && mGridConer[0].m128_f32[3] == 1.0 );
     assert( mGridConer[1].m128_f32[1] == 0.0 && mGridConer[1].m128_f32[3] == 1.0 );
@@ -168,8 +170,10 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
         for (int j = 0; j < sizeX; ++j)
         {
             XMVECTOR xx = (1.0f - v) * ( (1.0f - u) * mGridConer[0] + u * mGridConer[1]) + v * ( (1.0 - u) * mGridConer[2] + u * mGridConer[3] );
+            xx.m128_f32[1] =  noise.GetNoiseValue(i, j);
             XMFLOAT4 temp;
             XMStoreFloat4(&temp, XMVector4Transform(xx, viewprojMat ));
+            //temp.y = noise.ValueNoise_2D(temp.x, temp.z);
             SurfaceVertex vertex = {temp.x, temp.y, temp.z, temp.w };
             mSurfaceVertex.push_back(vertex);
             u += du;

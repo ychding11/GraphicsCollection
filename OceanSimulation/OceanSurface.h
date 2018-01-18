@@ -1,7 +1,11 @@
+#ifndef OCEAN_SURFACE_H_
+#define OCEAN_SURFACE_H_
+
 #include "DXUT.h"
-#include "DXUTcamera.h"
+//#include "DXUTcamera.h"
 //#include "PlaneMesh.h"
 #include "Camera.h"
+#include "PerlinNoise.h"
 #include <vector>
 
 #pragma warning( disable : 4100 )
@@ -54,6 +58,7 @@ public:
     std::vector<XMVECTOR> mIntersectionPoints;
     std::vector<SurfaceVertex> mSurfaceVertex;
     std::vector<int> mSurfaceIndex;
+    PerlinNoise noise;
 
 private:
 // for debug        
@@ -65,6 +70,8 @@ public:
         , mXSize(32), mYSize(32)
         , mvMeshColor(0.0, 1.0, 0.0, 1.0)
         , mObserveCamera(XMFLOAT3(400, 0.0, 0.0), XMFLOAT3(0,0,0), XM_PI * 0.25f, 1.78, 0.1f, 10000.0f)
+        //, noise(this->mXSize, this->mYSize, 4, 0.99)
+        , noise(256, 256, 9, 0.99)
     {
         mmWorld = XMMatrixIdentity();
         mNormal = XMLoadFloat4(&XMFLOAT4(0, 1, 0, 0));
@@ -124,6 +131,7 @@ public:
     {
         if (!IntersectionTest(renderCamera)) return;
         GetSurfaceRange(renderCamera);
+        noise.primeIndex++;
         TessellateSurfaceMesh(renderCamera);
         CreateAndUpdateSurfaceMeshBuffer(pd3dDevice);
         UpdateParameters(pd3dImmediateContext, renderCamera);
@@ -164,5 +172,7 @@ public:
         pd3dImmediateContext->DrawIndexed(24, 0, 0);
     }
 };
+
+#endif
 
 
