@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "Logger.h"
 
 //using namespace DirectX;
 
@@ -100,6 +101,7 @@ LRESULT Camera::HandleMessages(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wPara
 
             if (keys['Z'] || keys['Q'] || keys['S'] || keys['W'] || keys['D'] || keys['A'])
             {
+                Logger::GetLogger() << "Camera Position: [" << this->position.x << " " << this->position.y << " " <<this->position.z << "]" << std::endl;
                 this->UpdateCameraByPos(detPosition);
             }
 

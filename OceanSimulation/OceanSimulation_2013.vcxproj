@@ -378,6 +378,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="PlaneMesh.h" />
     <CLInclude Include="resource.h" />
     <ResourceCompile Include="OceanSimulation.rc" />
@@ -395,6 +396,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="OceanSimulation.cpp" />
     <ClCompile Include="OceanSurface.h" />
     <ClCompile Include="OceaSurface.cpp" />
