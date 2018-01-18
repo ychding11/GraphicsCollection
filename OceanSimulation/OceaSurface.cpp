@@ -170,7 +170,7 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
         for (int j = 0; j < sizeX; ++j)
         {
             XMVECTOR xx = (1.0f - v) * ( (1.0f - u) * mGridConer[0] + u * mGridConer[1]) + v * ( (1.0 - u) * mGridConer[2] + u * mGridConer[3] );
-            xx.m128_f32[1] =  noise.GetNoiseValue(i, j);
+            xx.m128_f32[1] = fparameters["max_amplitude"] * noise.GetNoiseValue(i, j);
             XMFLOAT4 temp;
             XMStoreFloat4(&temp, XMVector4Transform(xx, viewprojMat ));
             //temp.y = noise.ValueNoise_2D(temp.x, temp.z);

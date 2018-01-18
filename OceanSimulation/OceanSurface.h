@@ -7,6 +7,8 @@
 #include "Camera.h"
 #include "PerlinNoise.h"
 #include <vector>
+#include <string>
+#include <map>
 
 #pragma warning( disable : 4100 )
 
@@ -54,11 +56,16 @@ public:
     XMVECTOR mNormal;
     XMVECTOR mGridConer[4];
     XMMATRIX mmWorld;
-    XMFLOAT4 mvMeshColor;
     std::vector<XMVECTOR> mIntersectionPoints;
     std::vector<SurfaceVertex> mSurfaceVertex;
     std::vector<int> mSurfaceIndex;
     PerlinNoise noise;
+    std::map<std::string, int> iparameters;
+    std::map<std::string, float> fparameters;
+
+    XMFLOAT4 mvMeshColor;
+    const XMFLOAT4 cvGreen;
+    const XMFLOAT4 cvRed;
 
 private:
 // for debug        
@@ -68,7 +75,9 @@ public:
     OceanSurface()
         : mEffectsFile(L"oceanSimulation.fx")
         , mXSize(32), mYSize(32)
-        , mvMeshColor(0.0, 1.0, 0.0, 1.0)
+        , mvMeshColor(0.0, 0.0, 0.0, 1.0)
+        , cvGreen(0.0, 1.0, 0.0, 1.0)
+        , cvRed(1.0, 0.0, 0.0, 1.0)
         , mObserveCamera(XMFLOAT3(400, 0.0, 0.0), XMFLOAT3(0,0,0), XM_PI * 0.25f, 1.78, 0.1f, 10000.0f)
         //, noise(this->mXSize, this->mYSize, 4, 0.99)
         , noise(256, 256, 9, 0.99)
@@ -76,8 +85,25 @@ public:
         mmWorld = XMMatrixIdentity();
         mNormal = XMLoadFloat4(&XMFLOAT4(0, 1, 0, 0));
         mBase   = XMLoadFloat4(&XMFLOAT4(0, 1, 0, 0));
-        mUpper = XMPlaneFromPointNormal( XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1.0)) + mNormal, mNormal);
-        mLow   = XMPlaneFromPointNormal( XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1.0)) - mNormal, mNormal);
+        iparameters["prime_index"] = 0;
+        fparameters["max_amplitude"] = 1.0f;
+
+        mUpper = XMPlaneFromPointNormal( XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1.0)) + fparameters["max_amplitude"] * mNormal, mNormal);
+        mLow   = XMPlaneFromPointNormal( XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1.0)) - fparameters["max_amplitude"] * mNormal, mNormal);
+    }
+
+    void setPrimeIndex(int index)
+    {
+        iparameters["prime_index"] = index;
+        noise.primeIndex = index;
+    }
+
+    void setMaxAmplitude(float amplitude)
+    {
+        fparameters["max_amplitude"] = amplitude;
+        mUpper = XMPlaneFromPointNormal( XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1.0)) + fparameters["max_amplitude"] * mNormal, mNormal);
+        mLow   = XMPlaneFromPointNormal( XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1.0)) - fparameters["max_amplitude"] * mNormal, mNormal);
+        
     }
 
     ~OceanSurface()
@@ -131,9 +157,9 @@ public:
     {
         if (!IntersectionTest(renderCamera)) return;
         GetSurfaceRange(renderCamera);
-        noise.primeIndex++;
         TessellateSurfaceMesh(renderCamera);
         CreateAndUpdateSurfaceMeshBuffer(pd3dDevice);
+        mvMeshColor = cvGreen;
         UpdateParameters(pd3dImmediateContext, renderCamera);
 
         // Render the mesh
@@ -155,6 +181,7 @@ public:
     void ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
     {
         CreateFrustumBuffer(pd3dDevice, renderCamera);
+        mvMeshColor = cvRed;
         UpdateParameters(pd3dImmediateContext, mObserveCamera);
 
         // Render the mesh
@@ -166,8 +193,10 @@ public:
         pd3dImmediateContext->IASetVertexBuffers(0, 1, pVB, Strides, Offsets);
         pd3dImmediateContext->IASetIndexBuffer(mpIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
         pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
         pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
         pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
+
         pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
         pd3dImmediateContext->DrawIndexed(24, 0, 0);
     }

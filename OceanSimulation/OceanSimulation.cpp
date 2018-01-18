@@ -15,19 +15,14 @@ OceanSurface oceansurface;
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
-CModelViewerCamera                  g_Camera;               // A model viewing camera
-CModelViewerCamera                  g_ObserveCamera;
 Camera  g_renderCamera(XMFLOAT3(0, 10, -10), XMFLOAT3(0, 0, 0));
 
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
 ID3D11SamplerState*         g_pSamplerLinear = nullptr;
-XMMATRIX                    g_World;
-XMFLOAT4                    g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
 
 bool                                g_bWireframe = true;
-float                               g_fModelWaviness = 0.0f;
 
 ID3D11RasterizerState*              g_pRasterizerStateWireframe = nullptr;
 ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
@@ -92,18 +87,6 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     RasterDesc.FillMode = D3D11_FILL_SOLID;
     pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateSolid);
 
-    // Initialize the view matrix
-    static const XMVECTORF32 s_Eye = { 0.0f, 10.f, -10.0f, 0.f };
-    static const XMVECTORF32 s_At = { 0.0f, 0.0f, 0.0f, 0.f };
-    static const XMVECTORF32 s_Up = { 0.0f, 1.0f, 0.0f, 0.f };
-    //g_View = XMMatrixLookAtLH( s_Eye, s_At, s_Up );
-    g_Camera.SetViewParams(s_Eye, s_At);
-
-    const XMVECTORF32 Eye = { 400.0f, 0.f, 0.0f, 0.f };
-    const XMVECTORF32 At = { 0.0f, 1.0f, 0.0f, 0.f };
-    g_ObserveCamera.SetViewParams(Eye, At);
-
-    
     oceansurface.CreateConstBuffer(pd3dDevice);
     oceansurface.CreateEffects(pd3dDevice, pUserContext);
     return S_OK;
@@ -132,26 +115,20 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
     // Update the camera's position based on user input 
-    g_Camera.FrameMove(fElapsedTime);
 
     // Rotate cube around the origin
     //g_World = XMMatrixRotationY( 60.0f * XMConvertToRadians((float)fTime) );
-
-    // Modify the color
-    g_vMeshColor.x = ( sinf( ( float )fTime * 1.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.y = ( cosf( ( float )fTime * 3.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.z = ( sinf( ( float )fTime * 5.0f ) + 1.0f ) * 0.5f;
 }
 
 
 //--------------------------------------------------------------------------------------
 // Render the scene using the D3D11 device
 //--------------------------------------------------------------------------------------
-void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext,
-                                  double fTime, float fElapsedTime, void* pUserContext )
+void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext )
 {
-    // Clear the back buffer
-    // Clear the depth stencil
+    static int i = 0;
+    static int frames = 0;
+
     auto pRTV = DXUTGetD3D11RenderTargetView();
     pd3dImmediateContext->ClearRenderTargetView( pRTV, Colors::MidnightBlue );
     auto pDSV = DXUTGetD3D11DepthStencilView();
@@ -160,8 +137,16 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     // set Rasterizer state
     pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
 
+    if (frames > 24)
+    {
+        oceansurface.setPrimeIndex(i++);
+        frames = 0;
+    }
+
     oceansurface.Render(pd3dDevice, pd3dImmediateContext, g_renderCamera);
     oceansurface.ObserveRenderCameraFrustum(pd3dDevice, pd3dImmediateContext, g_renderCamera);
+
+    ++frames;
 }
 
 
