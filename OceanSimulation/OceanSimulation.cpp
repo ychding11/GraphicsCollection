@@ -5,27 +5,31 @@
 
 #include "OceanSurface.h"
 #include "Camera.h"
+#include <map>
+#include <string>
 
 #pragma warning( disable : 4100 )
 
 using namespace DirectX;
 
-OceanSurface oceansurface;
 
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
-Camera  g_renderCamera(XMFLOAT3(0, 10, -10), XMFLOAT3(0, 0, 0));
+static Camera  g_renderCamera(XMFLOAT3(0, 10, -10), XMFLOAT3(0, 0, 0));
+static Camera *activeCamera =  &g_renderCamera;
+static OceanSurface oceansurface;
+
 
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
 ID3D11SamplerState*         g_pSamplerLinear = nullptr;
+ID3D11RasterizerState*      g_pRasterizerStateWireframe = nullptr;
+ID3D11RasterizerState*      g_pRasterizerStateSolid = nullptr;
+bool                        g_bWireframe = true;
 
-bool                                g_bWireframe = true;
-
-ID3D11RasterizerState*              g_pRasterizerStateWireframe = nullptr;
-ID3D11RasterizerState*              g_pRasterizerStateSolid = nullptr;
+std::map<std::string, int> iparameters;
 
 //--------------------------------------------------------------------------------------
 // UI control IDs
@@ -121,33 +125,6 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 }
 
 
-//--------------------------------------------------------------------------------------
-// Render the scene using the D3D11 device
-//--------------------------------------------------------------------------------------
-void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext )
-{
-    static int i = 0;
-    static int frames = 0;
-
-    auto pRTV = DXUTGetD3D11RenderTargetView();
-    pd3dImmediateContext->ClearRenderTargetView( pRTV, Colors::MidnightBlue );
-    auto pDSV = DXUTGetD3D11DepthStencilView();
-    pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
-
-    // set Rasterizer state
-    pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
-
-    if (frames > 24)
-    {
-        oceansurface.setPrimeIndex(i++);
-        frames = 0;
-    }
-
-    oceansurface.Render(pd3dDevice, pd3dImmediateContext, g_renderCamera);
-    oceansurface.ObserveRenderCameraFrustum(pd3dDevice, pd3dImmediateContext, g_renderCamera);
-
-    ++frames;
-}
 
 
 //--------------------------------------------------------------------------------------
@@ -211,10 +188,48 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
                 oceansurface.mYSize = y;
                 break;
             }
+            case VK_F3:
+            {
+                iparameters["render_scene"] ^= 1;
+                break;
+            }
         }
     }
 }
 
+//--------------------------------------------------------------------------------------
+// Render the scene using the D3D11 device
+//--------------------------------------------------------------------------------------
+void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime, float fElapsedTime, void* pUserContext)
+{
+    static int i = 0;
+    static int frames = 0;
+
+    auto pRTV = DXUTGetD3D11RenderTargetView();
+    pd3dImmediateContext->ClearRenderTargetView(pRTV, Colors::MidnightBlue);
+    auto pDSV = DXUTGetD3D11DepthStencilView();
+    pd3dImmediateContext->ClearDepthStencilView(pDSV, D3D11_CLEAR_DEPTH, 1.0, 0);
+
+    // set Rasterizer state
+    pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
+
+    if (frames > 24)
+    {
+        oceansurface.setPrimeIndex(i++);
+        frames = 0;
+    }
+
+    if (iparameters["render_scene"])
+    {
+        oceansurface.Render(pd3dDevice, pd3dImmediateContext, *activeCamera);
+    }
+    else
+    {
+        oceansurface.ObserveRenderCameraFrustum(pd3dDevice, pd3dImmediateContext, *activeCamera);
+    }
+
+    ++frames;
+}
 
 //--------------------------------------------------------------------------------------
 // Call if device was removed.  Return true to find a new device, false to quit
@@ -234,6 +249,8 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 #ifdef _DEBUG
     _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
+
+    iparameters["render_scene"] = 1;
 
     // DXUT will create and use the best device
     // that is available on the system depending on which D3D callbacks are set below
