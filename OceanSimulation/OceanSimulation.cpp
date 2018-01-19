@@ -28,17 +28,6 @@ ID3D11SamplerState*    g_pSamplerLinear = nullptr;
 std::map<std::string, int> iparameters;
 
 //--------------------------------------------------------------------------------------
-// UI control IDs
-//--------------------------------------------------------------------------------------
-#define IDC_TOGGLEFULLSCREEN    1
-#define IDC_TOGGLEREF           2
-#define IDC_CHANGEDEVICE        3
-#define IDC_TOGGLEWARP          4
-#define IDC_TOGGLESPIN          5
-#define IDC_PUFF_SCALE          6
-#define IDC_PUFF_STATIC         7
-#define IDC_TOGGLEWIREFRAME     8
-//--------------------------------------------------------------------------------------
 // Reject any D3D11 devices that aren't acceptable by returning false
 //--------------------------------------------------------------------------------------
 bool CALLBACK IsD3D11DeviceAcceptable( const CD3D11EnumAdapterInfo *AdapterInfo, UINT Output, const CD3D11EnumDeviceInfo *DeviceInfo,

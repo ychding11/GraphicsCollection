@@ -174,79 +174,9 @@ private:
     
 public:
 
-    void Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
-    {
-        if (!IntersectionTest(renderCamera)) return;
-        GetSurfaceRange(renderCamera);
-        TessellateSurfaceMesh(renderCamera);
-        CreateAndUpdateSurfaceMeshBuffer(pd3dDevice);
-        mvMeshColor = cvGreen;
-        UpdateParameters(pd3dImmediateContext, renderCamera);
-
-        // Render the mesh
-        UINT Strides[1] = { sizeof(SurfaceVertex) };
-        UINT Offsets[1] = { 0 };
-        ID3D11Buffer* pVB[1] = { mpVertexBuffer };
-        pd3dImmediateContext->IASetVertexBuffers( 0, 1, pVB, Strides, Offsets );
-        pd3dImmediateContext->IASetIndexBuffer(mpIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-        // Set the Vertex Layout
-        pd3dImmediateContext->IASetInputLayout( mpVertexLayout );
-        switch (iparameters["primitive_topology"])
-        {
-        case 0 :
-            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-             break;
-        case 1 :
-            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-             break;
-        case 2 :
-            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-             break;
-        default  :
-             break;
-        }
-        if (iparameters["wireframe"])
-        {
-          pd3dImmediateContext->RSSetState(mpRSWireframe);
-        }
-        else
-        {
-          pd3dImmediateContext->RSSetState(mpRSSolid);
-        }
-
-        //pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-       // pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-        pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
-        pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
-        pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
-        pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
-        pd3dImmediateContext->DrawIndexed( mSurfaceIndex.size(), 0, 0);
-    }
-
-    void ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
-    {
-        CreateFrustumBuffer(pd3dDevice, renderCamera);
-        mvMeshColor = cvRed;
-        UpdateParameters(pd3dImmediateContext, mObserveCamera);
-
-        pd3dImmediateContext->RSSetState(mpRSWireframe);
-
-        // Render the mesh
-        UINT Strides[1] = { 16 };
-        UINT Offsets[1] = { 0 };
-        ID3D11Buffer* pVB[1] = { mpVertexBuffer };
-        // Set the Vertex Layout
-        pd3dImmediateContext->IASetInputLayout(mpVertexLayout);
-        pd3dImmediateContext->IASetVertexBuffers(0, 1, pVB, Strides, Offsets);
-        pd3dImmediateContext->IASetIndexBuffer(mpIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-        pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-
-        pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
-        pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
-
-        pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
-        pd3dImmediateContext->DrawIndexed(24, 0, 0);
-    }
+    void Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera);
+    void ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera);
+    
 };
 
 #endif
