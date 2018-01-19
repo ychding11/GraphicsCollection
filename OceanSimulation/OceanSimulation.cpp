@@ -24,11 +24,7 @@ static OceanSurface oceansurface;
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
-ID3D11SamplerState*         g_pSamplerLinear = nullptr;
-ID3D11RasterizerState*      g_pRasterizerStateWireframe = nullptr;
-ID3D11RasterizerState*      g_pRasterizerStateSolid = nullptr;
-bool                        g_bWireframe = true;
-
+ID3D11SamplerState*    g_pSamplerLinear = nullptr;
 std::map<std::string, int> iparameters;
 
 //--------------------------------------------------------------------------------------
@@ -81,18 +77,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     V_RETURN( pd3dDevice->CreateSamplerState( &sampDesc, &g_pSamplerLinear ) );
 
-    // Create solid and wireframe rasterizer state objects
-    D3D11_RASTERIZER_DESC RasterDesc;
-    ZeroMemory(&RasterDesc, sizeof(D3D11_RASTERIZER_DESC));
-    RasterDesc.CullMode = D3D11_CULL_NONE;
-    RasterDesc.DepthClipEnable = TRUE;
-    RasterDesc.FillMode = D3D11_FILL_WIREFRAME;
-    pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateWireframe);
-    RasterDesc.FillMode = D3D11_FILL_SOLID;
-    pd3dDevice->CreateRasterizerState(&RasterDesc, &g_pRasterizerStateSolid);
-
-    oceansurface.CreateConstBuffer(pd3dDevice);
-    oceansurface.CreateEffects(pd3dDevice, pUserContext);
+    oceansurface.InitD3D(pd3dDevice);
     return S_OK;
 }
 
@@ -141,8 +126,6 @@ void CALLBACK OnD3D11ReleasingSwapChain( void* pUserContext )
 void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
 {
     SAFE_RELEASE( g_pSamplerLinear );
-    SAFE_RELEASE( g_pRasterizerStateWireframe );
-    SAFE_RELEASE( g_pRasterizerStateSolid );
     oceansurface.Destroy();
 }
 
@@ -193,6 +176,17 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
                 iparameters["render_scene"] ^= 1;
                 break;
             }
+            case VK_TAB:
+            {
+                oceansurface.iparameters["wireframe"] ^= 1;
+                break;
+            }
+            case VK_F4:
+            {
+                int a = oceansurface.iparameters["primitive_topology"];
+                oceansurface.iparameters["primitive_topology"] = (a + 1) % 3;
+                break;
+            }
         }
     }
 }
@@ -209,9 +203,6 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
     pd3dImmediateContext->ClearRenderTargetView(pRTV, Colors::MidnightBlue);
     auto pDSV = DXUTGetD3D11DepthStencilView();
     pd3dImmediateContext->ClearDepthStencilView(pDSV, D3D11_CLEAR_DEPTH, 1.0, 0);
-
-    // set Rasterizer state
-    pd3dImmediateContext->RSSetState(g_pRasterizerStateWireframe);
 
     if (frames > 24)
     {
@@ -251,6 +242,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 #endif
 
     iparameters["render_scene"] = 1;
+    //iparameters["wireframe"] = 1;
 
     // DXUT will create and use the best device
     // that is available on the system depending on which D3D callbacks are set below

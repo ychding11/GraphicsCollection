@@ -48,6 +48,9 @@ public:
     ID3D11Buffer*			mpIndexBuffer  = nullptr;
     ID3D11Buffer*			mpVertexBuffer = nullptr;
     ID3D11Buffer*           mpCBChangesEveryFrame = nullptr;
+    ID3D11RasterizerState*  mpRSWireframe = nullptr;
+    ID3D11RasterizerState*  mpRSSolid = nullptr;
+
     LPCWSTR                 mEffectsFile;
 
     XMVECTOR mUpper;
@@ -63,6 +66,7 @@ public:
     std::map<std::string, int> iparameters;
     std::map<std::string, float> fparameters;
 
+    //wireframe color
     XMFLOAT4 mvMeshColor;
     const XMFLOAT4 cvGreen;
     const XMFLOAT4 cvRed;
@@ -86,6 +90,8 @@ public:
         mNormal = XMLoadFloat4(&XMFLOAT4(0, 1, 0, 0));
         mBase   = XMLoadFloat4(&XMFLOAT4(0, 1, 0, 0));
         iparameters["prime_index"] = 0;
+        iparameters["primitive_topology"] = 2;
+        iparameters["wireframe"] = 1;
         fparameters["max_amplitude"] = 1.0f;
 
         mUpper = XMPlaneFromPointNormal( XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1.0)) + fparameters["max_amplitude"] * mNormal, mNormal);
@@ -119,6 +125,8 @@ public:
         SAFE_RELEASE( mpCBChangesEveryFrame);
         SAFE_RELEASE( mpVertexShader);
         SAFE_RELEASE( mpPixelShader);
+        SAFE_RELEASE( mpRSSolid);
+        SAFE_RELEASE( mpRSWireframe);
     }
 
     void setSize(int x, int y)
@@ -127,10 +135,22 @@ public:
         mYSize = y;
     }
 
+private:
+
+    HRESULT CreateEffects(ID3D11Device* pd3dDevice);
+    HRESULT CreateConstBuffer(ID3D11Device* pd3dDevice);
+    HRESULT CreateRasterState(ID3D11Device* pd3dDevice);
+
 public:
 
-    HRESULT CreateEffects(ID3D11Device* pd3dDevice, void* pUserContext);
-    HRESULT CreateConstBuffer(ID3D11Device* pd3dDevice);
+    HRESULT InitD3D(ID3D11Device* pd3dDevice)
+    {
+        HRESULT hr = S_OK;
+        V_RETURN( CreateEffects( pd3dDevice) );
+        V_RETURN( CreateConstBuffer( pd3dDevice) );
+        V_RETURN( CreateRasterState( pd3dDevice) );
+        return hr;
+    }
 
     void SetMeshColor(XMFLOAT4 color)
     {
@@ -140,6 +160,7 @@ public:
     {
         mObserveCamera.UpdateAspect(aspect);
     }
+
 private:
 
     HRESULT CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice);
@@ -170,7 +191,31 @@ public:
         pd3dImmediateContext->IASetIndexBuffer(mpIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
         // Set the Vertex Layout
         pd3dImmediateContext->IASetInputLayout( mpVertexLayout );
-        pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        switch (iparameters["primitive_topology"])
+        {
+        case 0 :
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+             break;
+        case 1 :
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+             break;
+        case 2 :
+            pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+             break;
+        default  :
+             break;
+        }
+        if (iparameters["wireframe"])
+        {
+          pd3dImmediateContext->RSSetState(mpRSWireframe);
+        }
+        else
+        {
+          pd3dImmediateContext->RSSetState(mpRSSolid);
+        }
+
+        //pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+       // pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
         pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
         pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
         pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
@@ -183,6 +228,8 @@ public:
         CreateFrustumBuffer(pd3dDevice, renderCamera);
         mvMeshColor = cvRed;
         UpdateParameters(pd3dImmediateContext, mObserveCamera);
+
+        pd3dImmediateContext->RSSetState(mpRSWireframe);
 
         // Render the mesh
         UINT Strides[1] = { 16 };

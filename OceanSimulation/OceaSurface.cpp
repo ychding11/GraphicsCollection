@@ -139,7 +139,6 @@ void OceanSurface::GetSurfaceRange(const Camera &renderCamera)
 		XMFLOAT2(1, 1),
 	};
 
-	
 	XMMATRIX invViewprojMat = pack * XMMatrixInverse(nullptr, viewprojMat);
     mGridConer[0] = getWorldGridConer(gridConer[0], invViewprojMat );
     mGridConer[1] = getWorldGridConer(gridConer[1], invViewprojMat );
@@ -324,7 +323,7 @@ HRESULT OceanSurface::CreateConstBuffer(ID3D11Device* pd3dDevice )
     return S_OK;
 }
 
-HRESULT OceanSurface::CreateEffects(ID3D11Device* pd3dDevice, void* pUserContext)
+HRESULT OceanSurface::CreateEffects(ID3D11Device* pd3dDevice)
 {
     HRESULT hr = S_OK;
     DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
@@ -370,3 +369,19 @@ HRESULT OceanSurface::CreateEffects(ID3D11Device* pd3dDevice, void* pUserContext
     return hr;
 }
 
+HRESULT OceanSurface::CreateRasterState(ID3D11Device* pd3dDevice)
+{
+    HRESULT hr = S_OK;
+
+    // Create solid and wireframe rasterizer state objects
+    D3D11_RASTERIZER_DESC RasterDesc;
+    ZeroMemory(&RasterDesc, sizeof(D3D11_RASTERIZER_DESC));
+    RasterDesc.CullMode = D3D11_CULL_NONE;
+    RasterDesc.DepthClipEnable = TRUE;
+    RasterDesc.FillMode = D3D11_FILL_WIREFRAME;
+    V_RETURN( pd3dDevice->CreateRasterizerState(&RasterDesc, &mpRSWireframe) );
+    RasterDesc.FillMode = D3D11_FILL_SOLID;
+    V_RETURN( pd3dDevice->CreateRasterizerState(&RasterDesc, &mpRSSolid) );
+
+    return hr;
+}
