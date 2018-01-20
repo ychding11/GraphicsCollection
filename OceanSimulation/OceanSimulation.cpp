@@ -81,7 +81,6 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
     float fAspect = static_cast<float>( pBackBufferSurfaceDesc->Width ) / static_cast<float>( pBackBufferSurfaceDesc->Height );
     g_renderCamera.UpdateAspect(fAspect);
     oceansurface.setWindowAspect(fAspect);
-   // oceansurface.setSize(pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height);
 
     return S_OK;
 }
@@ -142,22 +141,22 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
         {
             case VK_F1:
             {
-                int x = oceansurface.mXSize;
-                int y = oceansurface.mYSize;
+                int x = oceansurface.iparameters["xsize"];
+                int y = oceansurface.iparameters["ysize"];
                 x = x + 4 > 64 ? 64 : x + 4;
                 y = x;
-                oceansurface.mXSize = x;
-                oceansurface.mYSize = y;
+                oceansurface.iparameters["xsize"] = x;
+                oceansurface.iparameters["ysize"] = y;
                 break;
             }
             case VK_F2:
             {
-                int x = oceansurface.mXSize;
-                int y = oceansurface.mYSize;
+                int x = oceansurface.iparameters["xsize"];
+                int y = oceansurface.iparameters["ysize"];
                 x = x - 4 < 4 ? 4 : x - 4;
                 y = x;
-                oceansurface.mXSize = x;
-                oceansurface.mYSize = y;
+                oceansurface.iparameters["xsize"] = x;
+                oceansurface.iparameters["ysize"] = y;
                 break;
             }
             case VK_F3:

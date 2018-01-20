@@ -149,8 +149,8 @@ void OceanSurface::GetSurfaceRange(const Camera &renderCamera)
 
 void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
 {
-    int sizeX = mXSize;
-    int sizeY = mYSize;
+    int sizeX = iparameters["xsize"];//mXSize;
+    int sizeY = iparameters["ysize"]; //mYSize;
     float u = 0.0f, v = 0.0f;
     float du = 1.0 / float(sizeX - 1), dv = 1.0 / float(sizeY - 1);
     XMMATRIX viewprojMat = renderCamera.GetViewProjMatrix();
@@ -220,12 +220,17 @@ void OceanSurface::UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, c
     // Update constant buffer that changes once per frame
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     V(pd3dImmediateContext->Map(mpCBChangesEveryFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
-    auto pCB = reinterpret_cast<CBChangesEveryFrame*>(MappedResource.pData);
+    CBChangesEveryFrame* pCB = reinterpret_cast<CBChangesEveryFrame*>(MappedResource.pData);
     XMStoreFloat4x4(&pCB->mWorld, XMMatrixTranspose(mmWorld));
     XMStoreFloat4x4(&pCB->mView, XMMatrixTranspose(mView));
     XMStoreFloat4x4(&pCB->mProj, XMMatrixTranspose(mProjection));
     pCB->vMeshColor = mvMeshColor;
     pd3dImmediateContext->Unmap(mpCBChangesEveryFrame, 0);
+
+    V(pd3dImmediateContext->Map(mpCBWireframe, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
+    CBWireframe* pCBWireframe = reinterpret_cast<CBWireframe*>(MappedResource.pData);
+    pCBWireframe->vMeshColor = mvMeshColor;
+    pd3dImmediateContext->Unmap(mpCBWireframe, 0);
 }
 
 HRESULT OceanSurface::CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice )
@@ -320,6 +325,8 @@ HRESULT OceanSurface::CreateConstBuffer(ID3D11Device* pd3dDevice )
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bd.ByteWidth = sizeof(CBChangesEveryFrame);
     V_RETURN(pd3dDevice->CreateBuffer(&bd, nullptr, &mpCBChangesEveryFrame));
+    bd.ByteWidth = sizeof(CBWireframe);
+    V_RETURN(pd3dDevice->CreateBuffer(&bd, nullptr, &mpCBWireframe));
     return S_OK;
 }
 
@@ -386,6 +393,14 @@ HRESULT OceanSurface::CreateRasterState(ID3D11Device* pd3dDevice)
     return hr;
 }
 
+HRESULT OceanSurface::BindBuffers(ID3D11DeviceContext* pd3dImmediateContext, int numBuffers, ID3D11Buffer* pVB[], UINT Strides[], UINT Offsets[], ID3D11Buffer* pIB)
+{
+
+    pd3dImmediateContext->IASetVertexBuffers(0, 1, pVB, Strides, Offsets);
+    pd3dImmediateContext->IASetIndexBuffer(pIB, DXGI_FORMAT_R32_UINT, 0);
+    return 0;
+}
+
 void OceanSurface::Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
 {
     if (!IntersectionTest(renderCamera)) return;
@@ -427,9 +442,8 @@ void OceanSurface::Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImm
     }
 
     pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
-    pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
     pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
-    pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
+    pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpCBWireframe);
     pd3dImmediateContext->DrawIndexed(mSurfaceIndex.size(), 0, 0);
 }
 void OceanSurface::ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)

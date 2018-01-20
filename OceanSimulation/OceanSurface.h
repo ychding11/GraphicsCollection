@@ -29,6 +29,11 @@ public:
         XMFLOAT4   vMeshColor;
     };
 
+    struct CBWireframe
+    {
+        XMFLOAT4   vMeshColor;
+    };
+
     struct SurfaceVertex
     {
         float x;
@@ -48,6 +53,7 @@ public:
     ID3D11Buffer*			mpIndexBuffer  = nullptr;
     ID3D11Buffer*			mpVertexBuffer = nullptr;
     ID3D11Buffer*           mpCBChangesEveryFrame = nullptr;
+    ID3D11Buffer*           mpCBWireframe = nullptr;
     ID3D11RasterizerState*  mpRSWireframe = nullptr;
     ID3D11RasterizerState*  mpRSSolid = nullptr;
 
@@ -77,7 +83,8 @@ private:
 
 public:
     OceanSurface()
-        : mEffectsFile(L"oceanSimulation.fx")
+        //: mEffectsFile(L"oceanSimulation.fx")
+        : mEffectsFile(L"wireframe.fx")
         , mXSize(32), mYSize(32)
         , mvMeshColor(0.0, 0.0, 0.0, 1.0)
         , cvGreen(0.0, 1.0, 0.0, 1.0)
@@ -92,6 +99,8 @@ public:
         iparameters["prime_index"] = 0;
         iparameters["primitive_topology"] = 2;
         iparameters["wireframe"] = 1;
+        iparameters["xsize"] = 32;
+        iparameters["ysize"] = 32;
         fparameters["max_amplitude"] = 1.0f;
 
         mUpper = XMPlaneFromPointNormal( XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1.0)) + fparameters["max_amplitude"] * mNormal, mNormal);
@@ -123,6 +132,7 @@ public:
         SAFE_RELEASE( mpIndexBuffer);
         SAFE_RELEASE( mpVertexBuffer);
         SAFE_RELEASE( mpCBChangesEveryFrame);
+        SAFE_RELEASE( mpCBWireframe);
         SAFE_RELEASE( mpVertexShader);
         SAFE_RELEASE( mpPixelShader);
         SAFE_RELEASE( mpRSSolid);
@@ -140,6 +150,7 @@ private:
     HRESULT CreateEffects(ID3D11Device* pd3dDevice);
     HRESULT CreateConstBuffer(ID3D11Device* pd3dDevice);
     HRESULT CreateRasterState(ID3D11Device* pd3dDevice);
+    HRESULT BindBuffers(ID3D11DeviceContext* pd3dImmediateContext, int numBuffers, ID3D11Buffer* pVB[], UINT Strides[], UINT Offsets[], ID3D11Buffer* pIB );
 
 public:
 

@@ -405,6 +405,11 @@
     <ClCompile Include="ParameterSet.cpp" />
     <ClCompile Include="PerlinNoise.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="wireframe.fx">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>
