@@ -14,9 +14,10 @@ struct PSInput
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-float4 DrawFustumVS( float4 pos : POSITION ) : SV_POSITION
+float4 DrawFrustumVS( float4 pos : POSITION ) : SV_POSITION
 {
     float4 ret = mul(pos, mInvViewProj);
+    ret = ret / ret.w;
     ret = mul(ret, mViewProj);
     return ret;
 }
@@ -25,7 +26,7 @@ float4 DrawFustumVS( float4 pos : POSITION ) : SV_POSITION
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 DrawFustumPS( float4 pos : SV_POSITION  ) : SV_Target
+float4 DrawFrustumPS( float4 pos : SV_POSITION  ) : SV_Target
 {
     return  vMeshColor;
 }

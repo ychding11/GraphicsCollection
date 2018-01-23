@@ -19,12 +19,20 @@ public:
         : mVertexFormat(vertexFormat)
     { }
 
-    HRESULT InitEffect(ID3D11Device* pd3dDevice, LPCWSTR filename, LPCSTR VSentrypoint, LPCSTR PSentrypoint);
-    HRESULT BindeBuffers(ID3D11Buffer *ib = nullptr, ID3D11Buffer *pb = nullptr, ID3D11Buffer * nb = nullptr, ID3D11Buffer* tb = nullptr, ID3D11Buffer *cb = nullptr);
-    HRESULT ApplyEffect(ID3D11DeviceContext* pd3dImmediateContext);
-
     ~D3D11Effect()
     { }
+
+    void Destroy()
+    {
+        SAFE_RELEASE(mpVertexLayout);
+        SAFE_RELEASE(mpPixelShader);
+        SAFE_RELEASE(mpVertexShader);
+    }
+
+    HRESULT InitEffect(ID3D11Device* pd3dDevice, LPCWSTR filename, LPCSTR VSentrypoint, LPCSTR PSentrypoint);
+    HRESULT BindeBuffers(ID3D11DeviceContext* pd3dImmediateContext, ID3D11Buffer *ib, ID3D11Buffer* vbs[], UINT strides[], UINT offsets[], ID3D11Buffer *cb = nullptr);
+    HRESULT ApplyEffect(ID3D11DeviceContext* pd3dImmediateContext);
+
 
 };
 #endif

@@ -67,12 +67,32 @@ HRESULT D3D11Effect::InitEffect(ID3D11Device* pd3dDevice, LPCWSTR filename, LPCS
     return hr;
 }
 
-HRESULT D3D11Effect::BindeBuffers(ID3D11Buffer *ib = nullptr, ID3D11Buffer *pb = nullptr, ID3D11Buffer * nb = nullptr, ID3D11Buffer* tb = nullptr, ID3D11Buffer *cb = nullptr)
+HRESULT D3D11Effect::BindeBuffers(ID3D11DeviceContext* pd3dImmediateContext, ID3D11Buffer *ib, ID3D11Buffer* vbs[], UINT strides[], UINT offsets[], ID3D11Buffer *cb)
 {
-
+    pd3dImmediateContext->VSSetConstantBuffers(0, 1, &cb);
+    pd3dImmediateContext->PSSetConstantBuffers(0, 1, &cb);
+    pd3dImmediateContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+    pd3dImmediateContext->IASetInputLayout(mpVertexLayout);
+    if ((mVertexFormat & 0x1) && !(mVertexFormat & (~0x1)))
+    {
+        pd3dImmediateContext->IASetVertexBuffers(0, 1, vbs, strides, offsets);
+    }
+    else if ((mVertexFormat & 0x1) && (mVertexFormat & 0x2) && (mVertexFormat & 0x4))
+    {
+        pd3dImmediateContext->IASetVertexBuffers(0, 3, vbs, strides, offsets);
+    }
+    else
+    {
+        assert(0);
+    }
+    return S_OK;
 }
 
 HRESULT D3D11Effect::ApplyEffect(ID3D11DeviceContext* pd3dImmediateContext)
 {
-
+    pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+    pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
+    pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
+    pd3dImmediateContext->DrawIndexed(24, 0, 0);
+    return S_OK;
 }

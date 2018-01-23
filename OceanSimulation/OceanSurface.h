@@ -5,6 +5,8 @@
 //#include "DXUTcamera.h"
 //#include "PlaneMesh.h"
 #include "Camera.h"
+#include "D3D11Effect.h"
+
 #include "PerlinNoise.h"
 #include <vector>
 #include <string>
@@ -49,6 +51,12 @@ public:
         float w;
     };
 
+    enum Effect
+    {
+       E_DrawFrustum,
+       E_EFFECTS
+    };
+
 public:
 
     int mXSize;
@@ -66,6 +74,8 @@ public:
     ID3D11RasterizerState*  mpRSSolid = nullptr;
 
     LPCWSTR                 mEffectsFile;
+    D3D11Effect mEffects[E_EFFECTS];
+    D3D11Effect mDrawFrustum;
 
     XMVECTOR mUpper;
     XMVECTOR mLow;
@@ -146,6 +156,7 @@ public:
         SAFE_RELEASE( mpRSSolid);
         SAFE_RELEASE( mpRSWireframe);
         SAFE_RELEASE( mpCBDrawFrustum);
+        mDrawFrustum.Destroy();
     }
 
     void setSize(int x, int y)
@@ -169,6 +180,8 @@ public:
         V_RETURN( CreateEffects( pd3dDevice) );
         V_RETURN( CreateConstBuffer( pd3dDevice) );
         V_RETURN( CreateRasterState( pd3dDevice) );
+        
+        mDrawFrustum.InitEffect(pd3dDevice, L"drawfrustum.fx", "DrawFrustumVS", "DrawFrustumPS");
         return hr;
     }
 

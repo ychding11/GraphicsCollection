@@ -378,6 +378,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="D3D11Effect.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="ParameterSet.h" />
     <ClInclude Include="PerlinNoise.h" />
@@ -398,6 +399,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="D3D11Effect.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="OceanSimulation.cpp" />
     <ClCompile Include="OceanSurface.h" />

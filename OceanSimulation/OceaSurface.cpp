@@ -512,7 +512,8 @@ void OceanSurface::ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11De
     //CreateFrustumBuffer(pd3dDevice, renderCamera);
     CreateUpdateFrustumBufferGPUMode(pd3dDevice, renderCamera);
     mvMeshColor = cvRed;
-    UpdateParameters(pd3dImmediateContext, mObserveCamera);
+    //UpdateParameters(pd3dImmediateContext, mObserveCamera);
+    UpdateParameters(pd3dImmediateContext, renderCamera);
 
     pd3dImmediateContext->RSSetState(mpRSWireframe);
 
@@ -520,6 +521,10 @@ void OceanSurface::ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11De
     UINT Strides[1] = { 16 };
     UINT Offsets[1] = { 0 };
     ID3D11Buffer* pVB[1] = { mpVertexBuffer };
+    mDrawFrustum.BindeBuffers(pd3dImmediateContext, mpIndexBuffer, pVB, Strides, Offsets, mpCBDrawFrustum);
+    mDrawFrustum.ApplyEffect(pd3dImmediateContext);
+
+#if 0
     // Set the Vertex Layout
     pd3dImmediateContext->IASetInputLayout(mpVertexLayout);
     pd3dImmediateContext->IASetVertexBuffers(0, 1, pVB, Strides, Offsets);
@@ -532,4 +537,6 @@ void OceanSurface::ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11De
 
     pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
     pd3dImmediateContext->DrawIndexed(24, 0, 0);
+#endif
+
 }

@@ -33,6 +33,7 @@
     <ClInclude Include="Logger.h" />
     <ClInclude Include="PerlinNoise.h" />
     <ClInclude Include="ParameterSet.h" />
+    <ClInclude Include="D3D11Effect.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OceanSimulation.rc">
@@ -47,5 +48,6 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="PerlinNoise.cpp" />
     <ClCompile Include="ParameterSet.cpp" />
+    <ClCompile Include="D3D11Effect.cpp" />
   </ItemGroup>
 </Project>
