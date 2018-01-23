@@ -29,6 +29,13 @@ public:
         XMFLOAT4   vMeshColor;
     };
 
+    struct CBDrawFrustum
+    {
+        XMFLOAT4X4 mInvViewProj;
+        XMFLOAT4X4 mViewProj;
+        XMFLOAT4   vMeshColor;
+    };
+
     struct CBWireframe
     {
         XMFLOAT4   vMeshColor;
@@ -54,6 +61,7 @@ public:
     ID3D11Buffer*			mpVertexBuffer = nullptr;
     ID3D11Buffer*           mpCBChangesEveryFrame = nullptr;
     ID3D11Buffer*           mpCBWireframe = nullptr;
+    ID3D11Buffer*           mpCBDrawFrustum = nullptr;
     ID3D11RasterizerState*  mpRSWireframe = nullptr;
     ID3D11RasterizerState*  mpRSSolid = nullptr;
 
@@ -137,6 +145,7 @@ public:
         SAFE_RELEASE( mpPixelShader);
         SAFE_RELEASE( mpRSSolid);
         SAFE_RELEASE( mpRSWireframe);
+        SAFE_RELEASE( mpCBDrawFrustum);
     }
 
     void setSize(int x, int y)
@@ -176,6 +185,7 @@ private:
 
     HRESULT CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice);
     HRESULT CreateFrustumBuffer(ID3D11Device* pd3dDevice,  const Camera &renderCamera);
+    HRESULT CreateUpdateFrustumBufferGPUMode(ID3D11Device* pd3dDevice,  const Camera &renderCamera);
 
     bool IntersectionTest(const Camera &renderCamera);
     void GetSurfaceRange(const Camera &renderCamera);

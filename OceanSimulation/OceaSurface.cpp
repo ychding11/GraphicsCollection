@@ -4,6 +4,8 @@
 #include "SDKmisc.h"
 //#include "DDSTextureLoader.h"
 
+
+
 bool OceanSurface::IntersectionTest(const Camera &renderCamera)
 {
     XMFLOAT3 frustum[8] = {
@@ -211,30 +213,12 @@ XMVECTOR OceanSurface::getWorldGridConer(XMFLOAT2 coner,  const XMMATRIX &invVie
     return ret;
 }
 
-void OceanSurface::UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
-{
-    HRESULT hr;
-    XMMATRIX mView = renderCamera.GetViewMatrix();
-    XMMATRIX mProjection = renderCamera.GetProjMatrix();
 
-    // Update constant buffer that changes once per frame
-    D3D11_MAPPED_SUBRESOURCE MappedResource;
-    V(pd3dImmediateContext->Map(mpCBChangesEveryFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
-    CBChangesEveryFrame* pCB = reinterpret_cast<CBChangesEveryFrame*>(MappedResource.pData);
-    XMStoreFloat4x4(&pCB->mWorld, XMMatrixTranspose(mmWorld));
-    XMStoreFloat4x4(&pCB->mView, XMMatrixTranspose(mView));
-    XMStoreFloat4x4(&pCB->mProj, XMMatrixTranspose(mProjection));
-    pCB->vMeshColor = mvMeshColor;
-    pd3dImmediateContext->Unmap(mpCBChangesEveryFrame, 0);
-
-    V(pd3dImmediateContext->Map(mpCBWireframe, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
-    CBWireframe* pCBWireframe = reinterpret_cast<CBWireframe*>(MappedResource.pData);
-    pCBWireframe->vMeshColor = mvMeshColor;
-    pd3dImmediateContext->Unmap(mpCBWireframe, 0);
-}
 
 HRESULT OceanSurface::CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice )
 {
+    
+
     HRESULT  hr;
     D3D11_BUFFER_DESC bd;
     ZeroMemory(&bd, sizeof(bd));
@@ -315,6 +299,51 @@ HRESULT OceanSurface::CreateFrustumBuffer(ID3D11Device* pd3dDevice,  const Camer
     return S_OK;
 }
 
+HRESULT OceanSurface::CreateUpdateFrustumBufferGPUMode(ID3D11Device* pd3dDevice, const Camera &renderCamera)
+{
+    HRESULT  hr;
+    D3D11_BUFFER_DESC bd;
+    D3D11_SUBRESOURCE_DATA InitData;
+    XMFLOAT4 frustumVertex[8] = {
+        XMFLOAT4(-1, -1, 0, 1),
+        XMFLOAT4(+1, -1, 0, 1),
+        XMFLOAT4(-1, +1, 0, 1),
+        XMFLOAT4(+1, +1, 0, 1),
+        XMFLOAT4(-1, -1, +1, 1),
+        XMFLOAT4(+1, -1, +1, 1),
+        XMFLOAT4(-1, +1, +1, 1),
+        XMFLOAT4(+1, +1, +1, 1) };
+
+    int frustumIndex[24] = {
+        0, 1, 0, 2, 2, 3, 1, 3,
+        0, 4, 2, 6, 3, 7, 1, 5,
+        4, 6, 4, 5, 5, 7, 6, 7 };
+    SAFE_RELEASE(mpVertexBuffer);
+    {
+        ZeroMemory(&bd, sizeof(bd));
+        ZeroMemory(&InitData, sizeof(InitData));
+        bd.Usage = D3D11_USAGE_DEFAULT;
+        bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        bd.CPUAccessFlags = 0;
+        bd.ByteWidth = 8 * 16;
+        InitData.pSysMem = frustumVertex;
+        V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &mpVertexBuffer));
+    }
+
+    SAFE_RELEASE(mpIndexBuffer);
+    {
+        ZeroMemory(&bd, sizeof(bd));
+        ZeroMemory(&InitData, sizeof(InitData));
+        bd.Usage = D3D11_USAGE_DEFAULT;
+        bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+        bd.CPUAccessFlags = 0;
+        bd.ByteWidth = 24 * sizeof(int);
+        InitData.pSysMem = frustumIndex;
+        V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &mpIndexBuffer));
+    }
+    return S_OK;
+}
+
 HRESULT OceanSurface::CreateConstBuffer(ID3D11Device* pd3dDevice )
 {
     HRESULT  hr;
@@ -327,7 +356,39 @@ HRESULT OceanSurface::CreateConstBuffer(ID3D11Device* pd3dDevice )
     V_RETURN(pd3dDevice->CreateBuffer(&bd, nullptr, &mpCBChangesEveryFrame));
     bd.ByteWidth = sizeof(CBWireframe);
     V_RETURN(pd3dDevice->CreateBuffer(&bd, nullptr, &mpCBWireframe));
+    bd.ByteWidth = sizeof(CBDrawFrustum);
+    V_RETURN(pd3dDevice->CreateBuffer(&bd, nullptr, &mpCBDrawFrustum));
     return S_OK;
+}
+
+void OceanSurface::UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
+{
+    HRESULT hr;
+    XMMATRIX mView = renderCamera.GetViewMatrix();
+    XMMATRIX mProjection = renderCamera.GetProjMatrix();
+
+    // Update constant buffer that changes once per frame
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    V(pd3dImmediateContext->Map(mpCBChangesEveryFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
+    CBChangesEveryFrame* pCB = reinterpret_cast<CBChangesEveryFrame*>(MappedResource.pData);
+    XMStoreFloat4x4(&pCB->mWorld, XMMatrixTranspose(mmWorld));
+    XMStoreFloat4x4(&pCB->mView, XMMatrixTranspose(mView));
+    XMStoreFloat4x4(&pCB->mProj, XMMatrixTranspose(mProjection));
+    pCB->vMeshColor = mvMeshColor;
+    pd3dImmediateContext->Unmap(mpCBChangesEveryFrame, 0);
+
+    V(pd3dImmediateContext->Map(mpCBWireframe, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
+    CBWireframe* pCBWireframe = reinterpret_cast<CBWireframe*>(MappedResource.pData);
+    pCBWireframe->vMeshColor = mvMeshColor;
+    pd3dImmediateContext->Unmap(mpCBWireframe, 0);
+
+    V(pd3dImmediateContext->Map(mpCBDrawFrustum, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
+    CBDrawFrustum* pCBDrawFrustum = reinterpret_cast<CBDrawFrustum*>(MappedResource.pData);
+
+    XMStoreFloat4x4(&pCBDrawFrustum->mInvViewProj, XMMatrixTranspose(renderCamera.GetInvViewProjMatrix()));
+    XMStoreFloat4x4(&pCBDrawFrustum->mViewProj, XMMatrixTranspose(mObserveCamera.GetViewProjMatrix()));
+    pCBDrawFrustum->vMeshColor = mvMeshColor;
+    pd3dImmediateContext->Unmap(mpCBDrawFrustum, 0);
 }
 
 HRESULT OceanSurface::CreateEffects(ID3D11Device* pd3dDevice)
@@ -448,7 +509,8 @@ void OceanSurface::Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImm
 }
 void OceanSurface::ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
 {
-    CreateFrustumBuffer(pd3dDevice, renderCamera);
+    //CreateFrustumBuffer(pd3dDevice, renderCamera);
+    CreateUpdateFrustumBufferGPUMode(pd3dDevice, renderCamera);
     mvMeshColor = cvRed;
     UpdateParameters(pd3dImmediateContext, mObserveCamera);
 
@@ -465,7 +527,8 @@ void OceanSurface::ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11De
     pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
     pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
-    pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
+    //pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
+    pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBDrawFrustum);
 
     pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
     pd3dImmediateContext->DrawIndexed(24, 0, 0);

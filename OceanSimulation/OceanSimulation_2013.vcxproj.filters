@@ -20,6 +20,9 @@
     <None Include="wireframe.fx">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="drawfrustum.fx">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
