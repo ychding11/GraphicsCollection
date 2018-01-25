@@ -1,6 +1,4 @@
 #include "OceanSurface.h"
-
-
 #include "SDKmisc.h"
 //#include "DDSTextureLoader.h"
 
@@ -165,6 +163,9 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
 #endif
 
     mSurfaceVertex.clear();
+    mSurfaceNormal.clear();
+    mSurfaceTexCoord.clear();
+
     for (int i = 0; i < sizeY; ++i)
     {
         u = 0.0f;
@@ -174,13 +175,18 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
             xx.m128_f32[1] = fparameters["max_amplitude"] * noise.GetNoiseValue(i, j);
             XMFLOAT4 temp;
             XMStoreFloat4(&temp, XMVector4Transform(xx, viewprojMat ));
-            //temp.y = noise.ValueNoise_2D(temp.x, temp.z);
-            SurfaceVertex vertex = {temp.x, temp.y, temp.z, temp.w };
+            //XMStoreFloat4(&temp, xx);
+            Position vertex = {temp.x, temp.y, temp.z, temp.w };
             mSurfaceVertex.push_back(vertex);
+            TexCoord tex = {u, v};
+            Normal normal = {0, 1, 0};
+            mSurfaceTexCoord.push_back(tex);
+            mSurfaceNormal.push_back(normal);
             u += du;
         }
         v += dv;
     }
+
 
     mSurfaceIndex.clear();
     for (int i = 0; i < sizeY - 1; ++i)
@@ -217,15 +223,13 @@ XMVECTOR OceanSurface::getWorldGridConer(XMFLOAT2 coner,  const XMMATRIX &invVie
 
 HRESULT OceanSurface::CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice )
 {
-    
-
     HRESULT  hr;
     D3D11_BUFFER_DESC bd;
     ZeroMemory(&bd, sizeof(bd));
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bd.CPUAccessFlags = 0;
-    bd.ByteWidth = mSurfaceVertex.size() * sizeof(SurfaceVertex);
+    bd.ByteWidth = mSurfaceVertex.size() * sizeof(Position);
 
     D3D11_SUBRESOURCE_DATA InitData;
     ZeroMemory(&InitData, sizeof(InitData));
@@ -243,7 +247,7 @@ HRESULT OceanSurface::CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice 
     return S_OK;
 }
 
-HRESULT OceanSurface::CreateFrustumBuffer(ID3D11Device* pd3dDevice,  const Camera &renderCamera)
+HRESULT OceanSurface::CreateFrustumBufferCPUMode(ID3D11Device* pd3dDevice,  const Camera &renderCamera)
 {
     HRESULT  hr;
     D3D11_BUFFER_DESC bd;
@@ -372,8 +376,7 @@ void OceanSurface::UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, c
     V(pd3dImmediateContext->Map(mpCBChangesEveryFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
     CBChangesEveryFrame* pCB = reinterpret_cast<CBChangesEveryFrame*>(MappedResource.pData);
     XMStoreFloat4x4(&pCB->mWorld, XMMatrixTranspose(mmWorld));
-    XMStoreFloat4x4(&pCB->mView, XMMatrixTranspose(mView));
-    XMStoreFloat4x4(&pCB->mProj, XMMatrixTranspose(mProjection));
+    XMStoreFloat4x4(&pCB->mViewProj, XMMatrixTranspose(renderCamera.GetViewProjMatrix()));
     pCB->vMeshColor = mvMeshColor;
     pd3dImmediateContext->Unmap(mpCBChangesEveryFrame, 0);
 
@@ -384,57 +387,10 @@ void OceanSurface::UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, c
 
     V(pd3dImmediateContext->Map(mpCBDrawFrustum, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
     CBDrawFrustum* pCBDrawFrustum = reinterpret_cast<CBDrawFrustum*>(MappedResource.pData);
-
     XMStoreFloat4x4(&pCBDrawFrustum->mInvViewProj, XMMatrixTranspose(renderCamera.GetInvViewProjMatrix()));
     XMStoreFloat4x4(&pCBDrawFrustum->mViewProj, XMMatrixTranspose(mObserveCamera.GetViewProjMatrix()));
     pCBDrawFrustum->vMeshColor = mvMeshColor;
     pd3dImmediateContext->Unmap(mpCBDrawFrustum, 0);
-}
-
-HRESULT OceanSurface::CreateEffects(ID3D11Device* pd3dDevice)
-{
-    HRESULT hr = S_OK;
-    DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-#ifdef _DEBUG
-    // Set the D3DCOMPILE_DEBUG flag to embed debug information in the shaders.
-    // Setting this flag improves the shader debugging experience, but still allows 
-    // the shaders to be optimized and to run exactly the way they will run in 
-    // the release configuration of this program.
-    dwShaderFlags |= D3DCOMPILE_DEBUG;
-
-    // Disable optimizations to further improve shader debugging
-    dwShaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
-    // Compile the vertex shader
-    // Create the vertex shader
-    ID3DBlob* pVSBlob = nullptr;
-    V_RETURN(DXUTCompileFromFile(mEffectsFile, nullptr, "VS", "vs_4_0", dwShaderFlags, 0, &pVSBlob));
-    hr = pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &mpVertexShader);
-    if (FAILED(hr))
-    {
-        SAFE_RELEASE(pVSBlob);
-        return hr;
-    }
-
-    // Create the input layout
-    D3D11_INPUT_ELEMENT_DESC layout[] =
-    {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-       // { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-       // { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    };
-    UINT numElements = ARRAYSIZE(layout);
-    pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &mpVertexLayout);
-    SAFE_RELEASE(pVSBlob);
-    if (FAILED(hr)) return hr;
-
-    // Compile the pixel shader
-    // Create the pixel shader
-    ID3DBlob* pPSBlob = nullptr;
-    V_RETURN(DXUTCompileFromFile(mEffectsFile, nullptr, "PS", "ps_4_0", dwShaderFlags, 0, &pPSBlob));
-    hr = pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &mpPixelShader);
-    SAFE_RELEASE(pPSBlob);
-    return hr;
 }
 
 HRESULT OceanSurface::CreateRasterState(ID3D11Device* pd3dDevice)
@@ -452,14 +408,6 @@ HRESULT OceanSurface::CreateRasterState(ID3D11Device* pd3dDevice)
     V_RETURN( pd3dDevice->CreateRasterizerState(&RasterDesc, &mpRSSolid) );
 
     return hr;
-}
-
-HRESULT OceanSurface::BindBuffers(ID3D11DeviceContext* pd3dImmediateContext, int numBuffers, ID3D11Buffer* pVB[], UINT Strides[], UINT Offsets[], ID3D11Buffer* pIB)
-{
-
-    pd3dImmediateContext->IASetVertexBuffers(0, 1, pVB, Strides, Offsets);
-    pd3dImmediateContext->IASetIndexBuffer(pIB, DXGI_FORMAT_R32_UINT, 0);
-    return 0;
 }
 
 void OceanSurface::Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
@@ -500,53 +448,25 @@ void OceanSurface::Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImm
     }
 
     // Render the mesh
-    UINT Strides[1] = { sizeof(SurfaceVertex) };
-    UINT Offsets[1] = { 0 };
+    UINT strides[1] = { sizeof(Position) };
+    UINT offsets[1] = { 0 };
     ID3D11Buffer* pVB[1] = { mpVertexBuffer };
-    mCPUEffect.BindeBuffers(pd3dImmediateContext, mpIndexBuffer, pVB, Strides, Offsets, mpCBWireframe);
+    mCPUEffect.BindeBuffers(pd3dImmediateContext, mpIndexBuffer, pVB, strides, offsets, mpCBWireframe);
     mCPUEffect.ApplyEffect(pd3dImmediateContext, mSurfaceIndex.size(), primitivetopology);
-
-#if 0
-    pd3dImmediateContext->IASetVertexBuffers(0, 1, pVB, Strides, Offsets);
-    pd3dImmediateContext->IASetIndexBuffer(mpIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    // Set the Vertex Layout
-    pd3dImmediateContext->IASetInputLayout(mpVertexLayout);
-    pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
-    pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
-    pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpCBWireframe);
-    pd3dImmediateContext->DrawIndexed(mSurfaceIndex.size(), 0, 0);
-#endif
 }
+
 void OceanSurface::ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
 {
     //CreateFrustumBuffer(pd3dDevice, renderCamera);
     CreateUpdateFrustumBufferGPUMode(pd3dDevice, renderCamera);
     mvMeshColor = cvRed;
-    //UpdateParameters(pd3dImmediateContext, mObserveCamera);
     UpdateParameters(pd3dImmediateContext, renderCamera);
-
-    pd3dImmediateContext->RSSetState(mpRSWireframe);
+    pd3dImmediateContext->RSSetState(mpRSWireframe); // only wireframe
 
     // Render the mesh
-    UINT Strides[1] = { 16 };
-    UINT Offsets[1] = { 0 };
+    UINT strides[1] = { 16 };
+    UINT offsets[1] = { 0 };
     ID3D11Buffer* pVB[1] = { mpVertexBuffer };
-    mDrawFrustum.BindeBuffers(pd3dImmediateContext, mpIndexBuffer, pVB, Strides, Offsets, mpCBDrawFrustum);
+    mDrawFrustum.BindeBuffers(pd3dImmediateContext, mpIndexBuffer, pVB, strides, offsets, mpCBDrawFrustum);
     mDrawFrustum.ApplyEffect(pd3dImmediateContext, 24, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-
-#if 0
-    // Set the Vertex Layout
-    pd3dImmediateContext->IASetInputLayout(mpVertexLayout);
-    pd3dImmediateContext->IASetVertexBuffers(0, 1, pVB, Strides, Offsets);
-    pd3dImmediateContext->IASetIndexBuffer(mpIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-
-    pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
-    //pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBChangesEveryFrame);
-    pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpCBDrawFrustum);
-
-    pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
-    pd3dImmediateContext->DrawIndexed(24, 0, 0);
-#endif
-
 }
