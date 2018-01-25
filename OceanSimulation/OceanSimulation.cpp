@@ -175,6 +175,11 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
                 oceansurface.iparameters["primitive_topology"] = (a + 1) % 3;
                 break;
             }
+            case VK_F6:
+            {
+                oceansurface.iparameters["cputransform"] ^= 1;
+                break;
+            }
         }
     }
 }

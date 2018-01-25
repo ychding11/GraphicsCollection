@@ -17,8 +17,8 @@ cbuffer cbChangesEveryFrame : register( b0 )
 struct VSInput
 {
     float4 Pos    : POSITION;
-    //float3 Normal : NORMAL;
-    //float2 Tex    : TEXCOORD;
+    float3 Normal : NORMAL;
+    float2 Tex    : TEXCOORD;
 };
 
 struct PSInput

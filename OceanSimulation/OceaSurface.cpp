@@ -174,8 +174,14 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
             XMVECTOR xx = (1.0f - v) * ( (1.0f - u) * mGridConer[0] + u * mGridConer[1]) + v * ( (1.0 - u) * mGridConer[2] + u * mGridConer[3] );
             xx.m128_f32[1] = fparameters["max_amplitude"] * noise.GetNoiseValue(i, j);
             XMFLOAT4 temp;
-            XMStoreFloat4(&temp, XMVector4Transform(xx, viewprojMat ));
-            //XMStoreFloat4(&temp, xx);
+            if (iparameters["cputransform"])
+            {
+                XMStoreFloat4(&temp, XMVector4Transform(xx, viewprojMat ));
+            }
+            else
+            {
+                XMStoreFloat4(&temp, xx);
+            }
             Position vertex = {temp.x, temp.y, temp.z, temp.w };
             mSurfaceVertex.push_back(vertex);
             TexCoord tex = {u, v};
@@ -236,6 +242,20 @@ HRESULT OceanSurface::CreateAndUpdateSurfaceMeshBuffer(ID3D11Device* pd3dDevice 
     InitData.pSysMem = &(mSurfaceVertex[0]);
     SAFE_RELEASE(mpVertexBuffer);
     V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &mpVertexBuffer));
+
+    bd.ByteWidth = mSurfaceNormal.size() * sizeof(Normal);
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    ZeroMemory(&InitData, sizeof(InitData));
+    InitData.pSysMem = &(mSurfaceNormal[0]);
+    SAFE_RELEASE(mpNormalBuffer);
+    V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &mpNormalBuffer));
+
+    bd.ByteWidth = mSurfaceTexCoord.size() * sizeof(TexCoord);
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    ZeroMemory(&InitData, sizeof(InitData));
+    InitData.pSysMem = &(mSurfaceTexCoord[0]);
+    SAFE_RELEASE(mpTexCoordBuffer);
+    V_RETURN(pd3dDevice->CreateBuffer(&bd, &InitData, &mpTexCoordBuffer));
 
     bd.ByteWidth = mSurfaceIndex.size() * sizeof(int);
     bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -420,8 +440,6 @@ void OceanSurface::Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImm
     GetSurfaceRange(renderCamera);
     TessellateSurfaceMesh(renderCamera);
     CreateAndUpdateSurfaceMeshBuffer(pd3dDevice);
-    mvMeshColor = cvGreen;
-    UpdateParameters(pd3dImmediateContext, renderCamera);
 
     D3D_PRIMITIVE_TOPOLOGY primitivetopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     switch (iparameters["primitive_topology"])
@@ -447,12 +465,26 @@ void OceanSurface::Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImm
         pd3dImmediateContext->RSSetState(mpRSSolid);
     }
 
-    // Render the mesh
-    UINT strides[1] = { sizeof(Position) };
-    UINT offsets[1] = { 0 };
-    ID3D11Buffer* pVB[1] = { mpVertexBuffer };
-    mCPUEffect.BindeBuffers(pd3dImmediateContext, mpIndexBuffer, pVB, strides, offsets, mpCBWireframe);
-    mCPUEffect.ApplyEffect(pd3dImmediateContext, mSurfaceIndex.size(), primitivetopology);
+    if (iparameters["cputransform"])
+    {
+        mvMeshColor = cvGreen;
+        UpdateParameters(pd3dImmediateContext, renderCamera);
+        UINT strides[] = { sizeof(Position) };
+        UINT offsets[] = { 0 };
+        ID3D11Buffer* pVB[] = { mpVertexBuffer };
+        mCPUEffect.BindeBuffers(pd3dImmediateContext, mpIndexBuffer, pVB, strides, offsets, mpCBWireframe);
+        mCPUEffect.ApplyEffect(pd3dImmediateContext, mSurfaceIndex.size(), primitivetopology);
+    }
+    else
+    {
+        mvMeshColor = cvRed;
+        UpdateParameters(pd3dImmediateContext, renderCamera);
+        UINT strides[] = { sizeof(Position), sizeof(Normal), sizeof(TexCoord) };
+        UINT offsets[] = { 0, 0, 0 };
+        ID3D11Buffer* pVB[] = { mpVertexBuffer, mpNormalBuffer, mpTexCoordBuffer };
+        mWaterEffect.BindeBuffers(pd3dImmediateContext, mpIndexBuffer, pVB, strides, offsets, mpCBChangesEveryFrame);
+        mWaterEffect.ApplyEffect(pd3dImmediateContext, mSurfaceIndex.size(), primitivetopology);
+    }
 }
 
 void OceanSurface::ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)

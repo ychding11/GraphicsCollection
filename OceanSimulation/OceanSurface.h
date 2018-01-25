@@ -78,6 +78,8 @@ public:
 
     ID3D11Buffer*			mpIndexBuffer  = nullptr;
     ID3D11Buffer*			mpVertexBuffer = nullptr;
+    ID3D11Buffer*			mpNormalBuffer = nullptr;
+    ID3D11Buffer*			mpTexCoordBuffer = nullptr;
     ID3D11Buffer*           mpCBChangesEveryFrame = nullptr;
     ID3D11Buffer*           mpCBWireframe = nullptr;
     ID3D11Buffer*           mpCBDrawFrustum = nullptr;
@@ -86,6 +88,7 @@ public:
 
     D3D11Effect mDrawFrustum;
     D3D11Effect mCPUEffect;
+    D3D11Effect mWaterEffect;
 
 
     XMVECTOR mUpper;
@@ -116,9 +119,10 @@ public:
         , mvMeshColor(0.0, 0.0, 0.0, 1.0)
         , cvGreen(0.0, 1.0, 0.0, 1.0)
         , cvRed(1.0, 0.0, 0.0, 1.0)
-        , mObserveCamera(XMFLOAT3(400, 0.0, 0.0), XMFLOAT3(0,0,0), XM_PI * 0.25f, 1.78, 0.1f, 10000.0f)
+        , mObserveCamera(XMFLOAT3(400, 0.0, 0.0), XMFLOAT3(0, 0, 0), XM_PI * 0.25f, 1.78, 0.1f, 10000.0f)
         //, noise(this->mXSize, this->mYSize, 4, 0.99)
         , noise(256, 256, 9, 0.99)
+        , mWaterEffect(0x1 | 0x2 | 0x4)
     {
         mmWorld = XMMatrixIdentity();
         mNormal = XMLoadFloat4(&XMFLOAT4(0, 1, 0, 0));
@@ -126,6 +130,7 @@ public:
         iparameters["prime_index"] = 0;
         iparameters["primitive_topology"] = 2;
         iparameters["wireframe"] = 1;
+        iparameters["cputransform"] = 1;
         iparameters["xsize"] = 32;
         iparameters["ysize"] = 32;
         fparameters["max_amplitude"] = 1.0f;
@@ -157,6 +162,8 @@ public:
     {
         SAFE_RELEASE( mpIndexBuffer);
         SAFE_RELEASE( mpVertexBuffer);
+        SAFE_RELEASE( mpNormalBuffer);
+        SAFE_RELEASE( mpTexCoordBuffer);
         SAFE_RELEASE( mpCBChangesEveryFrame);
         SAFE_RELEASE( mpCBWireframe);
         SAFE_RELEASE( mpRSSolid);
@@ -164,6 +171,7 @@ public:
         SAFE_RELEASE( mpCBDrawFrustum);
         mDrawFrustum.Destroy();
         mCPUEffect.Destroy();
+        mWaterEffect.Destroy();
     }
 
     void setSize(int x, int y)
@@ -187,6 +195,7 @@ public:
         
         mDrawFrustum.InitEffect(pd3dDevice, L"drawfrustum.fx", "DrawFrustumVS", "DrawFrustumPS");
         mCPUEffect.InitEffect(pd3dDevice, L"cpueffect.fx", "VS", "PS");
+        mWaterEffect.InitEffect(pd3dDevice, L"oceanSimulation.fx", "VS", "PS");
         return hr;
     }
 
