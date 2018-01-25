@@ -5,7 +5,13 @@
 
 #include <string>
 
-
+// It is just used to record effect infomation.
+// 1. vertex shader object
+// 2. pixel shader object.
+// 3. vertex attribute layout.
+// 4. vertex format.
+//
+// It is the caller's responsiblity of creating and updating GPU Buffers.
 class D3D11Effect
 {
 public:
@@ -31,7 +37,7 @@ public:
 
     HRESULT InitEffect(ID3D11Device* pd3dDevice, LPCWSTR filename, LPCSTR VSentrypoint, LPCSTR PSentrypoint);
     HRESULT BindeBuffers(ID3D11DeviceContext* pd3dImmediateContext, ID3D11Buffer *ib, ID3D11Buffer* vbs[], UINT strides[], UINT offsets[], ID3D11Buffer *cb = nullptr);
-    HRESULT ApplyEffect(ID3D11DeviceContext* pd3dImmediateContext);
+    HRESULT ApplyEffect(ID3D11DeviceContext* pd3dImmediateContext, int indexCount, D3D_PRIMITIVE_TOPOLOGY primitivetopology);
 
 
 };

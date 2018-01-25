@@ -408,7 +408,7 @@
     <ClCompile Include="PerlinNoise.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="wireframe.fx">
+    <None Include="cpueffect.fx">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

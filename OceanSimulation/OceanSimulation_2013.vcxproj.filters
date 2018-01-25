@@ -17,10 +17,10 @@
     <None Include="oceanSimulation.fx">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="wireframe.fx">
+    <None Include="drawfrustum.fx">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="drawfrustum.fx">
+    <None Include="cpueffect.fx">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

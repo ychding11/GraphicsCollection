@@ -74,8 +74,9 @@ public:
     ID3D11RasterizerState*  mpRSSolid = nullptr;
 
     LPCWSTR                 mEffectsFile;
-    D3D11Effect mEffects[E_EFFECTS];
     D3D11Effect mDrawFrustum;
+    D3D11Effect mCPUEffect;
+
 
     XMVECTOR mUpper;
     XMVECTOR mLow;
@@ -102,7 +103,8 @@ private:
 public:
     OceanSurface()
         //: mEffectsFile(L"oceanSimulation.fx")
-        : mEffectsFile(L"wireframe.fx")
+        //: mEffectsFile(L"wireframe.fx")
+        : mEffectsFile(L"cpueffect.fx")
         , mXSize(32), mYSize(32)
         , mvMeshColor(0.0, 0.0, 0.0, 1.0)
         , cvGreen(0.0, 1.0, 0.0, 1.0)
@@ -157,6 +159,7 @@ public:
         SAFE_RELEASE( mpRSWireframe);
         SAFE_RELEASE( mpCBDrawFrustum);
         mDrawFrustum.Destroy();
+        mCPUEffect.Destroy();
     }
 
     void setSize(int x, int y)
@@ -182,6 +185,7 @@ public:
         V_RETURN( CreateRasterState( pd3dDevice) );
         
         mDrawFrustum.InitEffect(pd3dDevice, L"drawfrustum.fx", "DrawFrustumVS", "DrawFrustumPS");
+        mCPUEffect.InitEffect(pd3dDevice, L"cpueffect.fx", "VS", "PS");
         return hr;
     }
 

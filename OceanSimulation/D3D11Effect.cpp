@@ -88,11 +88,11 @@ HRESULT D3D11Effect::BindeBuffers(ID3D11DeviceContext* pd3dImmediateContext, ID3
     return S_OK;
 }
 
-HRESULT D3D11Effect::ApplyEffect(ID3D11DeviceContext* pd3dImmediateContext)
+HRESULT D3D11Effect::ApplyEffect(ID3D11DeviceContext* pd3dImmediateContext, int indexcount, D3D_PRIMITIVE_TOPOLOGY primitivetopolog)
 {
-    pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+    pd3dImmediateContext->IASetPrimitiveTopology(primitivetopolog);
     pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
     pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
-    pd3dImmediateContext->DrawIndexed(24, 0, 0);
+    pd3dImmediateContext->DrawIndexed(indexcount, 0, 0);
     return S_OK;
 }

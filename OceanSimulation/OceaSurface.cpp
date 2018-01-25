@@ -464,31 +464,28 @@ HRESULT OceanSurface::BindBuffers(ID3D11DeviceContext* pd3dImmediateContext, int
 
 void OceanSurface::Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
 {
-    if (!IntersectionTest(renderCamera)) return;
+    if (!IntersectionTest(renderCamera))
+    {
+        return;
+    }
+
     GetSurfaceRange(renderCamera);
     TessellateSurfaceMesh(renderCamera);
     CreateAndUpdateSurfaceMeshBuffer(pd3dDevice);
     mvMeshColor = cvGreen;
     UpdateParameters(pd3dImmediateContext, renderCamera);
 
-    // Render the mesh
-    UINT Strides[1] = { sizeof(SurfaceVertex) };
-    UINT Offsets[1] = { 0 };
-    ID3D11Buffer* pVB[1] = { mpVertexBuffer };
-    pd3dImmediateContext->IASetVertexBuffers(0, 1, pVB, Strides, Offsets);
-    pd3dImmediateContext->IASetIndexBuffer(mpIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    // Set the Vertex Layout
-    pd3dImmediateContext->IASetInputLayout(mpVertexLayout);
+    D3D_PRIMITIVE_TOPOLOGY primitivetopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     switch (iparameters["primitive_topology"])
     {
     case 0:
-        pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+        primitivetopology = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
         break;
     case 1:
-        pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        primitivetopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         break;
     case 2:
-        pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        primitivetopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         break;
     default:
         break;
@@ -502,10 +499,23 @@ void OceanSurface::Render(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImm
         pd3dImmediateContext->RSSetState(mpRSSolid);
     }
 
+    // Render the mesh
+    UINT Strides[1] = { sizeof(SurfaceVertex) };
+    UINT Offsets[1] = { 0 };
+    ID3D11Buffer* pVB[1] = { mpVertexBuffer };
+    mCPUEffect.BindeBuffers(pd3dImmediateContext, mpIndexBuffer, pVB, Strides, Offsets, mpCBWireframe);
+    mCPUEffect.ApplyEffect(pd3dImmediateContext, mSurfaceIndex.size(), primitivetopology);
+
+#if 0
+    pd3dImmediateContext->IASetVertexBuffers(0, 1, pVB, Strides, Offsets);
+    pd3dImmediateContext->IASetIndexBuffer(mpIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    // Set the Vertex Layout
+    pd3dImmediateContext->IASetInputLayout(mpVertexLayout);
     pd3dImmediateContext->VSSetShader(mpVertexShader, nullptr, 0);
     pd3dImmediateContext->PSSetShader(mpPixelShader, nullptr, 0);
     pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpCBWireframe);
     pd3dImmediateContext->DrawIndexed(mSurfaceIndex.size(), 0, 0);
+#endif
 }
 void OceanSurface::ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, const Camera &renderCamera)
 {
@@ -522,7 +532,7 @@ void OceanSurface::ObserveRenderCameraFrustum(ID3D11Device* pd3dDevice, ID3D11De
     UINT Offsets[1] = { 0 };
     ID3D11Buffer* pVB[1] = { mpVertexBuffer };
     mDrawFrustum.BindeBuffers(pd3dImmediateContext, mpIndexBuffer, pVB, Strides, Offsets, mpCBDrawFrustum);
-    mDrawFrustum.ApplyEffect(pd3dImmediateContext);
+    mDrawFrustum.ApplyEffect(pd3dImmediateContext, 24, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
 #if 0
     // Set the Vertex Layout
