@@ -7,9 +7,13 @@ I keep the project name unchanged if it is adapted.
 It is an implementaion of a paper which gives an idea of "projection grid" to simulate infinite ocean surface.
 It is now under development on D3D11.
 
-## Ocean Simulation
-It is an implementaion of a paper which gives an idea of "projection grid" to simulate infinite ocean surface.
-It is now under development on D3D11.
+![run time screenshot](./demo/runtime-light-model.png)
+
+## Tessellate Bezier Surface 
+It is a simple demo about how to tessallate Utah teapot made of Bezier Surface. 
+The code structure is under refactor now.
+
+![run time screenshot ](./demo/runtime-bezier-tessellation.png)
 
 ## Gallery
 
