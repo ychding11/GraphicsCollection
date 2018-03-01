@@ -185,8 +185,8 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
             Position vertex = {temp.x, temp.y, temp.z, temp.w };
             mSurfaceVertex.push_back(vertex);
             TexCoord tex = {u, v};
-            Normal normal = {0, 1, 0};
             mSurfaceTexCoord.push_back(tex);
+            Normal normal = {0, 1, 0};
             mSurfaceNormal.push_back(normal);
             u += du;
         }
@@ -213,6 +213,7 @@ void OceanSurface::TessellateSurfaceMesh(const Camera &renderCamera)
             mSurfaceIndex.push_back(a);
         }
     }
+
 }
 
 XMVECTOR OceanSurface::getWorldGridConer(XMFLOAT2 coner,  const XMMATRIX &invViewprojMat)
@@ -376,11 +377,11 @@ HRESULT OceanSurface::CreateConstBuffer(ID3D11Device* pd3dDevice )
     bd.Usage = D3D11_USAGE_DYNAMIC;
     bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    bd.ByteWidth = sizeof(CBChangesEveryFrame);
+    bd.ByteWidth = ( sizeof(CBChangesEveryFrame) + 15) & ~0xf;
     V_RETURN(pd3dDevice->CreateBuffer(&bd, nullptr, &mpCBChangesEveryFrame));
-    bd.ByteWidth = sizeof(CBWireframe);
+    bd.ByteWidth = ( sizeof(CBWireframe) + 15) & ~0xf;
     V_RETURN(pd3dDevice->CreateBuffer(&bd, nullptr, &mpCBWireframe));
-    bd.ByteWidth = sizeof(CBDrawFrustum);
+    bd.ByteWidth = ( sizeof(CBDrawFrustum) + 15) & ~0xf;
     V_RETURN(pd3dDevice->CreateBuffer(&bd, nullptr, &mpCBDrawFrustum));
     return S_OK;
 }
@@ -397,6 +398,7 @@ void OceanSurface::UpdateParameters(ID3D11DeviceContext* pd3dImmediateContext, c
     CBChangesEveryFrame* pCB = reinterpret_cast<CBChangesEveryFrame*>(MappedResource.pData);
     XMStoreFloat4x4(&pCB->mWorld, XMMatrixTranspose(mmWorld));
     XMStoreFloat4x4(&pCB->mViewProj, XMMatrixTranspose(renderCamera.GetViewProjMatrix()));
+    pCB->vEyePos = renderCamera.GetEyePt();
     pCB->vMeshColor = mvMeshColor;
     pd3dImmediateContext->Unmap(mpCBChangesEveryFrame, 0);
 

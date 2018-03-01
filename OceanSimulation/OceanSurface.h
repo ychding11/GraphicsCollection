@@ -27,6 +27,7 @@ public:
     {
         XMFLOAT4X4 mWorld;
         XMFLOAT4X4 mViewProj;
+        XMFLOAT3   vEyePos;
         XMFLOAT4   vMeshColor;
     };
 

@@ -39,6 +39,5 @@ public:
     HRESULT BindeBuffers(ID3D11DeviceContext* pd3dImmediateContext, ID3D11Buffer *ib, ID3D11Buffer* vbs[], UINT strides[], UINT offsets[], ID3D11Buffer *cb = nullptr);
     HRESULT ApplyEffect(ID3D11DeviceContext* pd3dImmediateContext, int indexCount, D3D_PRIMITIVE_TOPOLOGY primitivetopology);
 
-
 };
 #endif
