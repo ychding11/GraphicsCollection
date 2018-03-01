@@ -193,8 +193,8 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     InitApp();
     DXUTInit( true, true ); // Parse the command line, show msgboxes on error, and an extra cmd line param to force REF for now
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
-    DXUTCreateWindow( L"Tessellation on D3D11" );
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0,  true, 1280, 1024 );
+    DXUTCreateWindow( L"Tessellation of Bezier Surface" );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0,  true, 800, 640 );
     DXUTMainLoop(); // Enter into the DXUT render loop
 
     return DXUTGetExitCode();
@@ -612,8 +612,8 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     g_HUD.SetLocation( pBackBufferSurfaceDesc->Width - 170, 0 );
     g_HUD.SetSize( 170, 170 );
-    g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 200, pBackBufferSurfaceDesc->Height - 600 );
-    g_SampleUI.SetSize( 200, 500 );
+    g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 170, pBackBufferSurfaceDesc->Height - 400 );
+    g_SampleUI.SetSize( 170, 200 );
 
     return S_OK;
 }

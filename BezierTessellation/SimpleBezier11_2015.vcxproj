@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>SimpleBezier11</ProjectName>
+    <ProjectName>TessellateBezier</ProjectName>
     <ProjectGuid>{D3D1110C-96D0-4629-88B8-122C0256058C}</ProjectGuid>
     <RootNamespace>SimpleBezier11</RootNamespace>
     <Keyword>Win32Proj</Keyword>
@@ -133,7 +133,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;DEBUG;PROFILE;_WINDOWS;USE_DIRECT3D11_2;_WIN32_WINNT=0x0600;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>DXUT.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
