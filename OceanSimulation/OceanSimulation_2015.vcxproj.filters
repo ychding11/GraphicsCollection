@@ -21,6 +21,11 @@
   <ItemGroup>
     <ClCompile Include="OceanSimulation.cpp" />
     <ClCompile Include="OceaSurface.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="D3D11Effect.cpp" />
+    <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="ParameterSet.cpp" />
+    <ClCompile Include="PerlinNoise.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
@@ -28,6 +33,11 @@
     </CLInclude>
     <ClInclude Include="PlaneMesh.h" />
     <ClInclude Include="OceanSurface.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="D3D11Effect.h" />
+    <ClInclude Include="Logger.h" />
+    <ClInclude Include="ParameterSet.h" />
+    <ClInclude Include="PerlinNoise.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OceanSimulation.rc">
