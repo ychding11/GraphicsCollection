@@ -148,8 +148,8 @@ enum OBJECTMODEL
 	ThreeDScanModel,
 };
 
-//OBJECTMODEL g_eObjectModel = SphereModel;
-OBJECTMODEL g_eObjectModel = PlaneModel;
+OBJECTMODEL g_eObjectModel = SphereModel;
+//OBJECTMODEL g_eObjectModel = PlaneModel;
 //Obj g_3DscanModel;
 
 //--------------------------------------------------------------------------------------
@@ -318,7 +318,6 @@ HRESULT CreateSeperateBuffers(ID3D11Device* pd3dDevice, ThreeDScanObject &objMod
 	return S_OK;
 }
 
-
 HRESULT CreateMeshBuffers(ID3D11Device* pd3dDevice, MeshGenerator &polyMesh)
 {
 	HRESULT  hr;
@@ -369,8 +368,8 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     g_HUD.SetLocation( pBackBufferSurfaceDesc->Width - 170, 0 );
     g_HUD.SetSize( 170, 170 );
-    g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 200, pBackBufferSurfaceDesc->Height - 400 );
-    g_SampleUI.SetSize( 200, 300 );
+    g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width - 170, pBackBufferSurfaceDesc->Height - 400 );
+    g_SampleUI.SetSize( 170, 170 );
 
     // background vertex buffer.
     // Map texels to pixels 
@@ -909,7 +908,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     DXUTCreateWindow( L"EnvMap&LightingModel" );
 
     // Only require 10-level hardware or later
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 1000, 1280 );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 800, 640 );
     DXUTMainLoop(); // Enter into the DXUT render loop
 
     // Perform any application-level cleanup here

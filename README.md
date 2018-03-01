@@ -7,6 +7,10 @@ I keep the project name unchanged if it is adapted.
 It is an implementaion of a paper which gives an idea of "projection grid" to simulate infinite ocean surface.
 It is now under development on D3D11.
 
+## Ocean Simulation
+It is an implementaion of a paper which gives an idea of "projection grid" to simulate infinite ocean surface.
+It is now under development on D3D11.
+
 ## Gallery
 
 ![sphere phong model](./demo/demo-sphere-phong.png)
