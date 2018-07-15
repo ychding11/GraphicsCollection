@@ -28,7 +28,7 @@ enum RenderMode
     RENDER_FULL_SCENE = 1,
     RENDER_POSITION   = 2,
     RENDER_NORMAL     = 3,
-    RENDER_DEPTH      = 4,
+    RENDER_COLOR      = 4,
     RENDER_SHADOW     = 5,
 };
 

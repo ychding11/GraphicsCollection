@@ -210,8 +210,8 @@ void glut_keyboard( unsigned char key, int x, int y )
             render_mode = RENDER_NORMAL;
             break;
         case '4':
-            glutSetWindowTitle("Depth" );
-            render_mode = RENDER_DEPTH;
+            glutSetWindowTitle("Color" );
+            render_mode = RENDER_COLOR;
             break;
         case '5':
             glutSetWindowTitle("Shadow" );
@@ -327,14 +327,10 @@ void renderScene()
     //glViewport( 10, 10, 400, 300);
 
     modelview = cam.get_view();
-    vec4 lightPos = modelview * light1.pos;
+    vec4 lightPos = light1.pos;
     mat4 persp = perspective(45.0f,(float)g_width / (float)g_height, zNear, zFar);
-    vec4 test(-2,0,10,1);
-    vec4 testp = persp * test;
-    vec4 testh = testp / testp.w;
-    vec2 coords = vec2(testh.x, testh.y) / 2.0f + 0.5f;
-
     mat4 biasLightMVP = biasMatrix * light1.mvp;
+
     deferredShader.use();
     deferredShader.setParameter( shader::mat4x4, &biasLightMVP[0][0], "u_lightMVP" );
     deferredShader.setParameter( shader::mat4x4, &projection[0][0], "u_persp" );
@@ -349,7 +345,7 @@ void renderScene()
     deferredShader.setParameter( shader::i1, &render_mode, "u_RenderMode" );
 
     eyePos = cam.get_pos();
-    deferredShader.setParameter( shader::fv4, &lightPos[0], "u_Light" );
+    deferredShader.setParameter( shader::fv4, &lightPos[0], "u_LightPos" );
     deferredShader.setParameter( shader::fv3, &light1.color[0], "u_LightColor" );
     deferredShader.setParameter( shader::fv3, &eyePos[0], "u_eyePos" );
 
@@ -394,10 +390,10 @@ void renderShadowMap( Light &light )
 	
     shadowmapShader.use();
 
-    mat4 depthProj = glm::perspective<float>( 60, 1, zNear, zFar );
-    mat4 depthView = glm::lookAt( vec3(light.pos), vec3(0,0,0), vec3( 1,0,0) );
-    mat4 depthModel = mat4(1.0);
-    light.mvp = depthProj * depthView * depthModel;
+    mat4 lightProj = glm::perspective<float>( 60, 1, zNear, zFar );
+    mat4 lightView = glm::lookAt( vec3(light.pos), vec3(0,0,0), vec3( 1,0,0) );
+    mat4 lightModel = mat4(1.0);
+    light.mvp = lightProj * lightView * lightModel;
 
     shadowmapShader.setParameter( shader::mat4x4, &light.mvp[0][0], "u_mvp" );
 
@@ -680,6 +676,6 @@ void createScreenQuad()
 
 void initLight()
 {
-    light1.pos = light1.initialPos = vec4( 0, 0.43, 0, 1 );
+    light1.pos = light1.initialPos = vec4( 0, 0.53, 0, 1.0 );
     light1.color = vec3( 1, 1, 1 );
 }
