@@ -20,9 +20,9 @@ layout (location = 2) out vec4 out_Color;
 
 void main(void)
 {
-    //out_Normal = vec4(normalize(fs_Normal),0.0f);
+    out_Position = fs_Position;
+    //out_Normal = vec4( normalize(fs_Normal), 0.0f);
 	out_Normal = u_InvTrans * vec4( fs_Normal, 0.0f );
-    out_Position = vec4(fs_Position.xyz, 1.0f); //Tuck position into 0 1 range
 	if( u_bBump == 1 )
 	    out_Normal = u_InvTrans * vec4( texture( u_bumpTex, fs_texcoord ).rgb, 0.0f );
     out_Color    = vec4(u_Color, u_shininess );

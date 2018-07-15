@@ -3,9 +3,8 @@
 uniform mat4x4 u_Model;
 uniform mat4x4 u_View;
 uniform mat4x4 u_Persp;
-uniform mat4x4 u_InvTrans;
 
-uniform vec4 kd;
+//uniform vec4 kd;
 
 layout (location = 0) in vec3 Position;
 layout (location = 1) in vec3 Normal;
@@ -21,7 +20,7 @@ void main(void)
     vec4 viewPos  = u_View  * worldPos;
     gl_Position   = u_Persp * viewPos;
 
-    fs_Normal   = vec4( Normal, 0.0f ).xyz;
+    fs_Normal   = Normal;
     fs_Position = worldPos;
 	fs_texcoord = texcoord;
 }

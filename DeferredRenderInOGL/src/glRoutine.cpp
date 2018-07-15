@@ -263,13 +263,14 @@ static void renderGeometry()
     view  = cam.get_view();
     modelview = cam.get_view();
     normalMat = transpose( inverse( modelview ) );
+    mat4 persp = perspective(45.0f,(float)g_width / (float)g_height, zNear, zFar);
 
     passShader.use();
     passShader.setParameter( shader::f1, (void*)&zFar,  "u_Far" );
     passShader.setParameter( shader::f1, (void*)&zNear, "u_Near" );
     passShader.setParameter( shader::mat4x4, (void*)&model[0][0], "u_Model" );
     passShader.setParameter( shader::mat4x4, (void*)&view[0][0], "u_View" );
-    passShader.setParameter( shader::mat4x4, (void*)&projection[0][0], "u_Persp" );
+    passShader.setParameter( shader::mat4x4, (void*)&persp[0][0], "u_Persp" );
     passShader.setParameter( shader::mat4x4, (void*)&normalMat[0][0], "u_InvTrans" );
 
     int bTextured;
@@ -323,10 +324,11 @@ void renderScene()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     glBindFramebuffer( GL_FRAMEBUFFER, 0);
+    //glViewport( 10, 10, 400, 300);
 
     modelview = cam.get_view();
     vec4 lightPos = modelview * light1.pos;
-    mat4 persp = perspective(45.0f,(float)g_width/(float)g_height,zNear,zFar);
+    mat4 persp = perspective(45.0f,(float)g_width / (float)g_height, zNear, zFar);
     vec4 test(-2,0,10,1);
     vec4 testp = persp * test;
     vec4 testh = testp / testp.w;
@@ -567,7 +569,6 @@ void initVertexData()
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo[i] );
         glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( unsigned int ) * model->numIdx, model->ibo, GL_STATIC_DRAW );
 
-        //Upload texture to GPU 
         for( int i = 0; i < model->numGroup; ++i )
         {
             if( model->groups[i].tex_filename.length() > 0 )
@@ -647,11 +648,12 @@ void genAtomicBuffer( int num, unsigned int &buffer )
 void createScreenQuad()
 {
     GLenum err;
-    vertex2_t verts [] = {
-		{vec3(-1,1,0),vec2(0,1)},
+    vertex2_t verts [] =
+    {
+		{vec3(-1, 1,0),vec2(0,1)},
         {vec3(-1,-1,0),vec2(0,0)},
-        {vec3(1,-1,0),vec2(1,0)},
-        {vec3(1,1,0),vec2(1,1)}};
+        {vec3( 1,-1,0),vec2(1,0)},
+        {vec3( 1, 1,0),vec2(1,1)}};
 
     unsigned short indices[] = { 0,1,2,0,2,3};
 

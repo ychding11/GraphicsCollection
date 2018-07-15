@@ -41,6 +41,7 @@ void checkFramebufferStatus(GLenum framebufferStatus)
 
 GLuint loadTexturFromFile( const char* filename,  GLint internal_format, GLenum format, unsigned int level )
 {
+    static int numTextures = 0;
     FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
     FIBITMAP *dib(0);
     BYTE* bits(0);
@@ -50,7 +51,6 @@ GLuint loadTexturFromFile( const char* filename,  GLint internal_format, GLenum 
     fif = FreeImage_GetFileType(filename, 0);
     if(fif == FIF_UNKNOWN) 
 		fif = FreeImage_GetFIFFromFilename(filename);
-	//if still unkown, return failure
 	if(fif == FIF_UNKNOWN)
 		return 0;
 
@@ -83,8 +83,7 @@ GLuint loadTexturFromFile( const char* filename,  GLint internal_format, GLenum 
 
     //glTexImage2D( GL_TEXTURE_2D, 0, internal_format, w, h, 0, format, GL_UNSIGNED_BYTE, bits);
 
-	//Free FreeImage data
+    ++numTextures;
 	FreeImage_Unload(dib);
-
     return texId;
 }
