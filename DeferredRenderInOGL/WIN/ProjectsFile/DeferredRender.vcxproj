@@ -86,6 +86,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\3party\glm.cpp" />
     <ClCompile Include="..\..\src\camera.cpp" />
+    <ClCompile Include="..\..\src\glHandleUI.cpp" />
     <ClCompile Include="..\..\src\glRoutine.cpp" />
     <ClCompile Include="..\..\src\glslUtility.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />

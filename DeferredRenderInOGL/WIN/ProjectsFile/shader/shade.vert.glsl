@@ -3,7 +3,7 @@
 layout (location = 0) in  vec3 Position;
 layout (location = 1) in  vec2 Texcoord;
 
-uniform mat4 u_Persp;
+uniform mat4 u_persp;
 
 out vec2 fs_Texcoord;
 

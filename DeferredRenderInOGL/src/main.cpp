@@ -5,6 +5,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <vector>
+#include <string>
 #include <gl/glew.h>
 #include <gl/freeglut.h>
 #include <glm/glm.hpp>
@@ -24,13 +26,38 @@ using namespace std;
 
 int g_width = 1280;
 int g_height = 720;
-int g_winId;
+static int g_winId;
 
 objLoader g_meshloader;
 
+static void LoadMesh(vector<string> &objects)
+{
+    for( size_t i = 0; i < objects.size(); ++i )
+    {
+        int ret = g_meshloader.load( objects[i] );
+        if (ret == 0)
+        {
+            static int input;
+            cout << "- Load Mesh failed:  mesh=" << objects[i] << "\n input any key to exit!" << endl;
+            scanf("%d", &input);
+            exit(1);
+        }
+    }
+}
+
+static void HookGLutHandler(void)
+{
+    glutDisplayFunc( glut_display );
+    glutIdleFunc( glut_idle );
+    glutReshapeFunc( glut_reshape );
+    glutKeyboardFunc( glut_keyboard );
+    glutMouseFunc( glut_mouse );
+    glutMotionFunc( glut_motion );
+}
+
 int  main( int argc, char* argv[] )
 {
-    int numLoadedMesh = 0;
+    vector<string> objects;
     if( argc <= 1 )
     {
         cout << "Usage: mesh=[obj file]" << endl;
@@ -45,13 +72,13 @@ int  main( int argc, char* argv[] )
         getline( line, data, '=' );
         if( header.compare( "mesh" ) == 0 )
         {
-            numLoadedMesh += g_meshloader.load( data );
+            objects.push_back(data);
         }
     }
 
-    if( numLoadedMesh == 0 )
+    if( objects.size() == 0 )
     {
-        cout << "Usage: mesh=[obj file]" << endl;
+        cout << "- No Mesh specified. Usage: pargarm_name mesh=[obj file]" << endl;
         return 0;
     }
 
@@ -75,18 +102,16 @@ int  main( int argc, char* argv[] )
     }
     cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
 
-    glutDisplayFunc( glut_display );
-    glutIdleFunc( glut_idle );
-    glutReshapeFunc( glut_reshape );
-    glutKeyboardFunc( glut_keyboard );
-    glutMouseFunc( glut_mouse );
-    glutMotionFunc( glut_motion );
+    HookGLutHandler();
 
     initShader();
     initFBO(g_width, g_height);
+
+    LoadMesh(objects);
     initVertexData(); 
 
     initLight();
+
     glutMainLoop();
     FreeImage_DeInitialise();
     exit(0);

@@ -16,6 +16,8 @@
 ////////////////////////////////////
 uniform mat4 u_persp;
 uniform mat4 u_modelview;
+uniform mat4 u_projection;
+uniform mat4 u_view;
 uniform mat4 u_lightMVP;
 
 uniform sampler2D u_Depthtex;
@@ -26,7 +28,6 @@ uniform sampler2D u_shadowmap;
 
 uniform float u_Far;
 uniform float u_Near;
-uniform int u_DisplayType;
 
 uniform int u_ScreenWidth;
 uniform int u_ScreenHeight;
@@ -36,11 +37,8 @@ uniform vec4 u_LightPos;
 uniform vec3 u_LightColor;
 uniform vec3 u_eyePos;
 
-uniform float zerothresh = 1.0f;
-uniform float falloff = 0.1f;
 
-in vec2 fs_Texcoord;
-
+in  vec2 fs_Texcoord;
 out vec4 out_Color;
 ///////////////////////////////////////
 
@@ -49,6 +47,8 @@ out vec4 out_Color;
 //				UTILITY FUNCTIONS
 /////////////////////////////////////
 
+float zerothresh = 1.0f;
+float falloff = 0.1f;
 //Depth used in the Z buffer is not linearly related to distance from camera
 //This restores linear depth
 float linearizeDepth(float exp_depth, float near, float far)

@@ -1,8 +1,3 @@
-// Sparse Voxel Octree and Voxel Cone Tracing
-// 
-// University of Pennsylvania CIS565 final project
-// copyright (c) 2013 Cheng-Tso Lin  
-
 #ifndef _GLROUTINE_H
 #define _GLROUTINE_H
 
@@ -10,6 +5,7 @@ typedef struct
 {
 	glm::vec3 pt;
 	glm::vec2 texcoord;
+
 } vertex2_t;
 
 enum Display
@@ -30,6 +26,12 @@ enum RenderMode
     RENDER_NORMAL     = 3,
     RENDER_COLOR      = 4,
     RENDER_SHADOW     = 5,
+};
+
+enum UIOption
+{
+    UIOPTION_SHADOW_OFF = 1,
+    UIOPTION_SHOW_NORMAL = 2,
 };
 
 enum LightType
@@ -57,31 +59,38 @@ void glut_motion( int x, int y );
 void glut_keyboard( unsigned char key, int x, int y );
 ////////////////
 
-///rendering routines
-void renderScene();
-void renderShadowMap( Light &light );
-
-///Framebuffer objects initialization
-void initFBO( int w, int h );
-void freeFBO();
-
-void bindFBO(int buf);
-
 void initShader();
 void initVertexData();
-void createPointCube( int dim );
-void createScreenQuad();
-
-///2D texture generation
-unsigned int gen2DTexture( int w, int h, GLenum internalFormat,  GLenum format, GLenum type );
-
-///Linear buffer generation 
-int genLinearBuffer( int size, GLenum format, GLuint* tex, GLuint* tbo );
-
-//Atomic counter  generation
-void genAtomicBuffer( int num, unsigned int &buffer );
-
-//Light setting
 void initLight();
 
+// FBO
+void initFBO( int w, int h );
+void freeFBO();
+void bindFBO(int buf);
+
+static void createScreenQuad();
+
+///rendering routines
+void renderScene();
+static void renderShadowMap( Light &light );
+
+///2D texture generation
+static unsigned int gen2DTexture( int w, int h, GLenum internalFormat,  GLenum format, GLenum type );
+static          int genLinearBuffer( int size, GLenum format, GLuint* tex, GLuint* tbo );
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/glm.hpp>
+#include "camera.h"
+
+/// global variable
+extern Camera cam;
+extern enum RenderMode render_mode;
+
+extern float FOV;
+extern float zNear;
+extern float zFar;
+
+extern glm::mat4 world;
+extern glm::mat4 view;
+extern glm::mat4 projection;
 #endif

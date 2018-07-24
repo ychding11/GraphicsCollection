@@ -27,6 +27,7 @@ public:
     void setTexParameter( int idx, char* name );
     void bindAttribLocation( unsigned int idx, char* name );
     void bindFragDataLocation( unsigned int idx, char* name );
+
 protected:
     GLuint vs; //vertex shader
     GLuint fs; //fragment shader

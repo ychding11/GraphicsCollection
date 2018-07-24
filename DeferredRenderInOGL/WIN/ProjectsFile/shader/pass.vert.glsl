@@ -1,8 +1,10 @@
 #version 430
 
-uniform mat4x4 u_Model;
+uniform mat4x4 u_World;
 uniform mat4x4 u_View;
-uniform mat4x4 u_Persp;
+uniform mat4x4 u_Projection;
+uniform mat4x4 u_NormalToWorld;
+uniform mat4x4 u_NormalToView;
 
 //uniform vec4 kd;
 
@@ -16,11 +18,11 @@ out vec2 fs_texcoord;
 
 void main(void)
 {
-    vec4 worldPos = u_Model * vec4(Position, 1.0);
+    vec4 worldPos = u_World * vec4(Position, 1.0);
     vec4 viewPos  = u_View  * worldPos;
-    gl_Position   = u_Persp * viewPos;
+    gl_Position   = u_Projection * viewPos;
 
-    fs_Normal   = Normal;
+    fs_Normal   = mat3(u_NormalToWorld) * Normal;
     fs_Position = worldPos;
 	fs_texcoord = texcoord;
 }
