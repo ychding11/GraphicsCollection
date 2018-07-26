@@ -16,6 +16,7 @@
 #include "variables.h"
 #include "FreeImage.h"
 
+#include "camera.h"
 
 //Eanble High Performance GPU on Optimus devices
 extern "C" {
@@ -26,9 +27,117 @@ using namespace std;
 
 int g_width = 1280;
 int g_height = 720;
-static int g_winId;
 
 objLoader g_meshloader;
+
+Camera camera;
+
+class Window {
+public:
+    Window()
+    {
+        this->interval = 1000 / 60;		//60 FPS
+        this->window_handle = -1;
+    }
+    int window_handle, interval;
+    ivec2 size;
+    float window_aspect;
+} window;
+
+void glut_display()
+{
+    renderScene();
+    glutSwapBuffers();
+}
+
+void glut_idle()
+{
+    glutPostRedisplay();
+}
+
+void glut_reshape(int w, int h)
+{
+    if (h == 0 || w == 0) return;
+
+    g_width = w;
+    g_height = h;
+
+    freeFBO();
+    initFBO(w, h);
+
+    if (h > 0)
+    {
+        window.size = ivec2(w, h);
+        window.window_aspect = float(w) / float(h);
+    }
+    camera.SetViewport(0, 0, window.size.x, window.size.y);
+}
+
+void glut_mouse(int button, int state, int x, int y)
+{
+    camera.SetPos(button, state, x, y);
+}
+
+void glut_motion(int x, int y)
+{
+    camera.Move2D(x, y);
+}
+
+void glut_keyboard(unsigned char key, int x, int y)
+{
+    switch (key)
+    {
+    case (27):
+        exit(0);
+        break;
+    case '1':
+        glutSetWindowTitle("Full Scene");
+        render_mode = RENDER_FULL_SCENE;
+        break;
+    case '2':
+        glutSetWindowTitle("Position");
+        render_mode = RENDER_POSITION;
+        break;
+    case '3':
+        glutSetWindowTitle("Normal");
+        render_mode = RENDER_NORMAL;
+        break;
+    case '4':
+        glutSetWindowTitle("Color");
+        render_mode = RENDER_COLOR;
+        break;
+    case '5':
+        glutSetWindowTitle("Shadow");
+        render_mode = RENDER_SHADOW;
+        break;
+    case ('n'):
+        glutSetWindowTitle("Full Scene With Normal");
+        render_mode = RENDER_FULL_SCENE;
+        break;
+    case 'w':
+        camera.Move(FORWARD);
+        break;
+    case 'a':
+        camera.Move(LEFT);
+        break;
+    case 's':
+        camera.Move(BACK);
+        break;
+    case 'd':
+        camera.Move(RIGHT);
+        break;
+    case 'q':
+        camera.Move(DOWN);
+        break;
+    case 'e':
+        camera.Move(UP);
+        break;
+    case 'u':
+        cout << (" - Regenerate Shader program objects. \n");
+        initShader();
+        break;
+    }
+}
 
 static void LoadMesh(vector<string> &objects)
 {
@@ -86,11 +195,12 @@ int  main( int argc, char* argv[] )
 
     glutInit( &argc, argv );
     glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH );
+    glutInitWindowPosition(0, 0);
     glutInitContextVersion( 4, 3 );
     glutInitContextFlags( GLUT_FORWARD_COMPATIBLE );
     glutInitContextProfile( GLUT_COMPATIBILITY_PROFILE );
     glutInitWindowSize( g_width, g_height );
-    g_winId = glutCreateWindow( "Deferred Rendering in OGL" );
+    window.window_handle = glutCreateWindow( "Deferred Rendering in OGL" );
 
     cout << "OpenGL version " << glGetString(GL_VERSION) << " supported" << endl;
 
@@ -104,13 +214,20 @@ int  main( int argc, char* argv[] )
 
     HookGLutHandler();
 
+    //Setup camera
+    camera.SetMode(FREE);
+    camera.SetPosition(glm::vec3(0, 0, -1));
+    camera.SetLookAt(glm::vec3(0, 0, 0));
+    camera.SetClipping(.1, 1000);
+    camera.SetFOV(45);
+
+    initLight();
     initShader();
     initFBO(g_width, g_height);
 
     LoadMesh(objects);
     initVertexData(); 
 
-    initLight();
 
     glutMainLoop();
     FreeImage_DeInitialise();

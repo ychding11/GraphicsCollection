@@ -16,15 +16,13 @@
 namespace glslUtility
 {
 
-
-	typedef struct {
+	typedef struct
+    {
 		GLuint vertex;
 		GLuint fragment;
         GLuint geometry;
         GLuint compute;
 	} shaders_t;
-
-
 
 shaders_t loadShaders(const char * vert_path, const char * frag_path, const char * geom_path = NULL, const char * compute_path = NULL );
 
@@ -38,6 +36,7 @@ char* loadFile(const char *fname, GLint &fSize);
 void printShaderInfoLog(GLint shader);
 
 void printLinkInfoLog(GLint prog) ;
+
 }
  
 #endif

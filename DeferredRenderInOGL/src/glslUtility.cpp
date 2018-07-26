@@ -36,29 +36,20 @@ namespace glslUtility
 		return memblock;
 	}
 
-	// printShaderInfoLog
-	// From OpenGL Shading Language 3rd Edition, p215-216
-	// Display (hopefully) useful error messages if shader fails to compile
 	void printShaderInfoLog(GLint shader)
 	{
 		int infoLogLen = 0;
 		int charsWritten = 0;
-		GLchar *infoLog;
 
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLen);
-
-		// should additionally check for OpenGL errors here
-
 		if (infoLogLen > 0)
 		{
-			infoLog = new GLchar[infoLogLen];
-			// error check for fail to allocate memory omitted
+			GLchar* infoLog = new GLchar[infoLogLen + 1];
 			glGetShaderInfoLog(shader,infoLogLen, &charsWritten, infoLog);
-			cout << "InfoLog:" << endl << infoLog << endl;
+			cout << "\n- Shader Compile Log: \t" << endl << infoLog << endl;
+			cout << "---------------------------------------------" << endl;
 			delete [] infoLog;
 		}
-
-		// should additionally check for OpenGL errors here
 	}
 
 	void printLinkInfoLog(GLint prog) 
@@ -68,15 +59,12 @@ namespace glslUtility
 		GLchar *infoLog;
 
 		glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &infoLogLen);
-
-		// should additionally check for OpenGL errors here
-
 		if (infoLogLen > 0)
 		{
-			infoLog = new GLchar[infoLogLen];
-			// error check for fail to allocate memory omitted
+			infoLog = new GLchar[infoLogLen + 1];
 			glGetProgramInfoLog(prog,infoLogLen, &charsWritten, infoLog);
-			cout << "InfoLog:" << endl << infoLog << endl;
+			cout << "\n- Shader Link Log: \t" << endl << infoLog << endl;
+			cout << "------------------------------------------" << endl;
 			delete [] infoLog;
 		}
 	}
@@ -96,7 +84,7 @@ namespace glslUtility
         glGetShaderiv (shader, GL_COMPILE_STATUS, &compiled) ; 
 		if (!compiled)
 		{
-			cout << "Shader not compiled." << endl;
+			cout << "Shader compile failed: " << filename << endl;
 			printShaderInfoLog(shader);
 		} 
         delete [] ss;
@@ -107,7 +95,6 @@ namespace glslUtility
 	shaders_t loadShaders(const char * vert_path, const char * frag_path, const char * geom_path, const char * compute_path)
     {
 		GLuint f = 0, v = 0, g = 0, c = 0;
-        
         if( vert_path )
 		    v = initshaders( GL_VERTEX_SHADER, vert_path );
         if( frag_path )
@@ -117,8 +104,8 @@ namespace glslUtility
         if( compute_path )
             c = initshaders( GL_COMPUTE_SHADER, compute_path );
 
-        shaders_t out; out.vertex = v; out.fragment = f; out.geometry = g;
-        out.compute = c;
+        shaders_t out;
+        out.vertex = v; out.fragment = f; out.geometry = g; out.compute = c;
 
 		return out;
 	}
@@ -133,8 +120,9 @@ namespace glslUtility
             glAttachShader(program, shaders.geometry  );
         if( shaders.compute)
             glAttachShader(program, shaders.compute  );
-		glLinkProgram(program);
+
 		GLint linked;
+		glLinkProgram(program);
 		glGetProgramiv(program,GL_LINK_STATUS, &linked);
 		if (!linked) 
 		{

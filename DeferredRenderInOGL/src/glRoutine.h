@@ -66,9 +66,7 @@ void initLight();
 // FBO
 void initFBO( int w, int h );
 void freeFBO();
-void bindFBO(int buf);
 
-static void createScreenQuad();
 
 ///rendering routines
 void renderScene();
@@ -83,12 +81,8 @@ static          int genLinearBuffer( int size, GLenum format, GLuint* tex, GLuin
 #include "camera.h"
 
 /// global variable
-extern Camera cam;
+extern Camera camera;
 extern enum RenderMode render_mode;
-
-extern float FOV;
-extern float zNear;
-extern float zFar;
 
 extern glm::mat4 world;
 extern glm::mat4 view;

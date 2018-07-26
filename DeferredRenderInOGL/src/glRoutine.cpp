@@ -19,20 +19,10 @@ using namespace glm;
 const int NUM_RENDERTARGET = 3;
 
 
-vec3 eyePos  = vec3(0,0,0 );
-vec3 eyeLook = vec3(-1,0,-1);
-vec3 upDir   = vec3(0,1,0);
-Camera cam( eyePos, eyeLook, upDir );
-
-float FOV = 45.0f;
-float zNear = 0.05f;
-float zFar = 10.0f;
-float aspect = 1.0f;
-
 mat4 world = mat4(1.0);
 mat4 view  = mat4(1.0);
 mat4 projection = mat4(1.0);
-mat4 lightProj = glm::perspective<float>( 60, 1, zNear, zFar );
+mat4 lightProj;
 
 mat4 normalToWorld = transpose( inverse( world ) );
 mat4 normalToView  = transpose( inverse( view * world) );
@@ -54,6 +44,8 @@ glm::mat4 biasMatrix(
 shader::ShaderProgram geometryShader;
 shader::ShaderProgram phongShader;
 shader::ShaderProgram shadowmapShader;
+shader::ShaderProgram visualNormalShader;
+shader::ShaderProgram plainShader;
 
 ////////////////////////////////////////////////////////////////
 ////OpenGL buffer objects for loaded mesh
@@ -64,7 +56,7 @@ static GLuint nbo[10] = {0};
 static GLuint tbo[10] = {0};
 static GLuint ibo[10] = {0};
 
-const int QUAD = 8;
+static const int QUAD = 8;
 
 ////////////////////////////////////////////////////////////////
 ////Textures 
@@ -164,8 +156,6 @@ static void renderGeometryMap()
     glEnable(GL_TEXTURE_2D);
 
     geometryShader.use();
-    geometryShader.setParameter( shader::f1, (void*)&zFar,  "u_Far" );
-    geometryShader.setParameter( shader::f1, (void*)&zNear, "u_Near");
     geometryShader.setParameter( shader::mat4x4, (void*)&world[0][0], "u_World");
     geometryShader.setParameter( shader::mat4x4, (void*)&view[0][0],  "u_View" );
     geometryShader.setParameter( shader::mat4x4, (void*)&projection[0][0], "u_Projection" );
@@ -211,17 +201,59 @@ static void renderGeometryMap()
     }
 }
 
-static void RenderNormal()
+static void renderNormal()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-    glBindFramebuffer( GL_FRAMEBUFFER, 0);
+    //glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    glEnable( GL_DEPTH_TEST );
+    glEnable( GL_CULL_FACE );
+    //glEnable( GL_TEXTURE_2D );
+    //glDepthFunc( GL_LESS );
+    glCullFace( GL_BACK );
 
-    //Draw the screen space quad
-    glBindVertexArray( vao[QUAD] );
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[QUAD] );
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT,0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    float normalStrength = .05f;
 
+    // Update Shader Parameter
+    visualNormalShader.use();
+    visualNormalShader.setParameter( shader::f1, (void*)&normalStrength,  "u_NormalLength" );
+    visualNormalShader.setParameter( shader::mat4x4, (void*)&world[0][0], "u_World");
+    visualNormalShader.setParameter( shader::mat4x4, (void*)&view[0][0],  "u_View" );
+    visualNormalShader.setParameter( shader::mat4x4, (void*)&projection[0][0], "u_Projection" );
+    visualNormalShader.setParameter( shader::mat4x4, (void*)&normalToWorld[0][0], "u_NormalToWorld" );
+    visualNormalShader.setParameter( shader::mat4x4, (void*)&normalToView[0][0],  "u_NormalToView" );
+
+    int numModel = g_meshloader.getModelCount();
+    for( int i = 0; i < numModel; ++i )
+    {
+        glBindVertexArray( vao[i] );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo[i] );
+        const ObjModel* model = g_meshloader.getModel(i);
+        for( int i = 0; i < model->numGroup; ++i )
+        {
+            glDrawElements( GL_TRIANGLES, 3 * model->groups[i].numTri , GL_UNSIGNED_INT, (void*)model->groups[i].ibo_offset );
+        }
+    }
+
+
+    plainShader.use();
+    plainShader.setParameter( shader::mat4x4, (void*)&world[0][0], "u_World");
+    plainShader.setParameter( shader::mat4x4, (void*)&view[0][0],  "u_View" );
+    plainShader.setParameter( shader::mat4x4, (void*)&projection[0][0], "u_Projection" );
+    plainShader.setParameter( shader::mat4x4, (void*)&normalToWorld[0][0], "u_NormalToWorld" );
+    plainShader.setParameter( shader::mat4x4, (void*)&normalToView[0][0],  "u_NormalToView" );
+
+    for( int i = 0; i < numModel; ++i )
+    {
+        glBindVertexArray( vao[i] );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo[i] );
+        const ObjModel* model = g_meshloader.getModel(i);
+        for( int i = 0; i < model->numGroup; ++i )
+        {
+            glDrawElements( GL_TRIANGLES, 3 * model->groups[i].numTri , GL_UNSIGNED_INT, (void*)model->groups[i].ibo_offset );
+        }
+    }
 }
 
 static void LightShade()
@@ -237,8 +269,6 @@ static void LightShade()
     phongShader.setParameter( shader::mat4x4, &view[0][0], "u_view" );
     phongShader.setParameter( shader::mat4x4, &projection[0][0], "u_projection" );
 
-    phongShader.setParameter( shader::f1, &zFar,  "u_Far" );
-    phongShader.setParameter( shader::f1, &zNear, "u_Near" );
     phongShader.setParameter( shader::i1, &g_height, "u_ScreenHeight" );
     phongShader.setParameter( shader::i1, &g_width,  "u_ScreenWidth" );
     phongShader.setParameter( shader::i1, &render_mode, "u_RenderMode" );
@@ -248,7 +278,7 @@ static void LightShade()
     phongShader.setParameter( shader::fv3, &light1.color[0], "u_LightColor" );
     phongShader.setParameter( shader::mat4x4, &biasLightMVP[0][0], "u_lightMVP" );
 
-    phongShader.setParameter( shader::fv3, &eyePos[0], "u_eyePos" );
+    phongShader.setParameter( shader::fv3, &camera.camera_position[0], "u_eyePos" );
 
     glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
@@ -288,7 +318,7 @@ void renderShadowMap( Light &light )
 	
     shadowmapShader.use();
 
-    mat4 lightProj = glm::perspective<float>( 60, 1, zNear, zFar );
+    mat4 lightProj = glm::perspective<float>( 60, 1, .01, 1000. );
     mat4 lightView = glm::lookAt( vec3(light.pos), vec3(0,0,0), vec3( 1,0,0) );
     mat4 lightModel = mat4(1.0);
     light.mvp = lightProj * lightView * lightModel;
@@ -338,20 +368,25 @@ void renderShadowMap( Light &light )
 
 static void UpdateCameraParam()
 {
-    view  = cam.get_view();
-    projection = perspective(FOV, (float)g_width / (float)g_height, zNear, zFar);
+    mat4 model;
+    camera.Update();
+    camera.GetMatricies(projection, view, model);
     normalToView = transpose( inverse( view * world) );
 }
 
+////////////////////////////////////////////////////////////////
+//// Public interface
+//// Main Render Pass
+////////////////////////////////////////////////////////////////
 void renderScene()
 {
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+   // renderGeometryMap();
+   // renderShadowMap( light1 );
+   // LightShade();
+
     UpdateCameraParam();
-
-    renderGeometryMap();
-
-    renderShadowMap( light1 );
-
-    LightShade();
+    renderNormal();
 
     glBindVertexArray(0);
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
@@ -359,7 +394,38 @@ void renderScene()
 
 static void initGeometryMapFBO(int w, int h)
 {
+    GLenum FBOstatus;
 
+    glActiveTexture(GL_TEXTURE9);
+
+    if (depthFBTex == 0)    depthFBTex  = gen2DTexture( w, h, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT );
+    if (normalFBTex == 0)   normalFBTex = gen2DTexture( w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT );
+    if (positionFBTex == 0) positionFBTex = gen2DTexture( w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT );
+    if (colorFBTex == 0) colorFBTex    = gen2DTexture( w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT );
+
+    if (FBO[0] == 0) glGenFramebuffers(1, &FBO[0]);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO[0]);
+
+    glReadBuffer(GL_NONE);
+
+    GLenum draws [NUM_RENDERTARGET];
+    draws[0] = GL_COLOR_ATTACHMENT0;
+    draws[1] = GL_COLOR_ATTACHMENT1;
+    draws[2] = GL_COLOR_ATTACHMENT2;
+
+    glDrawBuffers(NUM_RENDERTARGET, draws);
+
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthFBTex, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, draws[0], normalFBTex, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, draws[1], positionFBTex, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, draws[2], colorFBTex, 0);
+    
+    FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(FBOstatus != GL_FRAMEBUFFER_COMPLETE)
+	{
+        cout << " - GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO[0]\n" << endl;
+        checkFramebufferStatus(FBOstatus);
+    }
 }
 
 static void initShadowMapFBO(int w, int h)
@@ -389,68 +455,14 @@ static void initShadowMapFBO(int w, int h)
 
 }
 
+////////////////////////////////////////////////////////////////
+//// Public interface
+//// Create application FB 
+////////////////////////////////////////////////////////////////
 void initFBO( int w, int h )
 {
-    GLenum FBOstatus;
-    GLenum err;
-
-    glActiveTexture(GL_TEXTURE9);
-
-    depthFBTex  = gen2DTexture( w, h, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT );
-    normalFBTex = gen2DTexture( w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT );
-    positionFBTex = gen2DTexture( w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT );
-    colorFBTex    = gen2DTexture( w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT );
-
-    // create a framebuffer object
-    glGenFramebuffers(1, &FBO[0]);
-    glBindFramebuffer(GL_FRAMEBUFFER, FBO[0]);
-
-    // Instruct openGL that we won't bind a color texture with the currently bound FBO
-    glReadBuffer(GL_NONE);
-
-    GLenum draws [NUM_RENDERTARGET];
-    draws[0] = GL_COLOR_ATTACHMENT0;
-    draws[1] = GL_COLOR_ATTACHMENT1;
-    draws[2] = GL_COLOR_ATTACHMENT2;
-
-    glDrawBuffers(NUM_RENDERTARGET, draws);
-
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthFBTex, 0);
-    glFramebufferTexture(GL_FRAMEBUFFER, draws[0], normalFBTex, 0);
-    glFramebufferTexture(GL_FRAMEBUFFER, draws[1], positionFBTex, 0);
-    glFramebufferTexture(GL_FRAMEBUFFER, draws[2], colorFBTex, 0);
-    
-    FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if(FBOstatus != GL_FRAMEBUFFER_COMPLETE)
-	{
-        cout << " - GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO[0]\n" << endl;
-        checkFramebufferStatus(FBOstatus);
-    }
-   
-    //Shadow map buffers
-    glGenTextures(1, &shadowmapTex );
-    glBindTexture(GL_TEXTURE_2D, shadowmapTex );
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32 , 1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0 );
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-    
-    glGenFramebuffers(1, &FBO[1]);
-    glBindFramebuffer(GL_FRAMEBUFFER, FBO[1]);
-    glFramebufferTexture( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowmapTex, 0 );
-    glDrawBuffer( GL_NONE ); //Disable render
-
-    FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if(FBOstatus != GL_FRAMEBUFFER_COMPLETE)
-	{
-        cout << " - GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO[1]\n" << endl;
-        checkFramebufferStatus(FBOstatus);
-    }
-    err = glGetError();
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    initGeometryMapFBO(w, h);
+    initShadowMapFBO(1024, 1024);
 }
 
 void freeFBO() 
@@ -462,24 +474,14 @@ void freeFBO()
     glDeleteFramebuffers(1,&FBO[0]);
     glDeleteFramebuffers(1,&FBO[1]);
     FBO[0] = FBO[1] = 0;
+    depthFBTex = normalFBTex = positionFBTex = colorFBTex = 0;
 }
 
-void bindFBO(int buf)
-{
-    glBindFramebuffer(GL_FRAMEBUFFER, FBO[buf]);
-}
 
-void initShader()
-{
-    geometryShader.init( "shader/pass.vert.glsl", "shader/pass.frag.glsl" );
-    phongShader.init( "shader/shade.vert.glsl", "shader/diagnostic.frag.glsl" );
-    shadowmapShader.init( "shader/shadowmap.vert.glsl", "shader/shadowmap.frag.glsl" );
-}
 
-//create a screen-size quad
-void createScreenQuad()
+static void CreateScreenQuadData()
 {
-    GLenum err;
+    //GLenum err;
     vertex2_t verts [] =
     {
 		{vec3(-1, 1,0),vec2(0,1)},
@@ -507,13 +509,18 @@ void createScreenQuad()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*sizeof(GLushort), indices, GL_STATIC_DRAW);
 
     glBindVertexArray(0);
-
-    glGetError();
+    glBindBuffer(GL_ARRAY_BUFFER, 0 );
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0 );
 }
 
-void initVertexData()
+void CreateModelData()
 {
     int numModel = g_meshloader.getModelCount();
+    if (numModel >= QUAD)
+    {
+        cout << "- More Models than expected, cannot handle, exit!" << endl;
+        exit(1);
+    }
     for( int i = 0; i < numModel; ++i )
     {
         const ObjModel* model = g_meshloader.getModel(i);
@@ -555,10 +562,6 @@ void initVertexData()
             printf("- Model %d, Has no Texture coord.\n", i);
         }
 
-        glGenBuffers( 1, &ibo[i] );
-        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo[i] );
-        glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( unsigned int ) * model->numIdx, model->ibo, GL_STATIC_DRAW );
-
         for( int i = 0; i < model->numGroup; ++i )
         {
             if( model->groups[i].tex_filename.length() > 0 )
@@ -570,16 +573,34 @@ void initVertexData()
             else
                 model->groups[i].bumpTexId = 0;
         }
+
+        glGenBuffers( 1, &ibo[i] );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo[i] );
+        glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( unsigned int ) * model->numIdx, model->ibo, GL_STATIC_DRAW );
     }
     
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+    glBindBuffer(GL_ARRAY_BUFFER, 0 );
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0 );
     glBindVertexArray(0);
-
-    createScreenQuad();
 }
 
+void initVertexData()
+{
+    static int count = 0;
+    assert(count == 0);
+    CreateModelData();
+    CreateScreenQuadData();
+    ++count;
+}
 
+void initShader()
+{
+    geometryShader.init( "shader/pass.vert.glsl", "shader/pass.frag.glsl" );
+    phongShader.init( "shader/shade.vert.glsl", "shader/diagnostic.frag.glsl" );
+    shadowmapShader.init( "shader/shadowmap.vert.glsl", "shader/shadowmap.frag.glsl" );
+    plainShader.init("shader/plain.vert.glsl", "shader/plain.frag.glsl");
+    visualNormalShader.init("shader/visualNormal.vert.glsl", "shader/visualNormal.frag.glsl", "shader/visualNormal.geom.glsl");
+}
 
 void initLight()
 {

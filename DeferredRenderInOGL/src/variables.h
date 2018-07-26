@@ -10,4 +10,5 @@ extern int g_width;
 extern int g_height;
 extern objLoader g_meshloader;
 
+
 #endif

@@ -40,12 +40,8 @@ int ShaderProgram::init(const char* vs_source, const char* fs_source, const char
     fs = shaderSet.fragment;
     gs = shaderSet.geometry;
    
-    //create program
     program = glCreateProgram();
-
-    //attach shader 
     attachAndLinkProgram( program, shaderSet );
-
     return 0;
 }
 
@@ -53,6 +49,7 @@ void ShaderProgram::use()
 {
     glUseProgram( program );
 }
+
 void ShaderProgram::unuse()
 {
     glUseProgram( 0 );
