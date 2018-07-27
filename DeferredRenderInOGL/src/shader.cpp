@@ -1,8 +1,3 @@
-// Sparse Voxel Octree and Voxel Cone Tracing
-// 
-// University of Pennsylvania CIS565 final project
-// copyright (c) 2013 Cheng-Tso Lin  
-
 #include <gl/glew.h>
 #include "shader.h"
 #include "glslUtility.h"
@@ -20,16 +15,30 @@ ShaderProgram::ShaderProgram()
     gs = 0;
 }
 
+ShaderProgram::ShaderProgram(const char* vs_source, const char* fs_source, const char* gs_source)
+    : vsName(vs_source)
+    , fsName(fs_source)
+    , gsName(gs_source)
+{
+    shaders_t shaderSet = loadShaders( vs_source, fs_source, gs_source );
+    vs = shaderSet.vertex;
+    fs = shaderSet.fragment;
+    gs = shaderSet.geometry;
+   
+    program = glCreateProgram();
+    attachAndLinkProgram( program, shaderSet );
+}
+
 ShaderProgram::~ShaderProgram()
 {
     if( program )
-    glDeleteProgram( program );
+        glDeleteProgram( program );
     if(vs )
-    glDeleteShader( vs );
+        glDeleteShader( vs );
     if( fs )
-    glDeleteShader( fs );
+        glDeleteShader( fs );
     if( gs )
-    glDeleteShader( gs );
+        glDeleteShader( gs );
 }
 
 int ShaderProgram::init(const char* vs_source, const char* fs_source, const char* gs_source )

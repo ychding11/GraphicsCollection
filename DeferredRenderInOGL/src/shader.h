@@ -1,10 +1,7 @@
-// Sparse Voxel Octree and Voxel Cone Tracing
-// 
-// University of Pennsylvania CIS565 final project
-// copyright (c) 2013 Cheng-Tso Lin  
-
 #ifndef _SHADER_H
 #define _SHADER_H
+
+#include <string>
 
 namespace shader
 {
@@ -19,7 +16,9 @@ class ShaderProgram
 public:
 
     ShaderProgram();
+    ShaderProgram(const char* vs_source, const char* fs_source, const char* gs_source);
     virtual ~ShaderProgram();
+
     int init( const char* vs_source, const char* fs_source, const char* gs_source = 0 );
     void use();
     void unuse();
@@ -29,10 +28,16 @@ public:
     void bindFragDataLocation( unsigned int idx, char* name );
 
 protected:
+
     GLuint vs; //vertex shader
     GLuint fs; //fragment shader
     GLuint gs; //geometry shader
     GLuint program;
+
+    std::string vsName;
+    std::string fsName;
+    std::string gsName;
+
 };
 
 class ComputeShader: public ShaderProgram
