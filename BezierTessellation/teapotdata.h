@@ -1,7 +1,7 @@
 
 // Teapot data
 
-typedef unsigned int uint32_t;
+typedef unsigned int   uint32_t;
 typedef unsigned short uint16_t;
 
 const static uint16_t kTeapotNumPatches = 32;
@@ -41,8 +41,9 @@ uint32_t teapotPatches[kTeapotNumPatches][16] = {
 	{270, 270, 270, 270, 300, 305, 306, 279, 297, 303, 304, 275, 294, 301, 302, 271}
 };
 
-float teapotVertices[kTeapotNumVertices + 1][3] = {
-	{ 0.0,  0.0,  0.0 }, //fake vertex as a placeholder
+float teapotVertices[kTeapotNumVertices + 1][3] =
+{
+	{ 0.0,     0.0,     0.0 }, //fake vertex as a placeholder
 	{ 1.4000,  0.0000,  2.4000},                                                     
 	{ 1.4000, -0.7840,  2.4000},                                                     
 	{ 0.7840, -1.4000,  2.4000},                                                     

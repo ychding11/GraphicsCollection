@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>SimpleBezier11</ProjectName>
+    <ProjectName>TesseBezierSurface</ProjectName>
     <ProjectGuid>{D3D1110C-96D0-4629-88B8-122C0256058C}</ProjectGuid>
     <RootNamespace>SimpleBezier11</RootNamespace>
     <Keyword>Win32Proj</Keyword>
@@ -174,9 +174,8 @@
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>WIN32;_DEBUG;DEBUG;PROFILE;_WINDOWS;USE_DIRECT3D11_2;_WIN32_WINNT=0x0600;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>
-      </PrecompiledHeaderFile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>DXUT.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
@@ -376,32 +375,24 @@
     <None Include="..\DXUT\Optional\directx.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="teapotdata.h" />
-    <ClCompile Include="SimpleBezier11.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-    </ClCompile>
-    <CLInclude Include="MobiusStrip.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="SimpleBezier11.hlsl" />
-  </ItemGroup>
-  <ItemGroup>
-    <CLInclude Include="resource.h" />
+    <ClInclude Include="src\BezierSurface.h" />
+    <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\ShaderManager.h" />
+    <ClInclude Include="src\utahTeapot.h" />
     <ResourceCompile Include="SimpleBezier11.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DXUT\Core\DXUT_2015_Win10.vcxproj">
+    <ProjectReference Include="..\DXUT\Core\DXUT_2015.vcxproj">
       <Project>{85344b7f-5aa0-4e12-a065-d1333d11f6ca}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\DXUT\Optional\DXUTOpt_2015_Win10.vcxproj">
+    <ProjectReference Include="..\DXUT\Optional\DXUTOpt_2015.vcxproj">
       <Project>{61b333c2-c4f7-4cc1-a9bf-83f6d95588eb}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\BezierSurface.cpp" />
+    <ClCompile Include="src\ShaderManager.cpp" />
+    <ClCompile Include="src\SimpleBezierSurfaceViewer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

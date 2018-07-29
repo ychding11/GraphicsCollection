@@ -103,7 +103,8 @@ vec4 myShade( vec4 lightPos, vec3 lightColor, vec4 surfaceColor, vec3 surfacePos
     N = normalize( surfaceNormal );
     V = normalize( eyePos - surfacePos );
     R = 2.0 * dot(L, N) * N - L;
-    
+    if (length(N) <= 1e-5 )
+        return vec4 ( vec3(0.9, 0.9, 0.9) * lightColor * surfaceColor.xyz, 0.0f);
     return vec4 ((max(dot(L, N), 0.0f) + pow(max(dot(R, V), 0.0f), 32)) * lightColor * surfaceColor.xyz, 0.0f);
 }
 
@@ -136,9 +137,9 @@ void main()
     }
     else
     {
-        if (textureProj(u_shadowmap, shadowCoord.xyw).z < (shadowCoord.z / shadowCoord.w))
+        if (textureProj(u_shadowmap, shadowCoord.xyw).x < (shadowCoord.z / shadowCoord.w))
         {
-            out_Color = color * vec4(0.1f, 0.1f, 0.1f, 1.0f);
+            out_Color = color * vec4(0.0f, 0.0f, 0.0f, 1.0f);
         }
         else                                           
         {

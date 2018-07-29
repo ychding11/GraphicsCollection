@@ -480,7 +480,7 @@ void initFBO( int w, int h )
     //Shadow map buffers
     glGenTextures(1, &shadowmapTex );
     glBindTexture(GL_TEXTURE_2D, shadowmapTex );
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32 , 1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0 );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32 , w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0 );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
