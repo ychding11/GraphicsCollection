@@ -8,6 +8,7 @@
 #include "SDKmisc.h"
 #include "DXUTcamera.h"
 #include "ShaderManager.h"
+#include "IDataSource.h"
 
 
 #ifndef SAFE_RELEASE
@@ -60,8 +61,7 @@ public:
     };
 
 private:
-    std::vector<ControlPoint> mControlPoints;
-    std::vector<int> mIndex;
+    IDataSource*  mMeshData;
     PartitionMode mPartitionMode;
 
     ID3D11Buffer*             mpcbFrameParam = nullptr;
@@ -74,16 +74,23 @@ private:
 public:
     BezierSurface(void)
         : mPartitionMode(PARTITION_INTEGER)
+        , mMeshData(nullptr)
     { }
+
+    ~BezierSurface()
+    {
+        delete mMeshData; 
+    }
+
+    void SetupMeshData(IDataSource *data)
+    {
+        assert(data);
+        mMeshData = data;
+    }
 
     void Initialize(ID3D11Device*  d3dDevice, ID3D11DeviceContext* context)
     {
         CreateD3D11GraphicsObjects(d3dDevice);
-    }
-
-    ~BezierSurface()
-    {
-        //DestroyD3D11Objects();
     }
 
     void Render(ID3D11DeviceContext* pd3dImmediateContext);

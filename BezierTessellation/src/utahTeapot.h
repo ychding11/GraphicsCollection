@@ -8,7 +8,7 @@ typedef unsigned short uint16_t;
 const static uint16_t kTeapotNumPatches  = 32;
 const static uint16_t kTeapotNumVertices = 306;
 
-uint32_t teapotPatches[kTeapotNumPatches][16] =
+static uint32_t teapotPatches[kTeapotNumPatches][16] =
 {
 	{  1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16},
 	{  4,  17,  18,  19,   8,  20,  21,  22,  12,  23,  24,  25,  16,  26,  27,  28},
@@ -44,7 +44,7 @@ uint32_t teapotPatches[kTeapotNumPatches][16] =
 	{270, 270, 270, 270, 300, 305, 306, 279, 297, 303, 304, 275, 294, 301, 302, 271}
 };
 
-float teapotVertices[kTeapotNumVertices + 1][3] =
+static float teapotVertices[kTeapotNumVertices + 1][3] =
 {
 	{ 0.0,     0.0,     0.0 }, //fake vertex as a placeholder
 	{ 1.4000,  0.0000,  2.4000},                                                     

@@ -1,7 +1,7 @@
 
 #include "BezierSurface.h"
 #include "ShaderManager.h"
-#include "utahTeapot.h"
+//#include "utahTeapot.h"
 
 
 static RenderOption renderOption;
@@ -89,20 +89,20 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
 
     D3D11_BUFFER_DESC vbDesc;
     ZeroMemory(&vbDesc, sizeof(D3D11_BUFFER_DESC));
-    vbDesc.ByteWidth = sizeof(teapotVertices);
+    vbDesc.ByteWidth = mMeshData->VBufferSize();
     vbDesc.Usage = D3D11_USAGE_DEFAULT;
     vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
     D3D11_SUBRESOURCE_DATA vbInitData;
     ZeroMemory(&vbInitData, sizeof(vbInitData));
-    vbInitData.pSysMem = teapotVertices;
+    vbInitData.pSysMem = mMeshData->VBuffer();
     V_RETURN(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointVB));
     DXUT_SetDebugName(mpControlPointVB, "Control Points VB");
 
     // Teapot control points index
-    vbDesc.ByteWidth = sizeof(teapotPatches);
     vbDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    vbInitData.pSysMem = teapotPatches;
+    vbDesc.ByteWidth   = mMeshData->IBufferSize();
+    vbInitData.pSysMem = mMeshData->IBuffer();
     V_RETURN(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointIB));
     DXUT_SetDebugName(mpControlPointIB, "Control Points IB");
 
@@ -140,14 +140,14 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
 
 
     // Draw Pass one
-    pd3dImmediateContext->DrawIndexed(kTeapotNumPatches * 16, 0, 0);
+    pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
 
     //
     if (RenderOption::getRenderOption().wireframeOn && RenderOption::getRenderOption().wireframeOnShaded)
     {
         pd3dImmediateContext->RSSetState(mpRSSolid);
         pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
-        pd3dImmediateContext->DrawIndexed(kTeapotNumPatches * 16, 0, 0);
+        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
     }
     else
     {
