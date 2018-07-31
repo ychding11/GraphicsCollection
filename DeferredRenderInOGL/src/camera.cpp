@@ -2,6 +2,17 @@
 #include "camera.h"
 using namespace std;
 
+static Camera mDrawCamera;
+static Camera mObserveCamera;
+
+Camera& CameraManager::getCamera(std::string name)
+{
+    if (name == "draw")
+        return mDrawCamera;
+    else if (name == "observe")
+        return mObserveCamera;
+}
+
 Camera::Camera() {
 	camera_mode = FREE;
 	camera_up = glm::vec3(0, 1, 0);

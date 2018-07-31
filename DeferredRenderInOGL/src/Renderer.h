@@ -11,27 +11,19 @@
 #include "objLoader.h"
 #include "camera.h"
 #include "util.h"
+#include "ShaderManager.h"
 
 using namespace glm;
 
-enum Display
-{
-    DISPLAY_DEPTH = 0,
-    DISPLAY_NORMAL = 1,
-    DISPLAY_POSITION = 2,
-    DISPLAY_COLOR = 3,
-    DISPLAY_TOTAL = 4,
-    DISPLAY_LIGHTS = 5,
-    DISPLAY_TOON = 6
-};
+typedef objLoader ModelContainer;
 
 enum DebugType
 {
-    RENDER_FULL_SCENE = 1,
-    RENDER_POSITION   = 2,
-    RENDER_NORMAL     = 3,
-    RENDER_COLOR      = 4,
-    RENDER_SHADOW     = 5,
+    DEBUG_FULL_SCENE = 1,
+    DEBUG_POSITION   = 2,
+    DEBUG_NORMAL     = 3,
+    DEBUG_COLOR      = 4,
+    DEBUG_SHADOW     = 5,
 };
 
 struct QuadVertexFormat
@@ -53,7 +45,7 @@ struct RenderOption
         , shadowOff(true)
         , wireframe(false)
         , visualizeVertexNormal(false)
-        , diagType(DebugType::RENDER_FULL_SCENE)
+        , diagType(DebugType::DEBUG_FULL_SCENE)
     { }
 
     static RenderOption& getRenderOption();
@@ -69,9 +61,6 @@ private:
     mat4 mNormalToView;
     mat4 mNormalToWorld;
     mat4 mLightMVP;
-
-    Camera& mDrawCamera;
-    Camera& mObserveCamera;
 
     ////////////////////////////////////////////////////////////////
     ////OpenGL buffer objects for loaded mesh
@@ -105,13 +94,7 @@ private:
 
     GLuint FBO[TOTAL_FB] = { 0, 0 };
 
-    void UpdateCameraMatrix(Camera& camera)
-    {
-        mat4 model;
-        camera.Update();
-        camera.GetMatricies(mProjection, mView, model);
-        mNormalToView = transpose(inverse(mView * mWorld));
-    }
+private:
 
     // Select object in scene, put it in new place.
     void UpdateWorldMatrix()
@@ -135,14 +118,20 @@ private:
     void RenderPlainModel();
     void RenderVertexNormal();
 
+    ModelContainer *mModels;
+
 public:
 
-    void SetObjectModel()
+    void SetUp(ModelContainer* models)
     {
+        mModels = models;
+        CreatedScreenQaudBuffer();
+        CreateObjectModelBuffer();
 
+        CreateShadowFB();
+        CreateGeomFB();
     }
 
-    
     void  Render(void)
     {
         if (RenderOption::getRenderOption().multipleView)
@@ -153,5 +142,10 @@ public:
 
 };
 
+class RendererManager
+{
+public:
+    static Renderer& getRender(std::string name = "");
+};
 
 #endif

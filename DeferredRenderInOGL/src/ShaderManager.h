@@ -19,6 +19,11 @@ public:
     ShaderManager();
     static ShaderManager& getShaderManager();
 
+    void SetupShaders()
+    {
+        BuildShaderList();
+    }
+
     void ActiveShader(const std::string& name);
     void UpdateShaderParam(const std::string& name);
 

@@ -18,7 +18,7 @@ ShaderProgram::ShaderProgram()
 ShaderProgram::ShaderProgram(const char* vs_source, const char* fs_source, const char* gs_source)
     : vsName(vs_source)
     , fsName(fs_source)
-    , gsName(gs_source)
+    , gsName(gs_source == 0 ? "" : gs_source)
 {
     shaders_t shaderSet = loadShaders( vs_source, fs_source, gs_source );
     vs = shaderSet.vertex;

@@ -16,7 +16,14 @@
 
 using namespace std;
 using namespace glm;
+using namespace shader;
 
+static Renderer render;
+
+Renderer& RendererManager::getRender(std::string name)
+{
+    return render;
+}
 
 static RenderOption renderOption;
 RenderOption & RenderOption::getRenderOption()
@@ -29,7 +36,7 @@ RenderOption & RenderOption::getRenderOption()
 ////////////////////////////////////////////////////////
 void Renderer::RenderSingleViewport()
 {
-
+    RenderVertexNormal();
 }
 
 void Renderer::RenderMultipleViewport()
@@ -71,7 +78,7 @@ void Renderer::CreatedScreenQaudBuffer()
 
 void Renderer::CreateObjectModelBuffer()
 {
-    int numModel = g_meshloader.getModelCount();
+    int numModel = mModels->getModelCount();
     if (numModel >= QUAD)
     {
         cout << "- More Models than expected, cannot handle, exit!" << endl;
@@ -79,7 +86,7 @@ void Renderer::CreateObjectModelBuffer()
     }
     for( int i = 0; i < numModel; ++i )
     {
-        const ObjModel* model = g_meshloader.getModel(i);
+        const ObjModel* model = mModels->getModel(i);
         glGenVertexArrays( 1, &vao[i] );
         glBindVertexArray( vao[i] );
 
@@ -164,38 +171,45 @@ void Renderer::RenderLighting()
 void Renderer::RenderPlainModel()
 {
 
-    }
+}
+
 void Renderer::RenderVertexNormal()
 {
-    const float normalStrength = .05f;
-    //glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     glEnable( GL_DEPTH_TEST );
     glEnable( GL_CULL_FACE );
     glCullFace( GL_BACK );
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     if (RenderOption::getRenderOption().wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    ShaderManager& shdmgr = ShaderManager::getShaderManager();
+    shdmgr.ActiveShader("VisualNormal");
+    shdmgr.UpdateShaderParam("VisualNormal");
 
-    // Update Shader Parameter
-    UpdateCameraMatrix(mDrawCamera);
-    visualNormalShader.use();
-    visualNormalShader.setParameter( shader::f1, (void*)&normalStrength,  "u_NormalLength" );
-    visualNormalShader.setParameter( shader::mat4x4, (void*)&mWorld[0][0], "u_World");
-    visualNormalShader.setParameter( shader::mat4x4, (void*)&mView[0][0],  "u_View" );
-    visualNormalShader.setParameter( shader::mat4x4, (void*)&mProjection[0][0], "u_Projection" );
-    visualNormalShader.setParameter( shader::mat4x4, (void*)&mNormalToWorld[0][0], "u_NormalToWorld" );
-    visualNormalShader.setParameter( shader::mat4x4, (void*)&mNormalToView[0][0],  "u_NormalToView" );
-
-    int numModel = g_meshloader.getModelCount();
+    int numModel = mModels->getModelCount();
     for( int i = 0; i < numModel; ++i )
     {
         glBindVertexArray( vao[i] );
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo[i] );
-        const ObjModel* model = g_meshloader.getModel(i);
+        const ObjModel* model = mModels->getModel(i);
+        for( int i = 0; i < model->numGroup; ++i )
+        {
+            glDrawElements( GL_TRIANGLES, 3 * model->groups[i].numTri , GL_UNSIGNED_INT, (void*)model->groups[i].ibo_offset );
+        }
+    }
+
+    shdmgr.ActiveShader("Plain");
+    shdmgr.UpdateShaderParam("Plain");
+    for( int i = 0; i < numModel; ++i )
+    {
+        glBindVertexArray( vao[i] );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo[i] );
+        const ObjModel* model = mModels->getModel(i);
         for( int i = 0; i < model->numGroup; ++i )
         {
             glDrawElements( GL_TRIANGLES, 3 * model->groups[i].numTri , GL_UNSIGNED_INT, (void*)model->groups[i].ibo_offset );

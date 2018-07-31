@@ -16,7 +16,7 @@ class ShaderProgram
 public:
 
     ShaderProgram();
-    ShaderProgram(const char* vs_source, const char* fs_source, const char* gs_source);
+    ShaderProgram(const char* vs_source, const char* fs_source, const char* gs_source = 0);
     virtual ~ShaderProgram();
 
     int init( const char* vs_source, const char* fs_source, const char* gs_source = 0 );

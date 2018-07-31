@@ -20,6 +20,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <string>
 
 enum CameraType {
 	ORTHO, FREE
@@ -107,5 +108,11 @@ class Camera {
 		glm::mat4 model;
 		glm::mat4 MVP;
 
+};
+
+class CameraManager
+{
+public:
+    static Camera& getCamera(std::string);
 };
 #endif
