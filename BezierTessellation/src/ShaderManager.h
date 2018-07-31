@@ -22,13 +22,16 @@ public:
     ShaderManager()
     { }
 
-    static ShaderManager& getShaderManager();
-
     ~ShaderManager()
     { }
 
+    static ShaderManager& getShaderManager();
+
     HRESULT InitD3D11ShaderObjects(ID3D11Device*  pd3dDevice);
+
     void Destroy();
+
+public:
 
     ID3D11VertexShader*   getVertexShader(std::string name)
     {
@@ -54,7 +57,6 @@ public:
     {
         return mInputLayoutList[name];
     }
-
 
 private:
     

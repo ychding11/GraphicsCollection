@@ -49,6 +49,7 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
     XMStoreFloat3(&pData->cbCameraPosWorld, camera.GetEyePt());
     pData->cbTessellationFactor = 16.0f;
     pData->cbWireframeOn = renderOption.wireframeOn;
+    pData->cbTessellationFactor = renderOption.tessellateFactor;
     pd3dImmediateContext->Unmap(mpcbFrameParam, 0);
 
     // for debug purpose

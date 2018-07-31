@@ -183,7 +183,7 @@ static const WCHAR* UserOption()
 {
     const RenderOption & option = RenderOption::getRenderOption();
     wchar_t wString[4096];
-    wsprintf(wString, L"- wireframe: %d, wireframeOnShaded:%d", option.wireframeOn, option.wireframeOnShaded);
+    wsprintf(wString, L"- wireframe: %d, wireframeOnShaded:%d, tessellator factor:%d", option.wireframeOn, option.wireframeOnShaded, option.tessellateFactor);
     return wString;
 }
 
@@ -253,6 +253,12 @@ void CALLBACK KeyboardProc(UINT nChar, bool bKeyDown, bool bAltDown, void* pUser
             {
                 bool wire = RenderOption::getRenderOption().wireframeOnShaded;
                 RenderOption::getRenderOption().wireframeOnShaded = !wire;
+                break;
+            }
+            case 't':
+            {
+                int wire = RenderOption::getRenderOption().tessellateFactor;
+                RenderOption::getRenderOption().tessellateFactor = wire >= 64 ? 1 : wire * 2 > 64 ? wire + 1 : wire * 2;
                 break;
             }
         }
@@ -342,7 +348,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     // Setup the camera's projection parameters
     float fAspectRatio = pBackBufferSurfaceDesc->Width / ( FLOAT )pBackBufferSurfaceDesc->Height;
-    CameraManager::getCamera().SetProjParams( XM_PI / 4, fAspectRatio, 0.1f, 2000.0f );
+    CameraManager::getCamera().SetProjParams( XM_PI / 4, fAspectRatio, 0.1f, 600.0f );
     CameraManager::getCamera().SetWindow( pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height );
     CameraManager::getCamera().SetButtonMasks( MOUSE_MIDDLE_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON );
 

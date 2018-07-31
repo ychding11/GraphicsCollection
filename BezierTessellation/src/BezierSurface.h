@@ -34,10 +34,12 @@ struct RenderOption
 {
     bool wireframeOn;
     bool wireframeOnShaded;
+    int  tessellateFactor;
 
     RenderOption::RenderOption()
         : wireframeOn(false)
         , wireframeOnShaded(true)
+        , tessellateFactor(10)
     { }
 
     static RenderOption& getRenderOption();
