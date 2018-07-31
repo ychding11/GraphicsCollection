@@ -26,6 +26,7 @@ struct FrameParam
     DirectX::XMFLOAT4X4  cbViewProjection;
     DirectX::XMFLOAT3    cbCameraPosWorld;
     float                cbTessellationFactor;
+    bool                 cbWireframeOn;
 };
 
 struct RenderOption

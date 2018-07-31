@@ -34,6 +34,8 @@ static XMMATRIX   tempWorld(1, 0,  0, 0,
 void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 {
     CModelViewerCamera &camera = CameraManager::getCamera();
+    const RenderOption & renderOption = RenderOption::getRenderOption();
+
     // WVP
     XMMATRIX mProj = camera.GetProjMatrix();
     XMMATRIX mView = camera.GetViewMatrix();
@@ -46,6 +48,7 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
     XMStoreFloat4x4(&pData->cbViewProjection, XMMatrixTranspose(mViewProjection));
     XMStoreFloat3(&pData->cbCameraPosWorld, camera.GetEyePt());
     pData->cbTessellationFactor = 16.0f;
+    pData->cbWireframeOn = renderOption.wireframeOn;
     pd3dImmediateContext->Unmap(mpcbFrameParam, 0);
 
     // for debug purpose
@@ -68,7 +71,7 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     Desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     Desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     Desc.MiscFlags = 0;
-    Desc.ByteWidth = sizeof(FrameParam);
+    Desc.ByteWidth = ( sizeof(FrameParam) + 15 ) & ~0xf;
     V_RETURN(pd3dDevice->CreateBuffer(&Desc, nullptr, &mpcbFrameParam));
     DXUT_SetDebugName(mpcbFrameParam, "CB_PER_FRAME_Const_Buffer");
 

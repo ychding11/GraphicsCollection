@@ -1,7 +1,7 @@
 
 #include "ShaderManager.h"              
 
-#define TESSE_SHADER_FILE L"TesseBezierSurface.hlsl"
+#define TESSE_SHADER_FILE L".\\shader\\TesseBezierSurface.hlsl"
 
 
 ShaderManager& ShaderManager::getShaderManager()
