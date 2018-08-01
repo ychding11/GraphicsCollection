@@ -45,4 +45,22 @@ class UtahTeapot : public IDataSource
    size_t IBufferElement() override;
 };
 
+class Quad : public IDataSource
+{
+   // Index buffer address
+   void* IBuffer() override;
+    
+   // Vertex buffer address
+   void* VBuffer() override;
+
+   // Index buffer size in byte
+   size_t IBufferSize() override ;
+    
+   // Vndex buffer size in byte
+   size_t VBufferSize() override;
+
+   // Index buffer size in element
+   size_t IBufferElement() override;
+};
+
 #endif

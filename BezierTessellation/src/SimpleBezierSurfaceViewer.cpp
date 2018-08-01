@@ -328,7 +328,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( g_D3DSettingsDlg.OnD3D11CreateDevice( pd3dDevice ) );
     g_pTxtHelper = new CDXUTTextHelper( pd3dDevice, pd3dImmediateContext, &g_DialogResourceManager, 15 );
 
-    BezierSurfaceManager::getBezierSurface().SetupMeshData(new UtahTeapot);
+    //BezierSurfaceManager::getBezierSurface().SetupMeshData(new UtahTeapot);
+    BezierSurfaceManager::getBezierSurface().SetupMeshData(new Quad);
     BezierSurfaceManager::getBezierSurface().Initialize(pd3dDevice, pd3dImmediateContext);;
 
     return S_OK;

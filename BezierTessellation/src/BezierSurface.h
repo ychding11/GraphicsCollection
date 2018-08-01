@@ -73,6 +73,9 @@ private:
     ID3D11RasterizerState*    mpRSSolid = nullptr;
     ID3D11RasterizerState*    mpRSWireframe = nullptr;
 
+    ID3D11SamplerState*                 mpSamplerLinear = nullptr;
+    ID3D11ShaderResourceView*           mpHeightMapSRV  = nullptr;
+
 public:
     BezierSurface(void)
         : mPartitionMode(PARTITION_INTEGER)
@@ -104,6 +107,8 @@ public:
         SAFE_RELEASE( mpRSWireframe );
         SAFE_RELEASE( mpRSSolid );
         SAFE_RELEASE( mpcbFrameParam );
+        SAFE_RELEASE( mpSamplerLinear  );
+        SAFE_RELEASE( mpHeightMapSRV   );
         ShaderManager::getShaderManager().Destroy();
     }
 

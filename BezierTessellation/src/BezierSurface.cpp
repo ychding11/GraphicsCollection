@@ -107,6 +107,18 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     V_RETURN(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointIB));
     DXUT_SetDebugName(mpControlPointIB, "Control Points IB");
 
+    // Create the sample state
+    D3D11_SAMPLER_DESC sampDesc;
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    V_RETURN(pd3dDevice->CreateSamplerState(&sampDesc, &mpSamplerLinear));
+    V_RETURN(DXUTCreateShaderResourceViewFromFile(pd3dDevice, L"heightmap.png", &mpHeightMapSRV));
     ShaderManager::getShaderManager().InitD3D11ShaderObjects(pd3dDevice);
 }
 
@@ -116,7 +128,8 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
     UINT Stride = sizeof(ControlPoint);
     UINT Offset = 0;
     pd3dImmediateContext->IASetInputLayout(shdmgr.getInputLayout("ControlPointLayout"));
-    pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST);
+    //pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST);
+    pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
     pd3dImmediateContext->IASetVertexBuffers(0, 1, &mpControlPointVB, &Stride, &Offset);
     pd3dImmediateContext->IASetIndexBuffer(mpControlPointIB, DXGI_FORMAT_R32_UINT, 0);
 
@@ -134,11 +147,13 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
     pd3dImmediateContext->GSSetShader(nullptr, nullptr, 0);
     pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
 
+    pd3dImmediateContext->DSSetSamplers(0, 1, &mpSamplerLinear);
+    pd3dImmediateContext->DSSetShaderResources(0, 1, &mpHeightMapSRV);
+
     if (RenderOption::getRenderOption().wireframeOn)
         pd3dImmediateContext->RSSetState(mpRSWireframe);
     else 
         pd3dImmediateContext->RSSetState(mpRSSolid);
-
 
     // Draw Pass one
     pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
