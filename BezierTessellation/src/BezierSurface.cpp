@@ -47,9 +47,13 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
     XMStoreFloat4x4(&pData->cbWorld, XMMatrixTranspose(tempWorld));
     XMStoreFloat4x4(&pData->cbViewProjection, XMMatrixTranspose(mViewProjection));
     XMStoreFloat3(&pData->cbCameraPosWorld, camera.GetEyePt());
-    pData->cbTessellationFactor = 16.0f;
     pData->cbWireframeOn = renderOption.wireframeOn;
     pData->cbTessellationFactor = renderOption.tessellateFactor;
+    pData->cbHeightMapOn = renderOption.heightMapOn;
+    pData->cbDiagType = renderOption.diagType;
+    pData->cbTexelCellU = 0.002f;
+    pData->cbTexelCellU = 0.002f;
+    pData->cbWorldCell = 0.002f;
     pd3dImmediateContext->Unmap(mpcbFrameParam, 0);
 
     // for debug purpose
@@ -61,7 +65,7 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
         tempEyePos.m128_f32[2],
         tempEyePos.m128_f32[3]
     );
-    OutputDebugStringA(buf);
+   // OutputDebugStringA(buf);
 }
 
 HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
@@ -145,28 +149,36 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
     pd3dImmediateContext->HSSetShader(shdmgr.getHullShader("HullShader"), nullptr, 0);
     pd3dImmediateContext->DSSetShader(shdmgr.getDomainShader("DomainShader"), nullptr, 0);
     pd3dImmediateContext->GSSetShader(nullptr, nullptr, 0);
-    pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
 
     pd3dImmediateContext->DSSetSamplers(0, 1, &mpSamplerLinear);
     pd3dImmediateContext->DSSetShaderResources(0, 1, &mpHeightMapSRV);
 
-    if (RenderOption::getRenderOption().wireframeOn)
-        pd3dImmediateContext->RSSetState(mpRSWireframe);
-    else 
-        pd3dImmediateContext->RSSetState(mpRSSolid);
-
-    // Draw Pass one
-    pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
-
-    //
-    if (RenderOption::getRenderOption().wireframeOn && RenderOption::getRenderOption().wireframeOnShaded)
+    // Diag mode
+    if (RenderOption::getRenderOption().diagModeOn)
     {
         pd3dImmediateContext->RSSetState(mpRSSolid);
         pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
         pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
     }
+    else if (RenderOption::getRenderOption().wireframeOn)
+    {
+        RenderOption::getRenderOption().wireframeOn = false;
+        UpdateCBParam(pd3dImmediateContext);
+        pd3dImmediateContext->RSSetState(mpRSSolid);
+        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
+
+        RenderOption::getRenderOption().wireframeOn = true;
+        UpdateCBParam(pd3dImmediateContext);
+        pd3dImmediateContext->RSSetState(mpRSWireframe);
+        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
+        RenderOption::getRenderOption().wireframeOn = true;
+
+    }
     else
     {
-
+        pd3dImmediateContext->RSSetState(mpRSSolid);
+        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
     }
 }

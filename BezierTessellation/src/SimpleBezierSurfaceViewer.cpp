@@ -154,7 +154,7 @@ void InitApp()
 #endif
 
     // Setup the camera's view parameters
-    static const XMVECTORF32 s_vecEye = { 1.0f, 1.5f, -15.0f, 0.f };
+    static const XMVECTORF32 s_vecEye = { 0.0f, .5f, -5.0f, 0.f };
     static const XMVECTORF32 s_vecAt  = { 0.0f, 0.0f,   0.0f, 0.f };
     CameraManager::getCamera().SetViewParams( s_vecEye, s_vecAt );
 
@@ -183,7 +183,8 @@ static const WCHAR* UserOption()
 {
     const RenderOption & option = RenderOption::getRenderOption();
     wchar_t wString[4096];
-    wsprintf(wString, L"- wireframe: %d, wireframeOnShaded:%d, tessellator factor:%d", option.wireframeOn, option.wireframeOnShaded, option.tessellateFactor);
+    wsprintf(wString, L"- wireframe: %d, diagModeOn:%d, tessellator factor:%d, height map:%d, diag type:%d ",
+        option.wireframeOn, option.diagModeOn, option.tessellateFactor, option.heightMapOn, option.diagType);
     return wString;
 }
 
@@ -251,14 +252,26 @@ void CALLBACK KeyboardProc(UINT nChar, bool bKeyDown, bool bAltDown, void* pUser
             }
             case 's':
             {
-                bool wire = RenderOption::getRenderOption().wireframeOnShaded;
-                RenderOption::getRenderOption().wireframeOnShaded = !wire;
+                bool diag = RenderOption::getRenderOption().diagModeOn;
+                RenderOption::getRenderOption().diagModeOn = !diag;
                 break;
             }
             case 't':
             {
                 int wire = RenderOption::getRenderOption().tessellateFactor;
                 RenderOption::getRenderOption().tessellateFactor = wire >= 64 ? 1 : wire * 2 > 64 ? wire + 1 : wire * 2;
+                break;
+            }
+            case 'h':
+            {
+                unsigned int height = RenderOption::getRenderOption().heightMapOn;
+                RenderOption::getRenderOption().heightMapOn = !height;
+                break;
+            }
+            case 'd':
+            {
+                DiagType type = RenderOption::getRenderOption().diagType;
+                RenderOption::getRenderOption().diagType = DiagType((type + 1) % DiagType::eDiagNum);
                 break;
             }
         }

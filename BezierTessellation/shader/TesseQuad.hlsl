@@ -18,11 +18,17 @@ SamplerState samLinear   : register(s0);
 //--------------------------------------------------------------------------------------
 cbuffer cbPerFrame : register( b0 )
 {
-    column_major matrix g_mWorld; // column_major is default.
+    matrix g_mWorld; // column_major is default.
     matrix g_mViewProjection;
-    float3 g_vCameraPosWorld;
-    float  g_fTessellationFactor;
-    bool   cbWireframeOn;
+    float3 cbCameraPosWorld;
+    float  cbTessellationFactor;
+    int   cbWireframeOn;
+    int   cbHeightMapOn;
+    int   cbDiagType;
+    float cbTexelCellU;
+    float cbTexelCellV;
+    float cbWorldCell;
+
 };
 
 cbuffer cbMaterial : register(b1)
@@ -59,9 +65,6 @@ VS_CONTROL_POINT_OUTPUT BezierVS( VS_CONTROL_POINT_INPUT Input )
     return Output;
 }
 
-//--------------------------------------------------------------------------------------
-// Constant data function for the BezierHS.  This is executed once per patch.
-//--------------------------------------------------------------------------------------
 struct HS_CONSTANT_DATA_OUTPUT
 {
     float Edges[4]             : SV_TessFactor;
@@ -75,13 +78,12 @@ struct HS_OUTPUT
 
 // This constant hull shader is executed once per patch. SV_TessFactor and SV_InsideTessFactor for each patch.
 // You might calculate a variable tessellation factor based on the camera's distance.
-
 HS_CONSTANT_DATA_OUTPUT BezierConstantHS( InputPatch<VS_CONTROL_POINT_OUTPUT, INPUT_PATCH_SIZE> ip,
                                           uint PatchID : SV_PrimitiveID )
 {    
     HS_CONSTANT_DATA_OUTPUT Output;
 
-    float TessAmount = g_fTessellationFactor;
+    float TessAmount = cbTessellationFactor;
     Output.Edges[0]  = Output.Edges[1] = Output.Edges[2] = Output.Edges[3] = TessAmount;
     Output.Inside[0] = Output.Inside[1] = TessAmount;
     return Output;
@@ -115,7 +117,9 @@ struct DS_OUTPUT
 {
     float4 vPosition        : SV_POSITION;
     float3 vWorldPos        : WORLDPOS;
-//    float3 vNormal          : NORMAL;
+    float3 vNormal          : NORMAL;
+    float3 vTangent         : TANGENT;
+    float3 vBiTangent       : BITANGENT;
     float2 vtex             : TEX;
 };
 
@@ -133,11 +137,35 @@ DS_OUTPUT BezierDS( HS_CONSTANT_DATA_OUTPUT input,
                     const OutputPatch<HS_OUTPUT, OUTPUT_PATCH_SIZE> quad)
 {
     DS_OUTPUT Output;
-    float3 WorldPos = lerp( lerp(quad[0].vPosition, quad[1].vPosition, uv.x), lerp(quad[2].vPosition, quad[3].vPosition, uv.x), uv.y);
-    WorldPos.y = heightMap.SampleLevel(samLinear, uv, 0).r;
-    Output.vWorldPos = WorldPos;
+
     Output.vtex = uv;
-    Output.vPosition = mul( float4(WorldPos, 1.0), g_mViewProjection );
+    float3 WorldPos = lerp( lerp(quad[0].vPosition, quad[1].vPosition, uv.x), lerp(quad[2].vPosition, quad[3].vPosition, uv.x), uv.y);
+    if (cbHeightMapOn)
+    {
+        WorldPos.y = heightMap.SampleLevel(samLinear, uv, 0).r;
+
+        float2 leftTex   = uv + float2(-cbTexelCellU, 0.0f);
+        float2 rightTex  = uv + float2( cbTexelCellU, 0.0f);
+        float2 bottomTex = uv + float2(0.0f,  cbTexelCellV);
+        float2 topTex    = uv + float2(0.0f, -cbTexelCellV);
+
+        float leftY   = heightMap.SampleLevel(samLinear, leftTex,   0).r;
+        float rightY  = heightMap.SampleLevel(samLinear, rightTex,  0).r;
+        float bottomY = heightMap.SampleLevel(samLinear, bottomTex, 0).r;
+        float topY    = heightMap.SampleLevel(samLinear, topTex,    0).r;
+
+        Output.vTangent   = normalize(float3(2.0f * cbWorldCell, rightY - leftY, 0.0f));
+        Output.vBiTangent = normalize(float3(0.0f, bottomY - topY, -2.0f * cbWorldCell));
+        Output.vNormal    = cross(Output.vTangent, Output.vBiTangent);
+    }
+    else
+    {
+        Output.vNormal   = float3(0.f, 1.f, 0.f);
+        Output.vTangent  = float3(1.f, 0.f, 0.f);
+        Output.vBiTangent= float3(0.f, 0.f, 1.f);
+    }
+    Output.vWorldPos = WorldPos;
+    Output.vPosition = mul( float4(Output.vWorldPos, 1.0), g_mViewProjection );
 
     return Output;    
 }
@@ -145,15 +173,26 @@ DS_OUTPUT BezierDS( HS_CONSTANT_DATA_OUTPUT input,
 //--------------------------------------------------------------------------------------
 // Solid color shading pixel shader (used for wireframe overlay)
 //--------------------------------------------------------------------------------------
-float4 WireframePS( DS_OUTPUT Input ) : SV_TARGET
+float4 WireframePS( DS_OUTPUT input ) : SV_TARGET
 {
-    return float4( 0.f, 1.0f, 0.f, 1.0 );
+    if (cbWireframeOn)
+        return float4( 0.f, 1.0f, 0.f, 1.0 );
+    float v = dot(input.vNormal, cbCameraPosWorld - input.vWorldPos);
+    return float4( v, v, v, 1.0 );
 }
 
 //--------------------------------------------------------------------------------------
-// Solid color shading pixel shader (used for wireframe overlay)
+// Solid color shading pixel shader (used for diag)
 //--------------------------------------------------------------------------------------
-float4 SolidColorPS( DS_OUTPUT Input ) : SV_TARGET
+float4 SolidColorPS( DS_OUTPUT input ) : SV_TARGET
 {
-        return float4( 0.3, 0.4, 0.4, 1.0 );
+    float4 color;
+    if      (cbDiagType == 0) color = float4(input.vNormal, 1.0f);
+    else if (cbDiagType == 1) color = float4(input.vTangent, 1.0f);
+    else if (cbDiagType == 2) color = float4(input.vBiTangent, 1.0f);
+    else if (cbDiagType == 3) color = input.vPosition;
+    else;
+
+    return color;
+
 }

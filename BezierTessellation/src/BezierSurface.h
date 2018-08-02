@@ -21,25 +21,42 @@ public:
     static CModelViewerCamera& getCamera();
 };
 
+enum DiagType
+{
+    eDiagNormal       = 0,
+    eDiagTangent      = 1,
+    eDiagBiTangent    = 2,
+    eDiagPosition     = 3,
+    eDiagNum
+};
 struct FrameParam
 {
     DirectX::XMFLOAT4X4  cbWorld;
     DirectX::XMFLOAT4X4  cbViewProjection;
     DirectX::XMFLOAT3    cbCameraPosWorld;
-    float                cbTessellationFactor;
-    bool                 cbWireframeOn;
+    float cbTessellationFactor;
+    int   cbWireframeOn;
+    int   cbHeightMapOn;
+    int   cbDiagType;
+    float cbTexelCellU;
+    float cbTexelCellV;
+    float cbWorldCell;
 };
 
 struct RenderOption
 {
     bool wireframeOn;
-    bool wireframeOnShaded;
+    bool diagModeOn;
+    int heightMapOn;
     int  tessellateFactor;
+    DiagType diagType;
 
     RenderOption::RenderOption()
         : wireframeOn(false)
-        , wireframeOnShaded(true)
+        , diagModeOn(false)
+        , heightMapOn(1)
         , tessellateFactor(10)
+        , diagType(eDiagNormal)
     { }
 
     static RenderOption& getRenderOption();
