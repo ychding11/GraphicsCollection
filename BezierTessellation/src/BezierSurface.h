@@ -85,13 +85,44 @@ private:
 
     ID3D11Buffer*             mpcbFrameParam = nullptr;
     ID3D11Buffer*             mpcbMaterial = nullptr;
+
     ID3D11Buffer*             mpControlPointVB = nullptr;
     ID3D11Buffer*             mpControlPointIB = nullptr;
+
     ID3D11RasterizerState*    mpRSSolid = nullptr;
     ID3D11RasterizerState*    mpRSWireframe = nullptr;
 
-    ID3D11SamplerState*                 mpSamplerLinear = nullptr;
-    ID3D11ShaderResourceView*           mpHeightMapSRV  = nullptr;
+    ID3D11BlendState*         mpBSalphaToCoverage = nullptr;
+    ID3D11BlendState*         mpBStransparent = nullptr;
+
+    ID3D11SamplerState*        mpSamplerLinear = nullptr;
+
+    ID3D11ShaderResourceView*  mpHeightMapSRV  = nullptr;
+    ID3D11ShaderResourceView*  mpEnvMapSRV  = nullptr;
+    ID3D11ShaderResourceView*  mpSkyMapSRV  = nullptr;
+
+public:
+    void DestroyD3D11Objects()
+    {
+        SAFE_RELEASE( mpcbFrameParam );
+
+        SAFE_RELEASE( mpControlPointIB );
+        SAFE_RELEASE( mpControlPointVB );
+
+        SAFE_RELEASE( mpRSWireframe );
+        SAFE_RELEASE( mpRSSolid );
+
+        SAFE_RELEASE( mpSamplerLinear  );
+
+        SAFE_RELEASE( mpBSalphaToCoverage );
+        SAFE_RELEASE( mpBStransparent );
+
+        SAFE_RELEASE( mpHeightMapSRV   );
+        SAFE_RELEASE( mpEnvMapSRV );
+        SAFE_RELEASE( mpSkyMapSRV );
+
+        ShaderManager::getShaderManager().Destroy();
+    }
 
 public:
     BezierSurface(void)
@@ -117,17 +148,6 @@ public:
 
     void Render(ID3D11DeviceContext* pd3dImmediateContext);
 
-    void DestroyD3D11Objects()
-    {
-        SAFE_RELEASE( mpControlPointIB );
-        SAFE_RELEASE( mpControlPointVB );
-        SAFE_RELEASE( mpRSWireframe );
-        SAFE_RELEASE( mpRSSolid );
-        SAFE_RELEASE( mpcbFrameParam );
-        SAFE_RELEASE( mpSamplerLinear  );
-        SAFE_RELEASE( mpHeightMapSRV   );
-        ShaderManager::getShaderManager().Destroy();
-    }
 
 
 private:

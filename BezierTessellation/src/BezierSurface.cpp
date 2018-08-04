@@ -71,6 +71,11 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
 {
     HRESULT hr;
+    ShaderManager::getShaderManager().InitD3D11ShaderObjects(pd3dDevice);
+
+    ////////////////////////////////////////////////////////////////////////
+    /// Const Buffer
+    ////////////////////////////////////////////////////////////////////////
     D3D11_BUFFER_DESC Desc;
     Desc.Usage = D3D11_USAGE_DYNAMIC;
     Desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -80,7 +85,9 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     V_RETURN(pd3dDevice->CreateBuffer(&Desc, nullptr, &mpcbFrameParam));
     DXUT_SetDebugName(mpcbFrameParam, "CB_PER_FRAME_Const_Buffer");
 
-    // Create solid and wireframe rasterizer state objects
+    ////////////////////////////////////////////////////////////////////////
+    /// rasterizer state objects
+    ////////////////////////////////////////////////////////////////////////
     D3D11_RASTERIZER_DESC RasterDesc;
     ZeroMemory(&RasterDesc, sizeof(D3D11_RASTERIZER_DESC));
     RasterDesc.FillMode = D3D11_FILL_SOLID;
@@ -92,6 +99,9 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     V_RETURN(pd3dDevice->CreateRasterizerState(&RasterDesc, &mpRSWireframe));
     DXUT_SetDebugName(mpRSWireframe, "Wireframe_RS");
 
+    ////////////////////////////////////////////////////////////////////////
+    /// Vertex Buffer objects
+    ////////////////////////////////////////////////////////////////////////
     D3D11_BUFFER_DESC vbDesc;
     ZeroMemory(&vbDesc, sizeof(D3D11_BUFFER_DESC));
     vbDesc.ByteWidth = mMeshData->VBufferSize();
@@ -104,14 +114,18 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     V_RETURN(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointVB));
     DXUT_SetDebugName(mpControlPointVB, "Control Points VB");
 
-    // Teapot control points index
+    ////////////////////////////////////////////////////////////////////////
+    /// Index Buffer objects
+    ////////////////////////////////////////////////////////////////////////
     vbDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
     vbDesc.ByteWidth   = mMeshData->IBufferSize();
     vbInitData.pSysMem = mMeshData->IBuffer();
     V_RETURN(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointIB));
     DXUT_SetDebugName(mpControlPointIB, "Control Points IB");
 
-    // Create the sample state
+    ////////////////////////////////////////////////////////////////////////
+    /// sample state objects
+    ////////////////////////////////////////////////////////////////////////
     D3D11_SAMPLER_DESC sampDesc;
     ZeroMemory(&sampDesc, sizeof(sampDesc));
     sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -123,7 +137,14 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     V_RETURN(pd3dDevice->CreateSamplerState(&sampDesc, &mpSamplerLinear));
     V_RETURN(DXUTCreateShaderResourceViewFromFile(pd3dDevice, L"heightmap.png", &mpHeightMapSRV));
-    ShaderManager::getShaderManager().InitD3D11ShaderObjects(pd3dDevice);
+
+    ////////////////////////////////////////////////////////////////////////
+    /// blend state objects
+    ////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
+    /// depth stencil state objects
+    ////////////////////////////////////////////////////////////////////////
 }
 
 void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
