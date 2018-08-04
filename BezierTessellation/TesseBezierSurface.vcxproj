@@ -376,6 +376,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\BezierSurface.h" />
+    <ClInclude Include="src\IDataSource.h" />
+    <ClInclude Include="src\quad.h" />
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\ShaderManager.h" />
     <ClInclude Include="src\utahTeapot.h" />
@@ -391,8 +393,26 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BezierSurface.cpp" />
+    <ClCompile Include="src\IDataSource.cpp" />
     <ClCompile Include="src\ShaderManager.cpp" />
     <ClCompile Include="src\SimpleBezierSurfaceViewer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader\TesseBezierSurface.hlsl">
+      <FileType>Document</FileType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader\TesseBezierSurface_tessFactor.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shader\TesseQuad.hlsl">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

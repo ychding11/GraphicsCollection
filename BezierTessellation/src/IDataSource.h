@@ -6,6 +6,15 @@
 #include <string>
 
 
+enum ePrimitiveTopology
+{
+    ePoint = 0,
+    eLine,
+    eTriangleList,
+    eControlPoint_4,
+    eControlPoint_16,
+};
+
 class IDataSource
 {
 
@@ -25,6 +34,9 @@ public:
 
    // Index buffer size in element
    virtual size_t IBufferElement() = 0;
+
+   virtual ePrimitiveTopology PrimitiveTopology() = 0;
+
 };
 
 class UtahTeapot : public IDataSource
@@ -43,6 +55,11 @@ class UtahTeapot : public IDataSource
 
    // Index buffer size in element
    size_t IBufferElement() override;
+
+   ePrimitiveTopology PrimitiveTopology() override
+   {
+       return    eControlPoint_16;
+   }
 };
 
 class Quad : public IDataSource
@@ -61,6 +78,11 @@ class Quad : public IDataSource
 
    // Index buffer size in element
    size_t IBufferElement() override;
+
+   ePrimitiveTopology PrimitiveTopology() override
+   {
+       return    eControlPoint_4;
+   }
 };
 
 #endif

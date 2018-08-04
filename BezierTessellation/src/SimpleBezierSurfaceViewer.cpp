@@ -20,8 +20,6 @@ CDXUTDialog                         g_HUD;                   // manages the 3D
 CDXUTDialog                         g_SampleUI;              // dialog for sample specific controls
 CDXUTTextHelper*                    g_pTxtHelper = nullptr;
 
-
-
 //--------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
@@ -40,15 +38,13 @@ CDXUTTextHelper*                    g_pTxtHelper = nullptr;
 #define IDC_TRI_DOMAIN            13
 #define IDC_SELECTED_OBJECT       14
 
-CDXUTComboBox*        g_ObjectModelSelectCombo;
-
 //--------------------------------------------------------------------------------------
 // Forward declarations 
 //--------------------------------------------------------------------------------------
 bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* pUserContext );
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext );
-LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool* pbNoFurtherProcessing, void* pUserContext );
 void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, void* pUserContext );
+LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool* pbNoFurtherProcessing, void* pUserContext );
 
 bool CALLBACK IsD3D11DeviceAcceptable( const CD3D11EnumAdapterInfo *AdapterInfo, UINT Output, const CD3D11EnumDeviceInfo *DeviceInfo, DXGI_FORMAT BackBufferFormat, bool bWindowed, void* pUserContext );
 HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc, void* pUserContext );
@@ -61,10 +57,6 @@ void CALLBACK KeyboardProc(UINT nChar, bool bKeyDown, bool bAltDown, void* pUser
 void InitApp();
 void RenderText();
 
-//--------------------------------------------------------------------------------------
-// Entry point to the program. Initializes everything and goes into a message processing 
-// loop. Idle time is used to render the scene.
-//--------------------------------------------------------------------------------------
 int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow )
 {
     // Enable run-time memory check for debug builds.
@@ -160,19 +152,11 @@ void InitApp()
 
 }
 
-
-//--------------------------------------------------------------------------------------
-// Called right before creating a D3D device, allowing the app to modify the device settings as needed
-//--------------------------------------------------------------------------------------
 bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* pUserContext )
 {
     return true;
 }
 
-
-//--------------------------------------------------------------------------------------
-// Handle updates to the scene
-//--------------------------------------------------------------------------------------
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
     // Update the camera's position based on user input 
@@ -188,9 +172,6 @@ static const WCHAR* UserOption()
     return wString;
 }
 
-//--------------------------------------------------------------------------------------
-// Render the help and statistics text
-//--------------------------------------------------------------------------------------
 void RenderText()
 {
     g_pTxtHelper->Begin();
@@ -202,10 +183,6 @@ void RenderText()
     g_pTxtHelper->End();
 }
 
-
-//--------------------------------------------------------------------------------------
-// Handle messages to the application
-//--------------------------------------------------------------------------------------
 LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool* pbNoFurtherProcessing, void* pUserContext )
 {
     // Pass messages to dialog resource manager calls so GUI state is updated correctly
