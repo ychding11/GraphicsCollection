@@ -33,7 +33,7 @@ void Camera::Reset() {
 void Camera::Update() {
 	camera_direction = glm::normalize(camera_look_at - camera_position);
 	//need to set the matrix state. this is only important because lighting doesn't work if this isn't done
-	glViewport(viewport_x, viewport_y, window_width, window_height);
+	//glViewport(viewport_x, viewport_y, window_width, window_height);
 
 	if (camera_mode == ORTHO) {
 		//our projection matrix will be an orthogonal one in this case
@@ -90,8 +90,8 @@ void Camera::SetViewport(int loc_x, int loc_y, int width, int height) {
 	window_width = width;
 	window_height = height;
 	//need to use doubles division here, it will not work otherwise and it is possible to get a zero aspect ratio with integer rounding
-	aspect = double(width) / double(height);
-	;
+	//aspect = double(width) / double(height);
+    aspect = 1.618f;
 }
 void Camera::SetClipping(double near_clip_distance, double far_clip_distance) {
 	near_clip = near_clip_distance;

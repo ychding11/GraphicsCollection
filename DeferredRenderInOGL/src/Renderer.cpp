@@ -34,15 +34,7 @@ RenderOption & RenderOption::getRenderOption()
 ////////////////////////////////////////////////////////
 ////
 ////////////////////////////////////////////////////////
-void Renderer::RenderSingleViewport()
-{
-    RenderVertexNormal();
-}
 
-void Renderer::RenderMultipleViewport()
-{
-
-}
 
 void Renderer::CreatedScreenQaudBuffer()
 {
@@ -146,41 +138,218 @@ void Renderer::CreateObjectModelBuffer()
     glBindVertexArray(0);
 }
 
+
 void Renderer::CreateShadowFB()
 {
+    if (shadowmapTex == 0)
+    {
+        glGenTextures(1, &shadowmapTex);
+        glBindTexture(GL_TEXTURE_2D, shadowmapTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+
+    if (FBO[1] == 0) glGenFramebuffers(1, &FBO[1]);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO[1]);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowmapTex, 0);
+    glDrawBuffer(GL_NONE);
+
+    GLenum FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (FBOstatus != GL_FRAMEBUFFER_COMPLETE)
+    {
+        cout << " - GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO[1]\n" << endl;
+        checkFramebufferStatus(FBOstatus);
+    }
+}
+
+static GLuint  gen2DTexture(int w, int h, GLenum internalFormat, GLenum format, GLenum type)
+{
+    GLuint texId;
+    glGenTextures(1, &texId);
+    glBindTexture(GL_TEXTURE_2D, texId);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texId;
 }
 
 void Renderer::CreateGeomFB()
 {
+    GLenum FBOstatus;
+    int w = mBackBufferWidth;
+    int h = mBackBufferHeight;
 
+    glActiveTexture(GL_TEXTURE9);
+
+    if (depthFBTex == 0)    depthFBTex = gen2DTexture(w, h, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT);
+    if (normalFBTex == 0)   normalFBTex = gen2DTexture(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+    if (positionFBTex == 0) positionFBTex = gen2DTexture(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+    if (colorFBTex == 0)    colorFBTex = gen2DTexture(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+
+    if (FBO[0] == 0) glGenFramebuffers(1, &FBO[0]);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO[0]);
+
+    glReadBuffer(GL_NONE);
+
+    GLenum draws[3];
+    draws[0] = GL_COLOR_ATTACHMENT0;
+    draws[1] = GL_COLOR_ATTACHMENT1;
+    draws[2] = GL_COLOR_ATTACHMENT2;
+
+    glDrawBuffers(3, draws);
+
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthFBTex, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, draws[0], normalFBTex, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, draws[1], positionFBTex, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, draws[2], colorFBTex, 0);
+
+    FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (FBOstatus != GL_FRAMEBUFFER_COMPLETE)
+    {
+        cout << " - GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO[0]\n" << endl;
+        checkFramebufferStatus(FBOstatus);
+    }
 }
 
 void Renderer::RenderToGeomFB()
 {
 
-    }
+}
+
 void Renderer::RenderToShadowFB()
-{
-
-    }
-void Renderer::RenderLighting()
-{
-
-    }
-
-void Renderer::RenderPlainModel()
 {
 
 }
 
-void Renderer::RenderVertexNormal()
+void Renderer::RenderLighting()
 {
+
+}
+
+void Renderer::DrawDrawCamera(std::string shadernam, std::string cameraname)
+{
+
+}
+
+void Renderer::DrawModel(std::string shadername)
+{
+    ShaderManager& shdmgr = ShaderManager::getShaderManager();
+    shdmgr.ActiveShader(shadername);
+    shdmgr.UpdateShaderParam(shadername);
+
+    int numModel = mModels->getModelCount();
+    for( int i = 0; i < numModel; ++i )
+    {
+        glBindVertexArray( vao[i] );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo[i] );
+        const ObjModel* model = mModels->getModel(i);
+        for( int i = 0; i < model->numGroup; ++i )
+        {
+            glDrawElements( GL_TRIANGLES, 3 * model->groups[i].numTri , GL_UNSIGNED_INT, (void*)model->groups[i].ibo_offset );
+        }
+    }
+}
+
+void Renderer::DrawVertexNormal(std::string shadername)
+{
+    ShaderManager& shdmgr = ShaderManager::getShaderManager();
+    shdmgr.ActiveShader(shadername);
+    shdmgr.UpdateShaderParam(shadername);
+
+    int numModel = mModels->getModelCount();
+    for (int i = 0; i < numModel; ++i)
+    {
+        glBindVertexArray(vao[i]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[i]);
+        const ObjModel* model = mModels->getModel(i);
+        for (int i = 0; i < model->numGroup; ++i)
+        {
+            glDrawElements(GL_TRIANGLES, 3 * model->groups[i].numTri, GL_UNSIGNED_INT, (void*)model->groups[i].ibo_offset);
+        }
+    }
+}
+
+void Renderer::SplitBackBuffer(ViewPort &vp1, ViewPort &vp2)
+{
+    int h1 = mBackBufferHeight / 2.f;
+    int h2 = mBackBufferHeight - h1 - 5;
+    vp1.w = mBackBufferWidth;
+    vp1.h = h1;
+
+    vp2.x = 0;
+    vp2.y = h1 + 5;
+    vp2.w = mBackBufferWidth;
+    vp2.h = h2;
+}
+
+void Renderer::ObserveScene()
+{
+    ViewPort sceneViewPort(0, 0, mBackBufferWidth, mBackBufferHeight);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     glEnable( GL_DEPTH_TEST );
     glEnable( GL_CULL_FACE );
     glCullFace( GL_BACK );
 
+    RenderOption &option = RenderOption::getRenderOption();
+    
+    sceneViewPort.apply();
+    DrawModel("Plain");
+    //DrawCamera();
+}
+
+void Renderer::RenderSingle()
+{
+    ViewPort sceneViewPort(0, 0, mBackBufferWidth, mBackBufferHeight);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    glEnable( GL_DEPTH_TEST );
+    glEnable( GL_CULL_FACE );
+    glCullFace( GL_BACK );
+
+    RenderOption &option = RenderOption::getRenderOption();
+    if (option.wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    
+    sceneViewPort.apply();
+    DrawModel("Plain");
+    if (option.drawVnormal)
+    {
+        DrawModel("VisualNormal");
+    }
+}
+
+void Renderer::RenderMultiple()
+{
+    ViewPort vp1;
+    ViewPort vp2;
+    SplitBackBuffer(vp1, vp2);
+
+    vp2.apply();
+    ObserveScene();
+
+    vp1.apply();
+    RenderVertexNormal();
+}
+void Renderer::RenderVertexNormal()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    glEnable( GL_DEPTH_TEST );
+    glEnable( GL_CULL_FACE );
+    glCullFace( GL_BACK );
+
 
     if (RenderOption::getRenderOption().wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

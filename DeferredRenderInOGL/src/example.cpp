@@ -1,7 +1,4 @@
-// Sparse Voxel Octree and Voxel Cone Tracing
-// 
-// University of Pennsylvania CIS565 final project
-// copyright (c) 2013 Cheng-Tso Lin  
+// Example to test the architecute under desing 
 
 #include <iostream>
 #include <sstream>
@@ -11,7 +8,6 @@
 #include <gl/freeglut.h>
 #include <glm/glm.hpp>
 #include <glm.h>
-#include "glRoutine.h"
 #include "objLoader.h"
 #include "variables.h"
 #include "FreeImage.h"
@@ -34,8 +30,6 @@ int g_height = 720;
 
 objLoader g_meshloader;
 
-Camera camera;
-
 class Window {
 public:
     Window()
@@ -50,7 +44,6 @@ public:
 
 void glut_display()
 {
-    //renderScene();
     RendererManager::getRender().Render();
     glutSwapBuffers();
 }
@@ -62,32 +55,22 @@ void glut_idle()
 
 void glut_reshape(int w, int h)
 {
-    if (h == 0 || w == 0) return;
-
-    g_width = w;
-    g_height = h;
-
-    //freeFBO();
-  //  initFBO(w, h);
-
+    RendererManager::getRender().UpdateBackBufferSize(w, h);
     if (h > 0)
     {
         window.size = ivec2(w, h);
         window.window_aspect = float(w) / float(h);
     }
-    camera.SetViewport(0, 0, window.size.x, window.size.y);
     CameraManager::getCamera("draw").SetViewport(0, 0, window.size.x, window.size.y);
 }
 
 void glut_mouse(int button, int state, int x, int y)
 {
-    camera.SetPos(button, state, x, y);
     CameraManager::getCamera("draw").SetPos(button, state, x, y);
 }
 
 void glut_motion(int x, int y)
 {
-    camera.Move2D(x, y);
     CameraManager::getCamera("draw").Move2D(x, y);
 }
 
@@ -100,56 +83,71 @@ void glut_keyboard(unsigned char key, int x, int y)
         break;
     case '1':
         glutSetWindowTitle("Full Scene");
-        render_mode = RENDER_FULL_SCENE;
         break;
     case '2':
         glutSetWindowTitle("Position");
-        render_mode = RENDER_POSITION;
         break;
     case '3':
         glutSetWindowTitle("Normal");
-        render_mode = RENDER_NORMAL;
         break;
     case '4':
         glutSetWindowTitle("Color");
-        render_mode = RENDER_COLOR;
         break;
     case '5':
         glutSetWindowTitle("Shadow");
-        render_mode = RENDER_SHADOW;
-        break;
-    case ('n'):
-        glutSetWindowTitle("Full Scene With Normal");
-        render_mode = RENDER_FULL_SCENE;
         break;
     case 'w':
-        camera.Move(FORWARD);
         CameraManager::getCamera("draw").Move(FORWARD);
         break;
     case 'a':
-        camera.Move(LEFT);
         CameraManager::getCamera("draw").Move(LEFT);
         break;
     case 's':
-        camera.Move(BACK);
         CameraManager::getCamera("draw").Move(BACK);
         break;
     case 'd':
-        camera.Move(RIGHT);
         CameraManager::getCamera("draw").Move(RIGHT);
         break;
     case 'q':
-        camera.Move(DOWN);
         CameraManager::getCamera("draw").Move(DOWN);
         break;
     case 'e':
-        camera.Move(UP);
         CameraManager::getCamera("draw").Move(UP);
         break;
-    case 'u':
-        cout << (" - Regenerate Shader program objects. \n");
-        initShader();
+    case 'v':
+    {
+        bool view = RenderOption::getRenderOption().multipleView;
+        RenderOption::getRenderOption().multipleView = !view;
+        cout << "- keyboard: multiple viewport: " << RenderOption::getRenderOption().multipleView << std::endl;
         break;
+    }
+    case 'f':
+    {
+        bool wire = RenderOption::getRenderOption().wireframe;
+        RenderOption::getRenderOption().wireframe= !wire;
+        cout << "- keyboard: wireframe: " << RenderOption::getRenderOption().wireframe << std::endl;
+        break;
+    }
+    case 'n': //draw normal
+    {
+        bool normal = RenderOption::getRenderOption().drawVnormal;
+        RenderOption::getRenderOption().drawVnormal = !normal;
+        cout << "- keyboard: wireframe: " << RenderOption::getRenderOption().drawVnormal << std::endl;
+        break;
+    }
+    case 'c'://GLUT_KEY_F1: //Diag
+    {
+        DebugType diag = RenderOption::getRenderOption().diagType;
+        RenderOption::getRenderOption().diagType = DebugType( (diag + 1) % DebugType::DEBUG_NUM );
+        cout << "- keyboard: debug type: " << RenderOption::getRenderOption().diagType << std::endl;
+        break;
+    }
+    case 'u':
+    {
+        cout << (" - Regenerate Shader program objects. \n");
+        break;
+
+    }
     }
 }
 
@@ -185,7 +183,7 @@ int  main( int argc, char* argv[] )
     vector<string> objects;
     if( argc <= 1 )
     {
-        cout << "Usage: mesh=[obj file]" << endl;
+        cout << "Usage: mesh=[model file path]" << endl;
         return 0;
     }       
     for( int i = 1; i < argc; ++i )
@@ -230,25 +228,8 @@ int  main( int argc, char* argv[] )
 
     HookGLutHandler();
 
-    initLight();
-
-#ifdef UGLY
-    //Setup camera
-    camera.SetMode(FREE);
-    camera.SetPosition(glm::vec3(0, 0, -1));
-    camera.SetLookAt(glm::vec3(0, 0, 0));
-    camera.SetClipping(.1, 1000);
-    camera.SetFOV(45);
-
-    initShader();
-    initFBO(g_width, g_height);
-
-    LoadMesh(objects);
-    initVertexData(); 
-#else
-
     CameraManager::getCamera("draw").SetMode(FREE);
-    CameraManager::getCamera("draw").SetPosition(glm::vec3(0, 0, -1));
+    CameraManager::getCamera("draw").SetPosition(glm::vec3(0, 1, 4));
     CameraManager::getCamera("draw").SetLookAt(glm::vec3(0, 0, 0));
     CameraManager::getCamera("draw").SetClipping(.1, 1000);
     CameraManager::getCamera("draw").SetFOV(45);
@@ -258,9 +239,7 @@ int  main( int argc, char* argv[] )
     LoadMesh(objects);
     RendererManager::getRender().SetUp(&g_meshloader);
 
-#endif
-
-
+    //glut loop
     glutMainLoop();
     FreeImage_DeInitialise();
     exit(0);

@@ -19,11 +19,12 @@ typedef objLoader ModelContainer;
 
 enum DebugType
 {
-    DEBUG_FULL_SCENE = 1,
-    DEBUG_POSITION   = 2,
-    DEBUG_NORMAL     = 3,
-    DEBUG_COLOR      = 4,
-    DEBUG_SHADOW     = 5,
+    DEBUG_FULL_SCENE = 0,
+    DEBUG_POSITION   = 1,
+    DEBUG_NORMAL     = 2,
+    DEBUG_COLOR      = 3,
+    DEBUG_SHADOW     = 4,
+    DEBUG_NUM= 5,
 };
 
 struct QuadVertexFormat
@@ -32,19 +33,36 @@ struct QuadVertexFormat
 	glm::vec2 texcoord;
 };
 
+struct ViewPort
+{
+    int x, y;
+    int w, h;
+
+    ViewPort(int xx = 0, int yy = 0, int ww = 0, int hh = 0)
+        : x(xx), y(yy)
+        , w(ww), h(hh)
+    {}
+
+    void apply()
+    {
+        glViewport(x, y, w, h);
+    }
+
+};
+
 struct RenderOption
 {
     bool multipleView;
     bool shadowOff;
     bool wireframe;
-    bool visualizeVertexNormal;
+    bool drawVnormal;
     DebugType diagType;
 
     RenderOption()
         : multipleView(false)
         , shadowOff(true)
         , wireframe(false)
-        , visualizeVertexNormal(false)
+        , drawVnormal(false)
         , diagType(DebugType::DEBUG_FULL_SCENE)
     { }
 
@@ -103,8 +121,8 @@ private:
         mNormalToWorld = transpose(inverse(mWorld));
     }
 
-    void RenderSingleViewport();
-    void RenderMultipleViewport();
+    void RenderSingle();
+    void RenderMultiple();
 
     void CreatedScreenQaudBuffer();
     void CreateObjectModelBuffer();
@@ -115,12 +133,31 @@ private:
     void RenderToShadowFB();
     void RenderLighting();
 
-    void RenderPlainModel();
+    void DrawModel(std::string shadername);
+    void DrawVertexNormal(std::string shadernam);
+    void DrawDrawCamera(std::string shadernam, std::string cameraname);
     void RenderVertexNormal();
+
+    void SplitBackBuffer(ViewPort &vp1, ViewPort &vp2);
+    void ObserveScene();
 
     ModelContainer *mModels;
 
+    int mBackBufferHeight;
+    int mBackBufferWidth;
+
 public:
+
+    void UpdateBackBufferSize(int width, int height)
+    {
+        mBackBufferHeight = height;
+        mBackBufferWidth  = width;
+
+        //Handle resource reclaim
+        //....
+
+        CreateGeomFB();
+    }
 
     void SetUp(ModelContainer* models)
     {
@@ -135,9 +172,9 @@ public:
     void  Render(void)
     {
         if (RenderOption::getRenderOption().multipleView)
-            this->RenderMultipleViewport();
+            this->RenderMultiple();
         else
-            this->RenderSingleViewport();
+            this->RenderSingle();
     }
 
 };

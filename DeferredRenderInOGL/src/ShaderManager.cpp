@@ -4,6 +4,7 @@
 #include "shader.h"
 #include "ShaderManager.h"
 #include "camera.h"
+#include "Renderer.h"
 
 namespace shader
 {
@@ -38,6 +39,7 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
 {
     ShaderProgram & shader = *mShaderList[name];
     mat4 world(1.0f);
+    RenderOption & option = RenderOption::getRenderOption();
     if (name == "Observer")
     {
         Camera &camera = CameraManager::getCamera("observe");
@@ -74,9 +76,10 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
         const float normalStrength = .05f;
         shader.setParameter(shader::f1, (void*)&normalStrength, "u_NormalLength");
     }
-    else if (name == "")
+    else if (name == "Plain")
     {
-
+        const int diag = option.diagType;
+        shader.setParameter(shader::i1, (void*)&diag, "u_DiagType");
     }
     else
     {

@@ -15,6 +15,7 @@ struct VS_Output
     vec4 color;
 };
 
+out vec4 vsPosition;
 out vec4 vsColor;
 out vec4 vsNormal;
 
@@ -28,4 +29,5 @@ void main(void)
     vsColor = NdotL * diffuse;
     vsNormal = vec4(normal, 1.f);
     gl_Position   = u_Projection * u_View * u_World * vec4(Position, 1.0);
+    vsPosition = gl_Position;
 }
