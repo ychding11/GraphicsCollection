@@ -13,6 +13,10 @@ cbuffer cbPerFrame : register( b0 )
     matrix g_mWorld; // column_major is default.
     matrix g_mViewProjection;
     float3 cbCameraPosWorld;
+    float3  cbCameraUp;
+    float3  cbCameraRight;
+    float3  cbCameraForward;
+
     float  cbTessellationFactor;
     int   cbWireframeOn;
     int   cbHeightMapOn;
@@ -49,11 +53,6 @@ struct DS_OUTPUT
 {
 };
 
-struct GS_OUTPUT
-{
-    float3 vPosition    : POSITION;
-    float4 vColor       : COLOR;
-};
 
 /////////////////////////////////////////////////////////////////////////////
 // Vertex 
@@ -103,14 +102,43 @@ DS_OUTPUT DSMain(HS_CONSTANT_DATA_OUTPUT input, float2 uv : SV_DomainLocation, c
     return output;
 }
 
+struct GS_OUTPUT
+{
+    float3 vPosition    : POSITION;
+    float4 vColor       : COLOR;
+};
+
 /////////////////////////////////////////////////////////////////////////////
 // Geometry 
 /////////////////////////////////////////////////////////////////////////////
-GS_OUTPUT GSMain( VS_OUTPUT input )
+[maxvertexcount(6)]
+void GSMain( point VS_OUTPUT inPoint[1], inout LineStream<GS_OUTPUT> lineStream  )
 {
-    GS_OUTPUT output;    
-    output.vColor = float4(1.f, 0.f, 0.f, 1.f);
-    return output;
+    GS_OUTPUT output1, output2;    
+
+    output1.vColor = float4(1.f, 0.f, 0.f, 1.f);
+    output1.vPosition = inPoint[0].vPosition;
+    lineStream.Append(output1);
+    output2.vColor = float4(1.f, 0.f, 0.f, 1.f);
+    output2.vPosition = inPoint[0].vPosition + cbCameraRight * 2.f;
+    lineStream.Append(output2);
+    lineStream.RestartStrip();
+
+    output1.vColor = float4(0.f, 1.f, 0.f, 1.f);
+    output1.vPosition = inPoint[0].vPosition;
+    lineStream.Append(output1);
+    output2.vColor = float4(0.f, 1.f, 0.f, 1.f);
+    output2.vPosition = inPoint[0].vPosition + cbCameraUp * 2.f;
+    lineStream.Append(output2);
+    lineStream.RestartStrip();
+
+    output1.vColor = float4(0.f, 0.f, 1.f, 1.f);
+    output1.vPosition = inPoint[0].vPosition;
+    lineStream.Append(output1);
+    output2.vColor = float4(0.f, 0.f, 1.f, 1.f);
+    output2.vPosition = inPoint[0].vPosition + cbCameraForward * 2.f;
+    lineStream.Append(output2);
+    lineStream.RestartStrip();
 }
 
 /////////////////////////////////////////////////////////////////////////////

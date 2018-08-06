@@ -390,7 +390,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 
     //BezierSurfaceManager::getBezierSurface().Render(pd3dImmediateContext);
 
-    //CameraLayer::getCameraLayer().Render(pd3dImmediateContext);
+    CameraLayer::getCameraLayer().Render(pd3dImmediateContext);
 
     ////////////////////////////////////////////////////////////////
     // Render the HUD
@@ -422,5 +422,5 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     //BezierSurfaceManager::getBezierSurface().DestroyD3D11Objects();
 
     CameraLayer::getCameraLayer().DestroyD3D11Objects();          
-    ShaderContainer::getShaderContainer().Destory();
+    //ShaderContainer::getShaderContainer().Destory();
 }

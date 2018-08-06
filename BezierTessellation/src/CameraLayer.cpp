@@ -1,7 +1,8 @@
 
 #include "BezierSurface.h"
 #include "CameraLayer.h"
-#include "ShaderManager.h"
+//#include "ShaderManager.h"
+#include "ShaderContainer.h"
 
 using namespace DirectX;
 
@@ -25,6 +26,9 @@ void CameraLayer::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
     XMStoreFloat4x4(&pData->cbWorld, XMMatrixTranspose(tempWorld));
     XMStoreFloat4x4(&pData->cbViewProjection, XMMatrixTranspose(mViewProjection));
     XMStoreFloat3(&pData->cbCameraPosWorld, camera.GetEyePt());
+    XMStoreFloat3(&pData->cbCameraUp, {0.f, 1.f, 0.f} );
+    XMStoreFloat3(&pData->cbCameraRight, {1.f, 0.f, 0.f});
+    XMStoreFloat3(&pData->cbCameraForward, {0.f, 0.f, 1.f});
     pData->cbWireframeOn = renderOption.wireframeOn;
     pData->cbTessellationFactor = renderOption.tessellateFactor;
     pData->cbHeightMapOn = renderOption.heightMapOn;
@@ -126,10 +130,12 @@ HRESULT CameraLayer::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
 
 void CameraLayer::Render(ID3D11DeviceContext* pd3dImmediateContext)
 {
-    ShaderManager& shdmgr = ShaderManager::getShaderManager();
+    ShaderContainer &shaders = ShaderContainer::getShaderContainer();
+    Shader& shader = shaders[".\\shader\\drawCameraVector.hlsl"];
+
     UINT Stride = sizeof(float) * 3;
     UINT Offset = 0;
-    pd3dImmediateContext->IASetInputLayout(shdmgr.getInputLayout("ControlPointLayout"));
+    pd3dImmediateContext->IASetInputLayout(shader.getInputLayout("ControlPointLayout"));
     pd3dImmediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
     pd3dImmediateContext->IASetVertexBuffers(0, 1, &mpControlPointVB, &Stride, &Offset);
     pd3dImmediateContext->IASetIndexBuffer(mpControlPointIB, DXGI_FORMAT_R32_UINT, 0);
@@ -142,42 +148,18 @@ void CameraLayer::Render(ID3D11DeviceContext* pd3dImmediateContext)
     pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpcbFrameParam);
 
     // Set the shaders
-    pd3dImmediateContext->VSSetShader(shdmgr.getVertexShader("PlainVertexShader"), nullptr, 0);
+    pd3dImmediateContext->VSSetShader(shader.getVertexShader("PlainVertexShader"), nullptr, 0);
     pd3dImmediateContext->HSSetShader(nullptr, nullptr, 0);
     pd3dImmediateContext->DSSetShader(nullptr, nullptr, 0);
-    pd3dImmediateContext->GSSetShader(nullptr, nullptr, 0);
+    pd3dImmediateContext->GSSetShader(shader.getGeometryShader("GeometryShader"), nullptr, 0);
 
     pd3dImmediateContext->DSSetSamplers(0, 1, &mpSamplerLinear);
     pd3dImmediateContext->DSSetShaderResources(0, 1, &mpHeightMapSRV);
 
-    // Diag mode
-    if (RenderOption::getRenderOption().diagModeOn)
-    {
-        pd3dImmediateContext->RSSetState(mpRSSolid);
-        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
-        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
-    }
-    else if (RenderOption::getRenderOption().wireframeOn)
-    {
-        RenderOption::getRenderOption().wireframeOn = false;
-        UpdateCBParam(pd3dImmediateContext);
-        pd3dImmediateContext->RSSetState(mpRSSolid);
-        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
-        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
+    pd3dImmediateContext->RSSetState(mpRSSolid);
+    pd3dImmediateContext->PSSetShader(shader.getPixelShader("WireframePixelShader"), nullptr, 0);
+    pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
 
-        RenderOption::getRenderOption().wireframeOn = true;
-        UpdateCBParam(pd3dImmediateContext);
-        pd3dImmediateContext->RSSetState(mpRSWireframe);
-        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
-        RenderOption::getRenderOption().wireframeOn = true;
-
-    }
-    else
-    {
-        pd3dImmediateContext->RSSetState(mpRSSolid);
-        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
-        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
-    }
 }
 
 static CameraLayer cameraLayer;

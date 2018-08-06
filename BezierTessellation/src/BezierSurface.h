@@ -34,6 +34,9 @@ struct FrameParam
     DirectX::XMFLOAT4X4  cbWorld;
     DirectX::XMFLOAT4X4  cbViewProjection;
     DirectX::XMFLOAT3    cbCameraPosWorld;
+    DirectX::XMFLOAT3    cbCameraUp;
+    DirectX::XMFLOAT3    cbCameraRight;
+    DirectX::XMFLOAT3    cbCameraForward;
     float cbTessellationFactor;
     int   cbWireframeOn;
     int   cbHeightMapOn;

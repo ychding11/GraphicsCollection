@@ -65,6 +65,11 @@ public:
         return mDomainShaderList[name];
     }
 
+    ID3D11GeometryShader*   getGeometryShader(std::string name)
+    {
+        return mGeometryShaderList[name];
+    }
+
     ID3D11PixelShader*    getPixelShader(std::string name)
     {
         return mPixelShaderList[name];
@@ -81,6 +86,7 @@ private:
     std::map<std::string, ID3D11PixelShader*>  mPixelShaderList;
     std::map<std::string, ID3D11HullShader*>   mHullShaderList;
     std::map<std::string, ID3D11DomainShader*> mDomainShaderList;
+    std::map<std::string, ID3D11GeometryShader*> mGeometryShaderList;
     std::map<std::string, ID3D11InputLayout*>  mInputLayoutList;
     
 };
@@ -110,6 +116,12 @@ public:
     {
         std::wstring str;
         str.assign(shadername.begin(), shadername.end());
+
+        for (auto it = mContainer.begin(); it != mContainer.end(); ++it)
+        {
+            if (it->mShaderFile == str)
+                return;
+        }
         mContainer.push_back(Shader(str));
     }
 
