@@ -34,7 +34,7 @@ size_t UtahTeapot::IBufferElement()
 }
 
 /////////////////////////////////////////////////////////////////////////
-//
+//Quad
 /////////////////////////////////////////////////////////////////////////
 
 // Index buffer address
@@ -65,4 +65,41 @@ size_t Quad::VBufferSize()
 size_t Quad::IBufferElement()
 {
     return  4;
+}
+
+/////////////////////////////////////////////////////////////////////////
+//EyePoint
+/////////////////////////////////////////////////////////////////////////
+
+static float dummyEyeVertex[1][3] = { { 0.f, 0.f, 0.f } };
+static float dummyEyeIndex[1]  = { 0 };
+
+// Index buffer address
+void* EyePoint::IBuffer()
+{
+    return dummyEyeIndex;
+}
+    
+// Vertex buffer address
+void* EyePoint::VBuffer()
+{
+    return dummyEyeVertex;
+}
+
+// Index buffer size in byte
+size_t EyePoint::IBufferSize()
+{
+    return sizeof(dummyEyeIndex);
+}
+    
+// Vndex buffer size in byte
+size_t EyePoint::VBufferSize()
+{
+    return sizeof(dummyEyeVertex);
+}
+
+// Index buffer size in element
+size_t EyePoint::IBufferElement()
+{
+    return  1;
 }

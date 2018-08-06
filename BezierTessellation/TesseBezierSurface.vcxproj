@@ -376,9 +376,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\BezierSurface.h" />
+    <ClInclude Include="src\CameraLayer.h" />
     <ClInclude Include="src\IDataSource.h" />
     <ClInclude Include="src\quad.h" />
     <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\ShaderContainer.h" />
     <ClInclude Include="src\ShaderManager.h" />
     <ClInclude Include="src\utahTeapot.h" />
     <ResourceCompile Include="SimpleBezier11.rc" />
@@ -393,7 +395,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BezierSurface.cpp" />
+    <ClCompile Include="src\CameraLayer.cpp" />
     <ClCompile Include="src\IDataSource.cpp" />
+    <ClCompile Include="src\ShaderContainer.cpp" />
     <ClCompile Include="src\ShaderManager.cpp" />
     <ClCompile Include="src\SimpleBezierSurfaceViewer.cpp" />
   </ItemGroup>
@@ -409,6 +413,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="shader\drawCameraVector.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="shader\TesseQuad.hlsl">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

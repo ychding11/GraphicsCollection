@@ -33,6 +33,12 @@
     <ClCompile Include="src\IDataSource.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\CameraLayer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ShaderContainer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\BezierSurface.h">
@@ -50,9 +56,19 @@
     <ClInclude Include="src\quad.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\CameraLayer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ShaderContainer.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\TesseQuad.hlsl">
+      <Filter>shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\drawCameraVector.hlsl">
       <Filter>shader</Filter>
     </FxCompile>
   </ItemGroup>

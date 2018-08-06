@@ -6,6 +6,8 @@
 #include "resource.h"
 #include "BezierSurface.h"
 #include "IDataSource.h"
+#include "ShaderContainer.h"
+#include "CameraLayer.h"
 
 #pragma warning( disable : 4100 )
 
@@ -318,9 +320,19 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( g_D3DSettingsDlg.OnD3D11CreateDevice( pd3dDevice ) );
     g_pTxtHelper = new CDXUTTextHelper( pd3dDevice, pd3dImmediateContext, &g_DialogResourceManager, 15 );
 
+#if 0
     //BezierSurfaceManager::getBezierSurface().SetupMeshData(new UtahTeapot);
     BezierSurfaceManager::getBezierSurface().SetupMeshData(new Quad);
     BezierSurfaceManager::getBezierSurface().Initialize(pd3dDevice, pd3dImmediateContext);;
+#else
+    ShaderContainer &container = ShaderContainer::getShaderContainer();
+    container.addShader(".\\shader\\drawCameraVector.hlsl");
+    container.Init(pd3dDevice);
+    
+    CameraLayer::getCameraLayer().SetupMeshData(new EyePoint);
+    CameraLayer::getCameraLayer().Initialize(pd3dDevice, pd3dImmediateContext);
+
+#endif
 
     return S_OK;
 }
@@ -376,7 +388,9 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     auto pDSV = DXUTGetD3D11DepthStencilView();
     pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
 
-    BezierSurfaceManager::getBezierSurface().Render(pd3dImmediateContext);
+    //BezierSurfaceManager::getBezierSurface().Render(pd3dImmediateContext);
+
+    //CameraLayer::getCameraLayer().Render(pd3dImmediateContext);
 
     ////////////////////////////////////////////////////////////////
     // Render the HUD
@@ -404,6 +418,9 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
 {
     g_DialogResourceManager.OnD3D11DestroyDevice();
     g_D3DSettingsDlg.OnD3D11DestroyDevice();
-    DXUTGetGlobalResourceCache().OnDestroyDevice();
-    BezierSurfaceManager::getBezierSurface().DestroyD3D11Objects();
+    DXUTGetGlobalResourceCache().OnDestroyDevice();                        
+    //BezierSurfaceManager::getBezierSurface().DestroyD3D11Objects();
+
+    CameraLayer::getCameraLayer().DestroyD3D11Objects();          
+    ShaderContainer::getShaderContainer().Destory();
 }

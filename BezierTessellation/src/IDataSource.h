@@ -8,8 +8,8 @@
 
 enum ePrimitiveTopology
 {
-    ePoint = 0,
-    eLine,
+    ePointList = 0,
+    eLineList,
     eTriangleList,
     eControlPoint_4,
     eControlPoint_16,
@@ -82,6 +82,29 @@ class Quad : public IDataSource
    ePrimitiveTopology PrimitiveTopology() override
    {
        return    eControlPoint_4;
+   }
+};
+
+class EyePoint : public IDataSource
+{
+   // Index buffer address
+   void* IBuffer() override;
+    
+   // Vertex buffer address
+   void* VBuffer() override;
+
+   // Index buffer size in byte
+   size_t IBufferSize() override ;
+    
+   // Vndex buffer size in byte
+   size_t VBufferSize() override;
+
+   // Index buffer size in element
+   size_t IBufferElement() override;
+
+   ePrimitiveTopology PrimitiveTopology() override
+   {
+       return    ePointList;
    }
 };
 
