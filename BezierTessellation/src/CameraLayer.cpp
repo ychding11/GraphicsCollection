@@ -1,7 +1,6 @@
 
 #include "BezierSurface.h"
 #include "CameraLayer.h"
-//#include "ShaderManager.h"
 #include "ShaderContainer.h"
 
 using namespace DirectX;
@@ -12,12 +11,12 @@ static XMMATRIX   tempWorld(1, 0,  0, 0,
                     0, 0,  0, 1);
 void CameraLayer::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 {
-    CModelViewerCamera &camera = CameraManager::getCamera();
+    Camera &camera = CameraManager::getCamera();
     const RenderOption & renderOption = RenderOption::getRenderOption();
 
     // WVP
-    XMMATRIX mProj = camera.GetProjMatrix();
-    XMMATRIX mView = camera.GetViewMatrix();
+    XMMATRIX mProj = camera.Proj();
+    XMMATRIX mView = camera.View();
     XMMATRIX mViewProjection = mView * mProj;
 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
@@ -25,7 +24,8 @@ void CameraLayer::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
     auto pData = reinterpret_cast<FrameParam*>(MappedResource.pData);
     XMStoreFloat4x4(&pData->cbWorld, XMMatrixTranspose(tempWorld));
     XMStoreFloat4x4(&pData->cbViewProjection, XMMatrixTranspose(mViewProjection));
-    XMStoreFloat3(&pData->cbCameraPosWorld, camera.GetEyePt());
+    //XMStoreFloat3(&pData->cbCameraPosWorld, camera.GetEyePt());
+    pData->cbCameraPosWorld = camera.GetPosition();
     XMStoreFloat3(&pData->cbCameraUp, {0.f, 1.f, 0.f} );
     XMStoreFloat3(&pData->cbCameraRight, {1.f, 0.f, 0.f});
     XMStoreFloat3(&pData->cbCameraForward, {0.f, 0.f, 1.f});
@@ -38,6 +38,7 @@ void CameraLayer::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
     pData->cbWorldCell = 0.002f;
     pd3dImmediateContext->Unmap(mpcbFrameParam, 0);
 
+#if 0
     // for debug purpose
     XMVECTOR tempEyePos = camera.GetEyePt();
     char buf[256];
@@ -48,6 +49,7 @@ void CameraLayer::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
         tempEyePos.m128_f32[3]
     );
    // OutputDebugStringA(buf);
+#endif
 }
 
 HRESULT CameraLayer::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)

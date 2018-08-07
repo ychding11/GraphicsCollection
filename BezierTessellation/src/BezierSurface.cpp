@@ -1,7 +1,6 @@
 
 #include "BezierSurface.h"
 #include "ShaderManager.h"
-//#include "utahTeapot.h"
 
 
 static RenderOption renderOption;
@@ -10,9 +9,9 @@ RenderOption& RenderOption::getRenderOption()
     return renderOption;
 }
 
-static CModelViewerCamera modelCamera;
+static Camera modelCamera;
 
-CModelViewerCamera& CameraManager::getCamera()
+Camera& CameraManager::getCamera()
 {
     return modelCamera;
 }
@@ -33,20 +32,21 @@ static XMMATRIX   tempWorld(1, 0,  0, 0,
                     0, 0,  0, 1);
 void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 {
-    CModelViewerCamera &camera = CameraManager::getCamera();
+    Camera &camera = CameraManager::getCamera();
     const RenderOption & renderOption = RenderOption::getRenderOption();
 
     // WVP
-    XMMATRIX mProj = camera.GetProjMatrix();
-    XMMATRIX mView = camera.GetViewMatrix();
-    XMMATRIX mViewProjection = mView * mProj;
+    XMMATRIX mProj = camera.Proj();
+    XMMATRIX mView = camera.View();
+    XMMATRIX mViewProjection = camera.ViewProj();
 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     pd3dImmediateContext->Map(mpcbFrameParam, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
     auto pData = reinterpret_cast<FrameParam*>(MappedResource.pData);
     XMStoreFloat4x4(&pData->cbWorld, XMMatrixTranspose(tempWorld));
     XMStoreFloat4x4(&pData->cbViewProjection, XMMatrixTranspose(mViewProjection));
-    XMStoreFloat3(&pData->cbCameraPosWorld, camera.GetEyePt());
+    //XMStoreFloat3(&pData->cbCameraPosWorld, camera.GetPosition());
+    pData->cbCameraPosWorld = camera.GetPosition();
     pData->cbWireframeOn = renderOption.wireframeOn;
     pData->cbTessellationFactor = renderOption.tessellateFactor;
     pData->cbHeightMapOn = renderOption.heightMapOn;
@@ -56,6 +56,7 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
     pData->cbWorldCell = 0.002f;
     pd3dImmediateContext->Unmap(mpcbFrameParam, 0);
 
+#if 0
     // for debug purpose
     XMVECTOR tempEyePos = camera.GetEyePt();
     char buf[256];
@@ -66,6 +67,8 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
         tempEyePos.m128_f32[3]
     );
    // OutputDebugStringA(buf);
+#endif
+
 }
 
 HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)

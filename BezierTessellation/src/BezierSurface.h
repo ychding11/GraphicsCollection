@@ -4,9 +4,7 @@
 #include <vector>
 #include <d3d11.h>
 #include <DirectXMath.h>
-#include "DXUT.h"
-#include "SDKmisc.h"
-#include "DXUTcamera.h"
+#include "Camera.h"
 #include "ShaderManager.h"
 #include "IDataSource.h"
 
@@ -18,7 +16,7 @@
 class CameraManager
 {
 public:
-    static CModelViewerCamera& getCamera();
+    static Camera& getCamera();
 };
 
 enum DiagType

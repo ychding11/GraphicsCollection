@@ -39,6 +39,18 @@
     <ClCompile Include="src\ShaderContainer.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Camera.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Logger.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\BezierSurface.h">
@@ -61,6 +73,15 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\ShaderContainer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Camera.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\App.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Logger.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
