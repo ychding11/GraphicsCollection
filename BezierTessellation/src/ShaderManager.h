@@ -7,9 +7,6 @@
 #include <d3d11.h>
 #include <DirectXMath.h>
 
-#include "DXUT.h"
-#include "SDKmisc.h"
-
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p)      { if (p) { (p)->Release(); (p) = nullptr; } }
 #endif

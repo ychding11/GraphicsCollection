@@ -1,7 +1,33 @@
 
 #include "BezierSurface.h"
-#include "ShaderManager.h"
+#include "ShaderContainer.h"
+#include "WICTextureLoader.h"
 
+
+#undef V
+#define V(x)           { hr = (x); }
+#undef  V_RETURN
+#define V_RETURN(x)    { hr = (x); if( FAILED(hr) ) { return hr; } }
+
+#if defined(PROFILE) || defined(DEBUG)
+inline void SetDebugName(_In_ IDXGIObject* pObj, _In_z_ const CHAR* pstrName)
+{
+    if (pObj)
+        pObj->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)strlen(pstrName), pstrName);
+}
+inline void SetDebugName(_In_ ID3D11Device* pObj, _In_z_ const CHAR* pstrName)
+{
+    if (pObj)
+        pObj->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)strlen(pstrName), pstrName);
+}
+inline void SetDebugName(_In_ ID3D11DeviceChild* pObj, _In_z_ const CHAR* pstrName)
+{
+    if (pObj)
+        pObj->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)strlen(pstrName), pstrName);
+}
+#else
+#define SetDebugName( pObj, pstrName )
+#endif
 
 static RenderOption renderOption;
 RenderOption& RenderOption::getRenderOption()
@@ -74,7 +100,6 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
 {
     HRESULT hr;
-    ShaderManager::getShaderManager().InitD3D11ShaderObjects(pd3dDevice);
 
     ////////////////////////////////////////////////////////////////////////
     /// Const Buffer
@@ -86,7 +111,7 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     Desc.MiscFlags = 0;
     Desc.ByteWidth = ( sizeof(FrameParam) + 15 ) & ~0xf;
     V_RETURN(pd3dDevice->CreateBuffer(&Desc, nullptr, &mpcbFrameParam));
-    DXUT_SetDebugName(mpcbFrameParam, "CB_PER_FRAME_Const_Buffer");
+    SetDebugName(mpcbFrameParam, "CB_PER_FRAME_Const_Buffer");
 
     ////////////////////////////////////////////////////////////////////////
     /// rasterizer state objects
@@ -97,10 +122,10 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     RasterDesc.CullMode = D3D11_CULL_NONE;
     RasterDesc.DepthClipEnable = TRUE;
     V_RETURN(pd3dDevice->CreateRasterizerState(&RasterDesc, &mpRSSolid));
-    DXUT_SetDebugName(mpRSSolid, "Solid_RS");
+    SetDebugName(mpRSSolid, "Solid_RS");
     RasterDesc.FillMode = D3D11_FILL_WIREFRAME;
     V_RETURN(pd3dDevice->CreateRasterizerState(&RasterDesc, &mpRSWireframe));
-    DXUT_SetDebugName(mpRSWireframe, "Wireframe_RS");
+    SetDebugName(mpRSWireframe, "Wireframe_RS");
 
     ////////////////////////////////////////////////////////////////////////
     /// Vertex Buffer objects
@@ -115,7 +140,7 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     ZeroMemory(&vbInitData, sizeof(vbInitData));
     vbInitData.pSysMem = mMeshData->VBuffer();
     V_RETURN(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointVB));
-    DXUT_SetDebugName(mpControlPointVB, "Control Points VB");
+    SetDebugName(mpControlPointVB, "Control Points VB");
 
     ////////////////////////////////////////////////////////////////////////
     /// Index Buffer objects
@@ -124,7 +149,7 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     vbDesc.ByteWidth   = mMeshData->IBufferSize();
     vbInitData.pSysMem = mMeshData->IBuffer();
     V_RETURN(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointIB));
-    DXUT_SetDebugName(mpControlPointIB, "Control Points IB");
+    SetDebugName(mpControlPointIB, "Control Points IB");
 
     ////////////////////////////////////////////////////////////////////////
     /// sample state objects
@@ -139,7 +164,7 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     V_RETURN(pd3dDevice->CreateSamplerState(&sampDesc, &mpSamplerLinear));
-    V_RETURN(DXUTCreateShaderResourceViewFromFile(pd3dDevice, L"heightmap.png", &mpHeightMapSRV));
+    V_RETURN(CreateWICTextureFromFile(pd3dDevice, L"heightmap.png",nullptr, &mpHeightMapSRV));
 
     ////////////////////////////////////////////////////////////////////////
     /// blend state objects
@@ -152,10 +177,11 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
 
 void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
 {
-    ShaderManager& shdmgr = ShaderManager::getShaderManager();
+    Shader& shader = ShaderContainer::getShaderContainer()[".\\shader\\TesseQuad.hlsl"];
+
     UINT Stride = sizeof(ControlPoint);
     UINT Offset = 0;
-    pd3dImmediateContext->IASetInputLayout(shdmgr.getInputLayout("ControlPointLayout"));
+    pd3dImmediateContext->IASetInputLayout(shader.getInputLayout("ControlPointLayout"));
     //pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST);
     pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
     pd3dImmediateContext->IASetVertexBuffers(0, 1, &mpControlPointVB, &Stride, &Offset);
@@ -169,9 +195,9 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
     pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpcbFrameParam);
 
     // Set the shaders
-    pd3dImmediateContext->VSSetShader(shdmgr.getVertexShader("PlainVertexShader"), nullptr, 0);
-    pd3dImmediateContext->HSSetShader(shdmgr.getHullShader("HullShader"), nullptr, 0);
-    pd3dImmediateContext->DSSetShader(shdmgr.getDomainShader("DomainShader"), nullptr, 0);
+    pd3dImmediateContext->VSSetShader(shader.getVertexShader("PlainVertexShader"), nullptr, 0);
+    pd3dImmediateContext->HSSetShader(shader.getHullShader("HullShader"), nullptr, 0);
+    pd3dImmediateContext->DSSetShader(shader.getDomainShader("DomainShader"), nullptr, 0);
     pd3dImmediateContext->GSSetShader(nullptr, nullptr, 0);
 
     pd3dImmediateContext->DSSetSamplers(0, 1, &mpSamplerLinear);
@@ -181,7 +207,7 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
     if (RenderOption::getRenderOption().diagModeOn)
     {
         pd3dImmediateContext->RSSetState(mpRSSolid);
-        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
+        pd3dImmediateContext->PSSetShader(shader.getPixelShader("PlainPixelShader"), nullptr, 0);
         pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
     }
     else if (RenderOption::getRenderOption().wireframeOn)
@@ -189,7 +215,7 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
         RenderOption::getRenderOption().wireframeOn = false;
         UpdateCBParam(pd3dImmediateContext);
         pd3dImmediateContext->RSSetState(mpRSSolid);
-        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        pd3dImmediateContext->PSSetShader(shader.getPixelShader("WireframePixelShader"), nullptr, 0);
         pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
 
         RenderOption::getRenderOption().wireframeOn = true;
@@ -202,7 +228,7 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
     else
     {
         pd3dImmediateContext->RSSetState(mpRSSolid);
-        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        pd3dImmediateContext->PSSetShader(shader.getPixelShader("WireframePixelShader"), nullptr, 0);
         pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
     }
 }

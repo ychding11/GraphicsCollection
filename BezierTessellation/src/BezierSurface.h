@@ -5,7 +5,7 @@
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include "Camera.h"
-#include "ShaderManager.h"
+#include "ShaderContainer.h"
 #include "IDataSource.h"
 
 
@@ -121,8 +121,6 @@ public:
         SAFE_RELEASE( mpHeightMapSRV   );
         SAFE_RELEASE( mpEnvMapSRV );
         SAFE_RELEASE( mpSkyMapSRV );
-
-        ShaderManager::getShaderManager().Destroy();
     }
 
 public:

@@ -2,6 +2,12 @@
 #include "BezierSurface.h"
 #include "CameraLayer.h"
 #include "ShaderContainer.h"
+#include "WICTextureLoader.h"
+
+#undef V
+#define V(x)           { hr = (x); }
+#undef  V_RETURN
+#define V_RETURN(x)    { hr = (x); if( FAILED(hr) ) { return hr; } }
 
 using namespace DirectX;
 
@@ -119,7 +125,7 @@ HRESULT CameraLayer::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     V_RETURN(pd3dDevice->CreateSamplerState(&sampDesc, &mpSamplerLinear));
-    V_RETURN(DXUTCreateShaderResourceViewFromFile(pd3dDevice, L".\\texture\\heightmap.png", &mpHeightMapSRV));
+    V_RETURN(CreateWICTextureFromFile(pd3dDevice, L".\\texture\\heightmap.png",nullptr, &mpHeightMapSRV));
 
     ////////////////////////////////////////////////////////////////////////
     /// blend state objects

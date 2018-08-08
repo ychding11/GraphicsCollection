@@ -139,7 +139,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;usp10.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LargeAddressAware>true</LargeAddressAware>
@@ -384,14 +384,12 @@
     <ClInclude Include="src\quad.h" />
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\ShaderContainer.h" />
-    <ClInclude Include="src\ShaderManager.h" />
+    <ClInclude Include="src\ShaderManager.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="src\utahTeapot.h" />
+    <ClInclude Include="src\WICTextureLoader.h" />
     <ResourceCompile Include="SimpleBezier11.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DXUT\Optional\DXUTOpt_2015.vcxproj">
-      <Project>{61b333c2-c4f7-4cc1-a9bf-83f6d95588eb}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\App.cpp" />
@@ -402,10 +400,13 @@
     <ClCompile Include="src\Logger.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ShaderContainer.cpp" />
-    <ClCompile Include="src\ShaderManager.cpp" />
+    <ClCompile Include="src\ShaderManager.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\SimpleBezierSurfaceViewer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\WICTextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\TesseBezierSurface.hlsl">
