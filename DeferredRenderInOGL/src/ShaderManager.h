@@ -24,7 +24,7 @@ public:
         BuildShaderList();
     }
 
-    void ActiveShader(const std::string& name);
+    ShaderProgram& ActiveShader(const std::string& name);
     void UpdateShaderParam(const std::string& name);
 
 };

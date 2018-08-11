@@ -12,17 +12,20 @@ layout (location = 0) in vec3 Position;
 layout (location = 1) in vec3 Normal;
 layout (location = 2) in vec2 texcoord;
 
-out vec3 fs_Normal;
-out vec4 fs_Position;
-out vec2 fs_texcoord;
+out vec3 vsNormal;
+out vec4 vsPosition;
+out vec2 vsTexcoord;
+out vec4 vsProjectedPos;
 
 void main(void)
 {
-    vec4 worldPos = u_World * vec4(Position, 1.0);
+    //vec4 worldPos = u_World * vec4(Position, 1.0);
+    vec4 worldPos = vec4(Position, 1.0);
     vec4 viewPos  = u_View  * worldPos;
     gl_Position   = u_Projection * viewPos;
 
-    fs_Normal   = mat3(u_NormalToWorld) * Normal;
-    fs_Position = worldPos;
-	fs_texcoord = texcoord;
+    vsNormal   = mat3(u_NormalToWorld) * Normal;
+    vsPosition = worldPos;
+	vsTexcoord = texcoord;
+	vsProjectedPos = gl_Position;
 }

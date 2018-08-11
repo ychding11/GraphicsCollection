@@ -126,12 +126,12 @@ private:
 
     void CreatedScreenQaudBuffer();
     void CreateObjectModelBuffer();
-    void CreateShadowFB();
-    void CreateGeomFB();
+    void CreateShadowFB(int w = 1024, int h = 1024);
+    void CreateGeomFB(int w, int h);
 
-    void RenderToGeomFB();
-    void RenderToShadowFB();
-    void RenderLighting();
+    void RenderGeometryPass();
+    void RenderFinalPass();
+    void RenderShadowPass();
 
     void DrawModel(std::string shadername);
     void DrawVertexNormal(std::string shadernam);
@@ -154,9 +154,7 @@ public:
         mBackBufferWidth  = width;
 
         //Handle resource reclaim
-        //....
-
-        CreateGeomFB();
+        CreateGeomFB(width, height);
     }
 
     void SetUp(ModelContainer* models)
@@ -166,7 +164,6 @@ public:
         CreateObjectModelBuffer();
 
         CreateShadowFB();
-        CreateGeomFB();
     }
 
     void  Render(void)

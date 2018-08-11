@@ -139,20 +139,22 @@ void Renderer::CreateObjectModelBuffer()
 }
 
 
-void Renderer::CreateShadowFB()
+void Renderer::CreateShadowFB(int w, int h)
 {
     if (shadowmapTex == 0)
     {
         glGenTextures(1, &shadowmapTex);
         glBindTexture(GL_TEXTURE_2D, shadowmapTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
-    if (FBO[1] == 0) glGenFramebuffers(1, &FBO[1]);
+    if (FBO[1] != 0)
+        glDeleteFramebuffers(1, &FBO[1]);
+    glGenFramebuffers(1, &FBO[1]);
     glBindFramebuffer(GL_FRAMEBUFFER, FBO[1]);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowmapTex, 0);
     glDrawBuffer(GL_NONE);
@@ -160,7 +162,7 @@ void Renderer::CreateShadowFB()
     GLenum FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (FBOstatus != GL_FRAMEBUFFER_COMPLETE)
     {
-        cout << " - GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO[1]\n" << endl;
+        cout << " - GL_FRAMEBUFFER_COMPLETE failed, CANNOT use Shadow FB, FBO[1]\n" << endl;
         checkFramebufferStatus(FBOstatus);
     }
 }
@@ -180,20 +182,30 @@ static GLuint  gen2DTexture(int w, int h, GLenum internalFormat, GLenum format, 
     return texId;
 }
 
-void Renderer::CreateGeomFB()
+void Renderer::CreateGeomFB(int w, int h)
 {
     GLenum FBOstatus;
-    int w = mBackBufferWidth;
-    int h = mBackBufferHeight;
 
-    glActiveTexture(GL_TEXTURE9);
+	glEnable(GL_TEXTURE_2D);
+    //glActiveTexture(GL_TEXTURE9);
 
-    if (depthFBTex == 0)    depthFBTex = gen2DTexture(w, h, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT);
-    if (normalFBTex == 0)   normalFBTex = gen2DTexture(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT);
-    if (positionFBTex == 0) positionFBTex = gen2DTexture(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT);
-    if (colorFBTex == 0)    colorFBTex = gen2DTexture(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+    if (depthFBTex)
+        glDeleteTextures(1, &depthFBTex);
+    depthFBTex = gen2DTexture(w, h, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT);
 
-    if (FBO[0] == 0) glGenFramebuffers(1, &FBO[0]);
+    if (normalFBTex)
+        glDeleteTextures(1, &normalFBTex);
+    normalFBTex = gen2DTexture(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+
+    if (positionFBTex)
+        glDeleteTextures(1, &positionFBTex);
+    positionFBTex = gen2DTexture(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+
+    if (colorFBTex)
+        glDeleteTextures(1, &colorFBTex);
+    colorFBTex = gen2DTexture(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+
+    glGenFramebuffers(1, &FBO[0]);
     glBindFramebuffer(GL_FRAMEBUFFER, FBO[0]);
 
     glReadBuffer(GL_NONE);
@@ -218,17 +230,102 @@ void Renderer::CreateGeomFB()
     }
 }
 
-void Renderer::RenderToGeomFB()
+void Renderer::RenderGeometryPass()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO[0]);
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glEnable(GL_TEXTURE_2D);
 
+    ShaderManager& shdmgr = ShaderManager::getShaderManager();
+    ShaderProgram& shader = shdmgr.ActiveShader("GeometryPass");
+    shdmgr.UpdateShaderParam("GeometryPass");
+
+	int bTextured;
+	int numModel = mModels->getModelCount();
+	for (int j = 0; j < numModel; ++j)
+	{
+		const ObjModel* model = g_meshloader.getModel(j);
+		glBindVertexArray(vao[j]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[j]);
+		for (int i = 0; i < model->numGroup; ++i)
+		{
+			model->groups[i].shininess = 50;
+			shader.setParameter(shader::fv3, &model->groups[i].kd, "u_Color");
+			shader.setParameter(shader::f1, &model->groups[i].shininess, "u_Shininess");
+			if (model->groups[i].texId > 0)
+			{
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, model->groups[i].texId);
+				shader.setTexParameter(0, "u_ColorTex");
+				bTextured = 1;
+			}
+			else
+				bTextured = 0;
+			shader.setParameter(shader::i1, &bTextured, "u_bTextured");
+
+			if (model->groups[i].bumpTexId > 0)
+			{
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, model->groups[i].bumpTexId);
+				shader.setTexParameter(1, "u_BumpTex");
+				bTextured = 1;
+			}
+			else
+				bTextured = 0;
+			shader.setParameter(shader::i1, &bTextured, "u_bBump");
+
+			glDrawElements(GL_TRIANGLES, 3 * model->groups[i].numTri, GL_UNSIGNED_INT, (void*)model->groups[i].ibo_offset);
+		}
+	}
 }
 
-void Renderer::RenderToShadowFB()
+void Renderer::RenderFinalPass()
 {
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glDisable(GL_DEPTH_TEST);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	ShaderManager& shdmgr = ShaderManager::getShaderManager();
+	ShaderProgram& shader = shdmgr.ActiveShader("FinalPass");
+	shdmgr.UpdateShaderParam("FinalPass");
+
+	shader.setParameter(shader::i1, &mBackBufferHeight, "u_ScreenHeight");
+	shader.setParameter(shader::i1, &mBackBufferWidth,  "u_ScreenWidth");
+
+	glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthFBTex);
+	shader.setTexParameter(0, "u_Depthtex");
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, normalFBTex);
+	shader.setTexParameter(1, "u_Normaltex");
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, positionFBTex);
+	shader.setTexParameter(2, "u_Positiontex");
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, colorFBTex);
+	shader.setTexParameter(3, "u_Colortex");
+
+#if 1
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, shadowmapTex);
+	shader.setTexParameter(4, "u_shadowmap");
+#endif
+	//Draw the screen space quad
+	glBindVertexArray(vao[QUAD]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[QUAD]);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 }
 
-void Renderer::RenderLighting()
+void Renderer::RenderShadowPass()
 {
 
 }
@@ -332,16 +429,14 @@ void Renderer::RenderSingle()
 
 void Renderer::RenderMultiple()
 {
-    ViewPort vp1;
-    ViewPort vp2;
-    SplitBackBuffer(vp1, vp2);
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    ViewPort sceneViewPort(0, 0, mBackBufferWidth, mBackBufferHeight);
+    sceneViewPort.apply();
 
-    vp2.apply();
-    ObserveScene();
-
-    vp1.apply();
-    RenderVertexNormal();
+	//RenderGeometryPass();
+	RenderFinalPass();
 }
+
 void Renderer::RenderVertexNormal()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

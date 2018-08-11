@@ -26,13 +26,16 @@ void ShaderManager::BuildShaderList()
 {
     mShaderList["VisualNormal"] = new ShaderProgram("shader/visualNormal.vert.glsl", "shader/visualNormal.frag.glsl", "shader/visualNormal.geom.glsl");
     mShaderList["Plain"]        = new ShaderProgram("shader/plain.vert.glsl", "shader/plain.frag.glsl");
+    mShaderList["GeometryPass"] = new ShaderProgram("shader/geometryPass.vert", "shader/geometryPass.frag");
+    mShaderList["FinalPass"]    = new ShaderProgram("shader/finalPass.vert", "shader/finalPass.frag");
 }
 
 
-void ShaderManager::ActiveShader(const std::string& name)
+ShaderProgram& ShaderManager::ActiveShader(const std::string& name)
 {
     ShaderProgram & shader = *mShaderList[name];
     shader.use();
+	return shader;
 }
 
 void ShaderManager::UpdateShaderParam(const std::string& name)
@@ -80,6 +83,25 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
     {
         const int diag = option.diagType;
         shader.setParameter(shader::i1, (void*)&diag, "u_DiagType");
+    }
+    else if (name == "GeometryPass")
+    {
+    }
+    else if (name == "FinalPass")
+    {
+        const int diag = option.diagType;
+		const int shadowOn = !option.shadowOff;
+        shader.setParameter(shader::i1, (void*)&diag, "u_DiagType");
+        shader.setParameter(shader::i1, (void*)&shadowOn, "u_ShadowOn");
+
+		glm::vec3 lightPos(0.f, 6.f, 0.f), lightColor(1.f, 1.f, 1.f);
+		glm::mat4 biasLightMVP(1.f);
+		shader.setParameter(shader::fv4, &lightPos[0], "u_LightPos");
+		shader.setParameter(shader::fv3, &lightColor[0], "u_LightColor");
+		shader.setParameter(shader::mat4x4, &biasLightMVP[0][0], "u_LightMVP");
+
+		Camera &camera = CameraManager::getCamera("draw");
+		shader.setParameter(shader::fv3, &camera.camera_position[0], "u_eyePos");
     }
     else
     {

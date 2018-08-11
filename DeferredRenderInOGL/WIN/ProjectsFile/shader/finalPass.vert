@@ -3,12 +3,11 @@
 layout (location = 0) in  vec3 Position;
 layout (location = 1) in  vec2 Texcoord;
 
-uniform mat4 u_persp;
-
-out vec2 fs_Texcoord;
+out vec2 vsTexcoord;
+out vec4 vsPosition;
 
 void main()
 {
-    fs_Texcoord = Texcoord;
-    gl_Position = vec4(Position,1.0f);
+    vsTexcoord  = Texcoord;
+    vsPosition  = vec4(Position, 1.0f);
 }
