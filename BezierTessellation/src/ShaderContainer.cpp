@@ -53,20 +53,27 @@ HRESULT Shader::InitD3D11ShaderObjects(ID3D11Device*  pd3dDevice)
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
 
-#if 0
-    V_RETURN(DXUTCompileFromFile(TESSE_SHADER_FILE, nullptr, "VSMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobVS));
-    V_RETURN(DXUTCompileFromFile(TESSE_SHADER_FILE, nullptr, "HSMain", "hs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobHSInt));
-    V_RETURN(DXUTCompileFromFile(TESSE_SHADER_FILE, nullptr, "DSMain", "ds_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobDS));
-    V_RETURN(DXUTCompileFromFile(TESSE_SHADER_FILE, nullptr, "PSMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobPS));
-    V_RETURN(DXUTCompileFromFile(TESSE_SHADER_FILE, nullptr, "SolidColorPS", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobPSSolid));
-#else
-    V_RETURN(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobVS,    &pErrorBlob));
+    if (FAILED(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobVS, &pErrorBlob)))
+    {
+        if (pErrorBlob) OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
+        SAFE_RELEASE(pErrorBlob);
+    }
+
+    if (FAILED(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobPS, &pErrorBlob)))
+    {
+        if (pErrorBlob) OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
+        SAFE_RELEASE(pErrorBlob);
+    }
+
+    if ( FAILED(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "GSMain", "gs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobGS, &pErrorBlob)) )
+    {
+        if (pErrorBlob) OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
+        SAFE_RELEASE(pErrorBlob);
+    }
+
     V_RETURN(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "HSMain", "hs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobHSInt, &pErrorBlob));
     V_RETURN(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "DSMain", "ds_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobDS, &pErrorBlob));
-    V_RETURN(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "GSMain", "gs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobGS, &pErrorBlob));
-    V_RETURN(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobPS, &pErrorBlob));
     V_RETURN(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "DiagPSMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobPSSolid, &pErrorBlob));
-#endif
 
     // Create shaders
     V_RETURN(pd3dDevice->CreateVertexShader(pBlobVS->GetBufferPointer(), pBlobVS->GetBufferSize(), nullptr, &g_pVertexShader));

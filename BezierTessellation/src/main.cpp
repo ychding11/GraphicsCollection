@@ -6,6 +6,8 @@
 #include "App.h"
 
 static HWND hWnd = NULL;
+static App* app = NULL;
+
 
 LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
@@ -54,6 +56,11 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
                     RenderOption::getRenderOption().diagType = DiagType((type + 1) % DiagType::eDiagNum);
                     break;
                 }
+                case 'q':
+                {
+    		        PostQuitMessage( 0 );
+                    break;
+                }
             }
     		break;
         }
@@ -61,6 +68,12 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
         {
     		PostQuitMessage( 0 );
     		break;
+        }
+        case WM_SIZE:
+        {
+            if (wParam != SIZE_MINIMIZED)
+                if (app) app->Resize(hWnd);
+            break;
         }
     	default:
     		return DefWindowProc( hWnd, message, wParam, lParam );
@@ -109,12 +122,19 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
         Logger::getLogger() << "Initialize window failed, exit." << "\n";
 		return 0;
 	}
-    App & application = TessBezierSurface();
+    App & application = DrawCameraVector();
+    application.SetMesh(new EyePoint);
+
 	if (!application.Initialize(hWnd))
 	{
         Logger::getLogger() << "Initialize App failed, exit!" << "\n";
 		return 0;
 	}
+
+    Camera& camera = CameraManager::getCamera();                               
+    //camera.SetPosition(0.0f, 2.0f, -15.0f);           
+    camera.LookAt({ 0.f, 1.f, -5.f, 0 }, { 0, 0, 0, 0 }, {0.f, 1.f, 0.f, 0.f});
+    camera.SetLens(0.25f * sPi , 1.68f, 0.1f, 1000.0f);
 
 	MSG msg = { 0 };
 	while( WM_QUIT != msg.message )

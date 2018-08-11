@@ -3,7 +3,6 @@
 #define CAMERA_H
 
 #include <DirectXMath.h>
-//#include "d3dUtil.h"
 
 using namespace DirectX;
 
@@ -84,4 +83,5 @@ private:
 	XMFLOAT4X4 mProj;
 };
 
+extern const float sPi;
 #endif // CAMERA_H

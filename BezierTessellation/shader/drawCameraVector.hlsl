@@ -42,7 +42,7 @@ struct VS_INPUT
 
 struct VS_OUTPUT
 {
-    float3 vPosition        : POSITION;
+    float4 vPosition        : SV_POSITION;
 };
 
 struct HS_OUTPUT
@@ -60,7 +60,7 @@ struct DS_OUTPUT
 VS_OUTPUT VSMain( VS_INPUT Input )
 {
     VS_OUTPUT output;
-    output.vPosition = mul(float4(Input.vPosition,1.0), g_mWorld).xyz;
+    output.vPosition = mul(float4(Input.vPosition,1.0), g_mWorld);
     return output;
 }
 
@@ -104,7 +104,7 @@ DS_OUTPUT DSMain(HS_CONSTANT_DATA_OUTPUT input, float2 uv : SV_DomainLocation, c
 
 struct GS_OUTPUT
 {
-    float3 vPosition    : POSITION;
+    float4 vPosition    : SV_POSITION;
     float4 vColor       : COLOR;
 };
 
@@ -120,7 +120,7 @@ void GSMain( point VS_OUTPUT inPoint[1], inout LineStream<GS_OUTPUT> lineStream 
     output1.vPosition = inPoint[0].vPosition;
     lineStream.Append(output1);
     output2.vColor = float4(1.f, 0.f, 0.f, 1.f);
-    output2.vPosition = inPoint[0].vPosition + cbCameraRight * 2.f;
+    output2.vPosition = inPoint[0].vPosition + float4(cbCameraRight, 0.f) * 2.f;
     lineStream.Append(output2);
     lineStream.RestartStrip();
 
@@ -128,7 +128,7 @@ void GSMain( point VS_OUTPUT inPoint[1], inout LineStream<GS_OUTPUT> lineStream 
     output1.vPosition = inPoint[0].vPosition;
     lineStream.Append(output1);
     output2.vColor = float4(0.f, 1.f, 0.f, 1.f);
-    output2.vPosition = inPoint[0].vPosition + cbCameraUp * 2.f;
+    output2.vPosition = inPoint[0].vPosition + float4(cbCameraUp, 0.f) * 2.f;
     lineStream.Append(output2);
     lineStream.RestartStrip();
 
@@ -136,7 +136,7 @@ void GSMain( point VS_OUTPUT inPoint[1], inout LineStream<GS_OUTPUT> lineStream 
     output1.vPosition = inPoint[0].vPosition;
     lineStream.Append(output1);
     output2.vColor = float4(0.f, 0.f, 1.f, 1.f);
-    output2.vPosition = inPoint[0].vPosition + cbCameraForward * 2.f;
+    output2.vPosition = inPoint[0].vPosition + float4(cbCameraForward, 0.f) * 2.f;
     lineStream.Append(output2);
     lineStream.RestartStrip();
 }

@@ -151,9 +151,7 @@ void CameraLayer::Render(ID3D11DeviceContext* pd3dImmediateContext)
     // Bind all of the CBs
     this->UpdateCBParam(pd3dImmediateContext);
     pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpcbFrameParam);
-    pd3dImmediateContext->HSSetConstantBuffers(0, 1, &mpcbFrameParam);
-    pd3dImmediateContext->DSSetConstantBuffers(0, 1, &mpcbFrameParam);
-    pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpcbFrameParam);
+    //pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpcbFrameParam);
 
     // Set the shaders
     pd3dImmediateContext->VSSetShader(shader.getVertexShader("PlainVertexShader"), nullptr, 0);
@@ -161,8 +159,8 @@ void CameraLayer::Render(ID3D11DeviceContext* pd3dImmediateContext)
     pd3dImmediateContext->DSSetShader(nullptr, nullptr, 0);
     pd3dImmediateContext->GSSetShader(shader.getGeometryShader("GeometryShader"), nullptr, 0);
 
-    pd3dImmediateContext->DSSetSamplers(0, 1, &mpSamplerLinear);
-    pd3dImmediateContext->DSSetShaderResources(0, 1, &mpHeightMapSRV);
+    //pd3dImmediateContext->DSSetSamplers(0, 1, &mpSamplerLinear);
+    //pd3dImmediateContext->DSSetShaderResources(0, 1, &mpHeightMapSRV);
 
     pd3dImmediateContext->RSSetState(mpRSSolid);
     pd3dImmediateContext->PSSetShader(shader.getPixelShader("WireframePixelShader"), nullptr, 0);

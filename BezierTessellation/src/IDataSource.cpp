@@ -71,7 +71,7 @@ size_t Quad::IBufferElement()
 //EyePoint
 /////////////////////////////////////////////////////////////////////////
 
-static float dummyEyeVertex[1][3] = { { 0.f, 0.f, 0.f } };
+static float dummyEyeVertex[1][3] = { { 1.f, 1.f, 1.f } };
 static float dummyEyeIndex[1]  = { 0 };
 
 // Index buffer address

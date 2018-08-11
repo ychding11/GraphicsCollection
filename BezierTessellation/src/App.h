@@ -1,8 +1,8 @@
 #include "BezierSurface.h"
-//#include "ShaderContainer.h"
 #include "CameraLayer.h"
 #include "Logger.h"
 #include "IDataSource.h"
+#include "ShaderContainer.h"
 #include <windows.h>
 #include <d3d11.h>   
 #include <DirectXMath.h>
@@ -80,7 +80,7 @@ public:
             Logger::getLogger() << "- Create D3D Device and Swap Chain Failed." << "\n" << std::endl;
             return false;
         }
-
+#if 0
         // Create Render Target View Object from SwapChain's Back Buffer.
         // access one of swap chain's back buffer.[0-based buffer index, interface type which manipulates buffer, output param]
         ID3D11Texture2D* pBackBuffer = NULL;
@@ -97,6 +97,12 @@ public:
             Logger::getLogger() << "- Create render target from Back buffer failed.\n" << "\n";
             return false;
         }
+#else
+
+        Resize(hWnd);
+#endif
+
+
         m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, NULL);
 
         ////////////////////////////////////////////////////////////////////////
@@ -109,8 +115,50 @@ public:
         Desc.MiscFlags = 0;
         Desc.ByteWidth = (sizeof(FrameParam) + 15) & ~0xf;
         m_pd3dDevice->CreateBuffer(&Desc, nullptr, &mpcbFrameParam);
-        DXUT_SetDebugName(mpcbFrameParam, "CB_PER_FRAME_Const_Buffer");
+
+        ////////////////////////////////////////////////////////////////////////
+        /// Shader Container Initialize
+        ////////////////////////////////////////////////////////////////////////
+        ShaderContainer &container = ShaderContainer::getShaderContainer();
+        container.addShader(".\\shader\\drawCameraVector.hlsl");
+        //container.addShader(".\\shader\\TesseQuad.hlsl");
+        container.Init(m_pd3dDevice);
         return true;
+    }
+
+    void Resize(HWND hWnd)
+    {
+        if (m_pd3dDevice == NULL)
+            return;
+
+        HRESULT hr = S_OK;
+        RECT    rc;
+        GetClientRect(hWnd, &rc);
+        unsigned int width = rc.right - rc.left;
+        unsigned int height = rc.bottom - rc.top;
+
+        // release references to back buffer before resize, else fails
+        SAFE_RELEASE(m_pRenderTargetView);
+
+        DXGI_SWAP_CHAIN_DESC sd;
+        m_pSwapChain->GetDesc(&sd);
+
+        hr = m_pSwapChain->ResizeBuffers(sd.BufferCount, width, height, sd.BufferDesc.Format, 0);
+
+        ID3D11Texture2D* pTexture;
+        hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pTexture);
+        hr = m_pd3dDevice->CreateRenderTargetView(pTexture, NULL, &m_pRenderTargetView);
+        pTexture->Release();
+        pTexture = NULL;
+
+        D3D11_VIEWPORT vp;
+        vp.Width  = width;
+        vp.Height = height;
+        vp.MinDepth = 0.0f;
+        vp.MaxDepth = 1.0f;
+        vp.TopLeftX = 0.f;
+        vp.TopLeftY = 0.f;
+        m_pImmediateContext->RSSetViewports(1, &vp);
     }
 
 protected:
@@ -123,7 +171,9 @@ protected:
 
 public:
     virtual void Render() = 0;
+
     virtual void SetMesh(IDataSource* source) = 0;
+
     virtual void Destory()
     {
         SAFE_RELEASE(m_pRenderTargetView);
