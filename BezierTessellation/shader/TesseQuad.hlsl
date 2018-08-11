@@ -58,7 +58,7 @@ struct VS_CONTROL_POINT_OUTPUT
 
 // The input to the vertex shader comes from the vertex buffer.
 // The output from the vertex shader will go into the hull shader.
-VS_CONTROL_POINT_OUTPUT BezierVS( VS_CONTROL_POINT_INPUT Input )
+VS_CONTROL_POINT_OUTPUT VSMain( VS_CONTROL_POINT_INPUT Input )
 {
     VS_CONTROL_POINT_OUTPUT Output;
     Output.vPosition = mul(float4(Input.vPosition,1.0), g_mWorld).xyz;
@@ -104,7 +104,7 @@ HS_CONSTANT_DATA_OUTPUT BezierConstantHS( InputPatch<VS_CONTROL_POINT_OUTPUT, IN
 [outputtopology("triangle_cw")]
 [outputcontrolpoints(OUTPUT_PATCH_SIZE)]
 [patchconstantfunc("BezierConstantHS")]
-HS_OUTPUT BezierHS( InputPatch<VS_CONTROL_POINT_OUTPUT, INPUT_PATCH_SIZE> p, 
+HS_OUTPUT HSMain( InputPatch<VS_CONTROL_POINT_OUTPUT, INPUT_PATCH_SIZE> p, 
                     uint i : SV_OutputControlPointID,
                     uint PatchID : SV_PrimitiveID )
 {
@@ -132,7 +132,7 @@ struct DS_OUTPUT
 // The OutputPatch comes from the hull shader. 
 // DS calculates the final vertex position, color, texcoords, and other attributes.
 [domain("quad")]
-DS_OUTPUT BezierDS( HS_CONSTANT_DATA_OUTPUT input, 
+DS_OUTPUT DSMain( HS_CONSTANT_DATA_OUTPUT input, 
                     float2 uv : SV_DomainLocation,
                     const OutputPatch<HS_OUTPUT, OUTPUT_PATCH_SIZE> quad)
 {
@@ -171,9 +171,8 @@ DS_OUTPUT BezierDS( HS_CONSTANT_DATA_OUTPUT input,
 }
 
 //--------------------------------------------------------------------------------------
-// Solid color shading pixel shader (used for wireframe overlay)
 //--------------------------------------------------------------------------------------
-float4 WireframePS( DS_OUTPUT input ) : SV_TARGET
+float4 PSMain( DS_OUTPUT input ) : SV_TARGET
 {
     if (cbWireframeOn)
         return float4( 0.f, 1.0f, 0.f, 1.0 );
@@ -182,9 +181,8 @@ float4 WireframePS( DS_OUTPUT input ) : SV_TARGET
 }
 
 //--------------------------------------------------------------------------------------
-// Solid color shading pixel shader (used for diag)
 //--------------------------------------------------------------------------------------
-float4 SolidColorPS( DS_OUTPUT input ) : SV_TARGET
+float4 DiagPSMain( DS_OUTPUT input ) : SV_TARGET
 {
     float4 color;
     if      (cbDiagType == 0) color = float4(input.vNormal, 1.0f);
@@ -194,5 +192,24 @@ float4 SolidColorPS( DS_OUTPUT input ) : SV_TARGET
     else;
 
     return color;
+
+}
+
+struct GS_INPUT
+{
+    float4 gstemp1 : GSINPUT;
+};
+
+struct GS_OUTPUT
+{
+    float4 gstemp2;
+};
+
+/////////////////////////////////////////////////////////////////////////////
+// Geometry 
+/////////////////////////////////////////////////////////////////////////////
+[maxvertexcount(6)]
+void GSMain(point GS_INPUT inPoint[1], inout LineStream<GS_OUTPUT> lineStream)
+{
 
 }

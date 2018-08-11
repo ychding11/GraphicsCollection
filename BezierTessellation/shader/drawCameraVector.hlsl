@@ -60,7 +60,8 @@ struct DS_OUTPUT
 VS_OUTPUT VSMain( VS_INPUT Input )
 {
     VS_OUTPUT output;
-    output.vPosition = mul(float4(Input.vPosition,1.0), g_mWorld);
+    //output.vPosition = mul(float4(Input.vPosition,1.0), g_mWorld);
+    output.vPosition = float4(0.5, 0.5, 0.5,1.0);
     return output;
 }
 

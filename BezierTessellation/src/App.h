@@ -120,8 +120,8 @@ public:
         /// Shader Container Initialize
         ////////////////////////////////////////////////////////////////////////
         ShaderContainer &container = ShaderContainer::getShaderContainer();
-        container.addShader(".\\shader\\drawCameraVector.hlsl");
-        //container.addShader(".\\shader\\TesseQuad.hlsl");
+        //container.addShader(".\\shader\\drawCameraVector.hlsl");
+        container.addShader(".\\shader\\TesseQuad.hlsl");
         container.Init(m_pd3dDevice);
         return true;
     }
@@ -167,7 +167,7 @@ protected:
     IDXGISwapChain*				m_pSwapChain = nullptr;
     ID3D11RenderTargetView*		m_pRenderTargetView = nullptr;
     ID3D11Buffer*               mpcbFrameParam = nullptr;
-    float ClearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+    float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 public:
     virtual void Render() = 0;
