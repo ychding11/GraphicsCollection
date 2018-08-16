@@ -27,6 +27,31 @@ inline void SetDebugName(_In_ ID3D11DeviceChild* pObj, _In_z_ const CHAR* pstrNa
 #define SetDebugName( pObj, pstrName )
 #endif
 
+#define COMPILE_SHADER_CALL_CHECK(x)                  \
+do{                                                   \
+    LRESULT ret = x;                                  \
+    if((ret) != S_OK)                                 \
+    {                                                 \
+        char buf[512];                                \
+        sprintf_s(buf, 512, "- Error @%s:%d\t  %s %d\t \n",__FILE__,__LINE__, #x, (ret) );  \
+        OutputDebugStringA(buf);                      \
+        if (pErrorBlob) OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());    \
+        SAFE_RELEASE(pErrorBlob);                     \
+    }                                                 \
+} while(0)
+
+#define CREATE_SHADER_CALL_CHECK(x)                   \
+do{                                                   \
+    LRESULT ret = x;                                  \
+    if((ret) != S_OK)                                 \
+    {                                                 \
+        char buf[512];                                \
+        sprintf_s(buf, 512, "- Error @%s:%d\t  %s %d\t \n",__FILE__,__LINE__, #x, (ret) );  \
+        OutputDebugStringA(buf);                      \
+    }                                                 \
+} while(0)
+
+
 HRESULT Shader::InitD3D11ShaderObjects(ID3D11Device*  pd3dDevice)
 {
     HRESULT hr;
@@ -53,100 +78,54 @@ HRESULT Shader::InitD3D11ShaderObjects(ID3D11Device*  pd3dDevice)
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
 
-    if (FAILED(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobVS, &pErrorBlob)))
-    {
-        if (pErrorBlob) OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
-        SAFE_RELEASE(pErrorBlob);
-    }
+    COMPILE_SHADER_CALL_CHECK(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobVS, &pErrorBlob));
 
-    if (FAILED(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "HSMain", "hs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobHS, &pErrorBlob)))
-    {
-        if (pErrorBlob) OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
-        SAFE_RELEASE(pErrorBlob);
-    }
-    if (FAILED(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "DSMain", "ds_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobDS, &pErrorBlob)))
-    {
-        if (pErrorBlob) OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
-        SAFE_RELEASE(pErrorBlob);
-    }
+    COMPILE_SHADER_CALL_CHECK(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "HSMain", "hs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobHS, &pErrorBlob));
 
-    if ( FAILED(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "GSMain", "gs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobGS, &pErrorBlob)) )
-    {
-        if (pErrorBlob) OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
-        SAFE_RELEASE(pErrorBlob);
-    }
+    COMPILE_SHADER_CALL_CHECK(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "DSMain", "ds_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobDS, &pErrorBlob));
 
-    if (FAILED(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobPS, &pErrorBlob)))
-    {
-        if (pErrorBlob) OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
-        SAFE_RELEASE(pErrorBlob);
-    }
+    COMPILE_SHADER_CALL_CHECK(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "GSMain", "gs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobGS, &pErrorBlob));
 
-    if (FAILED(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "DiagPSMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobDiagPS, &pErrorBlob)))
-    {
-        if (pErrorBlob) OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
-        SAFE_RELEASE(pErrorBlob);
-    }
+    COMPILE_SHADER_CALL_CHECK(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobPS, &pErrorBlob));
+
+    COMPILE_SHADER_CALL_CHECK(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "DiagPSMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobDiagPS, &pErrorBlob));
 
     // Create shaders
-    if (FAILED(pd3dDevice->CreateVertexShader(pBlobVS->GetBufferPointer(), pBlobVS->GetBufferSize(), nullptr, &g_pVertexShader)))
-    {
-
-    }
+    CREATE_SHADER_CALL_CHECK(pd3dDevice->CreateVertexShader(pBlobVS->GetBufferPointer(), pBlobVS->GetBufferSize(), nullptr, &g_pVertexShader));
     SetDebugName(g_pVertexShader, "VS");
     mVertexShaderList["PlainVertexShader"] = g_pVertexShader;
 
-    if(FAILED(pd3dDevice->CreateInputLayout(patchlayout, ARRAYSIZE(patchlayout), pBlobVS->GetBufferPointer(), pBlobVS->GetBufferSize(), &g_pPatchLayout)))
-    {
-
-    }
+    CREATE_SHADER_CALL_CHECK(pd3dDevice->CreateInputLayout(patchlayout, ARRAYSIZE(patchlayout), pBlobVS->GetBufferPointer(), pBlobVS->GetBufferSize(), &g_pPatchLayout));
     SetDebugName(g_pPatchLayout, "InputLayout");
     mInputLayoutList["ControlPointLayout"] = g_pPatchLayout;
 
-    if(FAILED(pd3dDevice->CreateHullShader(pBlobHS->GetBufferPointer(), pBlobHS->GetBufferSize(), nullptr, &g_pHullShaderInteger)))
-    {
-
-    }
+    CREATE_SHADER_CALL_CHECK(pd3dDevice->CreateHullShader(pBlobHS->GetBufferPointer(), pBlobHS->GetBufferSize(), nullptr, &g_pHullShaderInteger));
     SetDebugName(g_pHullShaderInteger, "HS");
     mHullShaderList["HullShader"] = g_pHullShaderInteger;
 
-    if(FAILED(pd3dDevice->CreateDomainShader(pBlobDS->GetBufferPointer(), pBlobDS->GetBufferSize(), nullptr, &g_pDomainShader)))
-    {
-
-    }
+    CREATE_SHADER_CALL_CHECK(pd3dDevice->CreateDomainShader(pBlobDS->GetBufferPointer(), pBlobDS->GetBufferSize(), nullptr, &g_pDomainShader));
     SetDebugName(g_pDomainShader, "DS");
     mDomainShaderList["DomainShader"] = g_pDomainShader;
 
-    if(FAILED(pd3dDevice->CreateGeometryShader(pBlobGS->GetBufferPointer(), pBlobGS->GetBufferSize(), nullptr, &g_pGeometryShader)))
-    {
-
-    }
+    CREATE_SHADER_CALL_CHECK(pd3dDevice->CreateGeometryShader(pBlobGS->GetBufferPointer(), pBlobGS->GetBufferSize(), nullptr, &g_pGeometryShader));
     SetDebugName(g_pGeometryShader, "GS");
     mGeometryShaderList["GeometryShader"] = g_pGeometryShader;
 
-    if(FAILED(hr = pd3dDevice->CreatePixelShader(pBlobPS->GetBufferPointer(), pBlobPS->GetBufferSize(), nullptr, &g_pPlainPS)))
-    {
-        char buf[128];
-        sprintf(buf, "- D3D11 API return value: %d.\n", hr );
-        OutputDebugStringA(buf);
-    }
+    CREATE_SHADER_CALL_CHECK(pd3dDevice->CreatePixelShader(pBlobPS->GetBufferPointer(), pBlobPS->GetBufferSize(), nullptr, &g_pPlainPS));
     SetDebugName(g_pPlainPS, "PlainPixelShader");
     mPixelShaderList["PlainPixelShader"] = g_pPlainPS;
 
-    if(FAILED(pd3dDevice->CreatePixelShader(pBlobDiagPS->GetBufferPointer(), pBlobDiagPS->GetBufferSize(), nullptr, &g_pDiagPS)))
-    {
-
-    }
+    CREATE_SHADER_CALL_CHECK(pd3dDevice->CreatePixelShader(pBlobDiagPS->GetBufferPointer(), pBlobDiagPS->GetBufferSize(), nullptr, &g_pDiagPS));
     SetDebugName(g_pDiagPS, "DiagPS");
     mPixelShaderList["DiagPixelShader"] = g_pDiagPS;
 
     g_pVertexShader = nullptr;
     g_pHullShaderInteger = nullptr;
     g_pDomainShader = nullptr;
+    g_pGeometryShader = nullptr;
     g_pPlainPS = nullptr;
     g_pDiagPS = nullptr;
     g_pPatchLayout = nullptr;
-    g_pGeometryShader = nullptr;
 
     SAFE_RELEASE(pBlobVS);
     SAFE_RELEASE(pBlobHS);

@@ -20,7 +20,9 @@ static XMMATRIX   tempWorld(1, 0, 0, 0,
 class App
 {
 public:
-    virtual bool Initialize(HWND hWnd)
+
+    // Create device, context, render target, constant buffer.
+    virtual HRESULT  Initialize(HWND hWnd)
     {
         HRESULT hr = S_OK;
 
@@ -80,29 +82,7 @@ public:
             Logger::getLogger() << "- Create D3D Device and Swap Chain Failed." << "\n" << std::endl;
             return false;
         }
-#if 0
-        // Create Render Target View Object from SwapChain's Back Buffer.
-        // access one of swap chain's back buffer.[0-based buffer index, interface type which manipulates buffer, output param]
-        ID3D11Texture2D* pBackBuffer = NULL;
-        hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
-        if (FAILED(hr))
-        {
-            Logger::getLogger() << "- Get Back Buffer from SwapChain Failed." << "\n";
-            return false;
-        }
-        hr = m_pd3dDevice->CreateRenderTargetView(pBackBuffer, NULL, &m_pRenderTargetView);
-        pBackBuffer->Release();
-        if (FAILED(hr))
-        {
-            Logger::getLogger() << "- Create render target from Back buffer failed.\n" << "\n";
-            return false;
-        }
-#else
-
         Resize(hWnd);
-#endif
-
-
         m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, NULL);
 
         ////////////////////////////////////////////////////////////////////////
@@ -116,14 +96,7 @@ public:
         Desc.ByteWidth = (sizeof(FrameParam) + 15) & ~0xf;
         m_pd3dDevice->CreateBuffer(&Desc, nullptr, &mpcbFrameParam);
 
-        ////////////////////////////////////////////////////////////////////////
-        /// Shader Container Initialize
-        ////////////////////////////////////////////////////////////////////////
-        ShaderContainer &container = ShaderContainer::getShaderContainer();
-        //container.addShader(".\\shader\\drawCameraVector.hlsl");
-        container.addShader(".\\shader\\TesseQuad.hlsl");
-        container.Init(m_pd3dDevice);
-        return true;
+        return  S_OK;
     }
 
     void Resize(HWND hWnd)
@@ -227,11 +200,15 @@ protected:
     }
 };
 
-class TessBezierSurface :public App
+class TessSurface :public App
 {
 public:
-    bool Initialize(HWND hWnd) override;
+
+    // Create VB IB for mesh, Shader
+    HRESULT Initialize(HWND hWnd) override;
+
     void Render() override;
+
     void SetMesh(IDataSource* source)
     {
         surface.SetupMeshData(source);
@@ -250,7 +227,10 @@ private:
 class DrawCameraVector :public App
 {
 public:
-    bool Initialize(HWND hWnd) override;
+
+    // Create VB IB for mesh, Shader
+    HRESULT Initialize(HWND hWnd) override;
+
     void Render() override;
 
     void SetMesh(IDataSource* source)

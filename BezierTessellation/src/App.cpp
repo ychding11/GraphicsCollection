@@ -1,24 +1,38 @@
 #include "App.h"
 
-bool TessBezierSurface::Initialize(HWND hWnd)
+HRESULT TessSurface::Initialize(HWND hWnd)
 {
     App::Initialize(hWnd);
     surface.Initialize(this->m_pd3dDevice, this->m_pImmediateContext);
-    return true;
+
+    ////////////////////////////////////////////////////////////////////////
+    /// Shader Container Initialize
+    ////////////////////////////////////////////////////////////////////////
+    ShaderContainer &container = ShaderContainer::getShaderContainer();
+    container.addShader(".\\shader\\TesseQuad.hlsl");
+    container.Init(m_pd3dDevice);
+    return 0;
 }
 
-void TessBezierSurface::Render()
+void TessSurface::Render()
 {
     //float ClearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
     m_pImmediateContext->ClearRenderTargetView(m_pRenderTargetView, ClearColor);
     surface.Render(this->m_pImmediateContext);
 }
 
-bool DrawCameraVector::Initialize(HWND hWnd)
+HRESULT DrawCameraVector::Initialize(HWND hWnd)
 {
     App::Initialize(hWnd);
     layer.Initialize(this->m_pd3dDevice, this->m_pImmediateContext);
-    return true;
+
+    ////////////////////////////////////////////////////////////////////////
+    /// Shader Container Initialize
+    ////////////////////////////////////////////////////////////////////////
+    ShaderContainer &container = ShaderContainer::getShaderContainer();
+    container.addShader(".\\shader\\drawCameraVector.hlsl");
+    container.Init(m_pd3dDevice);
+    return 0;
 }
 
 void DrawCameraVector::Render()

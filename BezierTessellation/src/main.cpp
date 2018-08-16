@@ -130,23 +130,28 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow )
 	return S_OK;
 }
 
+EyePoint   eye;
+Quad       quad;
+UtahTeapot teap;
+
+TessSurface tessellator;
+
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
 {
     WIN_CALL_CHECK( InitWindow( hInstance, nCmdShow ) );
-    App & application = DrawCameraVector();
-    application.SetMesh(new EyePoint);
 
-	if (!application.Initialize(hWnd))
-	{
-        Logger::getLogger() << "Initialize App failed, exit!" << "\n";
-		return 0;
-	}
+    App* tess = &tessellator;  app = tess;
+    tess->SetMesh(&quad);
+    WIN_CALL_CHECK(tess->Initialize(hWnd));
 
     Camera& camera = CameraManager::getCamera();                               
     //camera.SetPosition(0.0f, 2.0f, -15.0f);           
     camera.LookAt({ 0.f, 1.f, -5.f, 0 }, { 0, 0, 0, 0 }, {0.f, 1.f, 0.f, 0.f});
     camera.SetLens(0.25f * sPi , 1.68f, 0.1f, 1000.0f);
 
+    ///////////////////////////////////////////////////////
+    /// Message Loop
+    ///////////////////////////////////////////////////////
 	MSG msg = { 0 };
 	while( WM_QUIT != msg.message )
 	{
@@ -157,11 +162,14 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		}
 		else
 		{
-			application.Render();
+			tess->Render();
 		}
 	}
+    ///////////////////////////////////////////////////////
+    // Message Loop ---- End
+    ///////////////////////////////////////////////////////
 
-    application.Destory();
-    Logger::flushLogger();
+    tess->Destory();
+    //Logger::flushLogger();
 	return ( int )msg.wParam;
 }
