@@ -8,6 +8,21 @@
 static HWND hWnd = NULL;
 static App* app = NULL;
 
+#define CHECK_WIN_CALL_FAIL  0xffff
+
+#define WIN_CALL_CHECK(x)                             \
+do{                                                   \
+    LRESULT ret = x;                                  \
+    if((ret) != S_OK)                                 \
+    {                                                 \
+        char buf[512];                                \
+        sprintf_s(buf, 512, "- Error @%s:%d\t  %s %d\t \n",__FILE__,__LINE__, #x, (ret) );  \
+        OutputDebugStringA(buf);                      \
+        system("pause");                              \
+        return CHECK_WIN_CALL_FAIL;                   \
+    }                                                 \
+} while(0)
+
 
 LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
@@ -82,7 +97,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 }
 
 #define CLASS_NAME  L"TutorialWindowClass"
-#define WINDOW_NAME L"Compute Shader - Filters"
+#define WINDOW_NAME L"HW Tessellation"
 
 HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow )
 {
@@ -117,11 +132,7 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow )
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
 {
-	if( FAILED( InitWindow( hInstance, nCmdShow ) ) )
-	{
-        Logger::getLogger() << "Initialize window failed, exit." << "\n";
-		return 0;
-	}
+    WIN_CALL_CHECK( InitWindow( hInstance, nCmdShow ) );
     App & application = DrawCameraVector();
     application.SetMesh(new EyePoint);
 
