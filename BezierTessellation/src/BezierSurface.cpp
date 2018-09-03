@@ -11,7 +11,6 @@ RenderOption& RenderOption::getRenderOption()
 }
 
 static CModelViewerCamera modelCamera;
-
 CModelViewerCamera& CameraManager::getCamera()
 {
     return modelCamera;
@@ -28,25 +27,36 @@ using namespace DirectX;
 
 
 static XMMATRIX   tempWorld(1, 0,  0, 0,
-                    0, 0, -1, 0,
-                    0, 1,  0, 0,
-                    0, 0,  0, 1);
+                            0, 1,  0, 0,
+                            0, 0,  1, 0,
+                            0, 0,  0, 1);
 void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 {
-    CModelViewerCamera &camera = CameraManager::getCamera();
     const RenderOption & renderOption = RenderOption::getRenderOption();
 
-    // WVP
-    XMMATRIX mProj = camera.GetProjMatrix();
-    XMMATRIX mView = camera.GetViewMatrix();
+    XMVECTOR eyePos = { 0.0f,  1.f, -1.0f };
+    XMVECTOR atPos  = { 0.0f, 0.0f, 0.0f };
+    XMVECTOR up     = { 0.0f, 1.0f, 0.0f };
+    float length = DirectX::XMVector3Length( XMVECTOR{ 0.0f,  0.f, 1.0f } - atPos).m128_f32[0];
+    static float theta = 0.f;
+    theta += 0.001 * XM_2PI;
+    float x = length * cosf(theta);
+    float z = length * sinf(theta);
+          
+    if (false == renderOption.fixedCamera)
+        eyePos = { x,  1.f, z };
+
+    XMMATRIX mView = DirectX::XMMatrixLookAtLH(eyePos, atPos, up);
+    XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(XM_PI / 2.f, 1.f, 0.1f, 600.0f);
     XMMATRIX mViewProjection = mView * mProj;
+
 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     pd3dImmediateContext->Map(mpcbFrameParam, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
     auto pData = reinterpret_cast<FrameParam*>(MappedResource.pData);
-    XMStoreFloat4x4(&pData->cbWorld, XMMatrixTranspose(tempWorld));
-    XMStoreFloat4x4(&pData->cbViewProjection, XMMatrixTranspose(mViewProjection));
-    XMStoreFloat3(&pData->cbCameraPosWorld, camera.GetEyePt());
+    DirectX::XMStoreFloat4x4(&pData->cbWorld, DirectX::XMMatrixTranspose(tempWorld));
+    DirectX::XMStoreFloat4x4(&pData->cbViewProjection, DirectX::XMMatrixTranspose(mViewProjection));
+    DirectX::XMStoreFloat3(&pData->cbCameraPosWorld, eyePos);
     pData->cbWireframeOn = renderOption.wireframeOn;
     pData->cbTessellationFactor = renderOption.tessellateFactor;
     pData->cbHeightMapOn = renderOption.heightMapOn;
@@ -56,16 +66,6 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
     pData->cbWorldCell = 0.002f;
     pd3dImmediateContext->Unmap(mpcbFrameParam, 0);
 
-    // for debug purpose
-    XMVECTOR tempEyePos = camera.GetEyePt();
-    char buf[256];
-    sprintf(buf, "- eye position: %f, %f, %f, %f.\n",
-        tempEyePos.m128_f32[0],
-        tempEyePos.m128_f32[1],
-        tempEyePos.m128_f32[2],
-        tempEyePos.m128_f32[3]
-    );
-   // OutputDebugStringA(buf);
 }
 
 HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)

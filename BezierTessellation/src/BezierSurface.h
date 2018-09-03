@@ -47,6 +47,7 @@ struct RenderOption
 {
     bool wireframeOn;
     bool diagModeOn;
+    bool fixedCamera;
     int heightMapOn;
     int  tessellateFactor;
     DiagType diagType;
@@ -54,6 +55,7 @@ struct RenderOption
     RenderOption::RenderOption()
         : wireframeOn(false)
         , diagModeOn(false)
+        , fixedCamera(false)
         , heightMapOn(1)
         , tessellateFactor(10)
         , diagType(eDiagNormal)

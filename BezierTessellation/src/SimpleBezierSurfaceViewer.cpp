@@ -251,6 +251,12 @@ void CALLBACK KeyboardProc(UINT nChar, bool bKeyDown, bool bAltDown, void* pUser
                 RenderOption::getRenderOption().diagType = DiagType((type + 1) % DiagType::eDiagNum);
                 break;
             }
+            case 'f':
+            {
+                bool fixed = RenderOption::getRenderOption().fixedCamera;
+                RenderOption::getRenderOption().fixedCamera = !fixed;
+                break;
+            }
         }
 	}
 }
@@ -336,12 +342,6 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     V_RETURN( g_DialogResourceManager.OnD3D11ResizedSwapChain( pd3dDevice, pBackBufferSurfaceDesc ) );
     V_RETURN( g_D3DSettingsDlg.OnD3D11ResizedSwapChain( pd3dDevice, pBackBufferSurfaceDesc ) );
-
-    // Setup the camera's projection parameters
-    float fAspectRatio = pBackBufferSurfaceDesc->Width / ( FLOAT )pBackBufferSurfaceDesc->Height;
-    CameraManager::getCamera().SetProjParams( XM_PI / 4, fAspectRatio, 0.1f, 600.0f );
-    CameraManager::getCamera().SetWindow( pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height );
-    CameraManager::getCamera().SetButtonMasks( MOUSE_MIDDLE_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON );
 
     g_HUD.SetLocation( pBackBufferSurfaceDesc->Width - 170, 0 );
     g_HUD.SetSize( 170, 170 );
