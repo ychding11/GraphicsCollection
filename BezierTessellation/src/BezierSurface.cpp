@@ -1,7 +1,6 @@
 
 #include "BezierSurface.h"
 #include "ShaderManager.h"
-//#include "utahTeapot.h"
 
 
 static RenderOption renderOption;

@@ -14,11 +14,6 @@
 #define SAFE_RELEASE(p)      { if (p) { (p)->Release(); (p) = nullptr; } }
 #endif
 
-class CameraManager
-{
-public:
-};
-
 enum DiagType
 {
     eDiagNormal       = 0,
