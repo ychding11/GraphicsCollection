@@ -10,10 +10,10 @@ static uint32_t quadIndex[4] = { 0, 1, 2, 3 };
 static float    quadVertices[4][3] =
 #if 1
 {
-    { -1.0f, -1.0f, 0.5f },
-    { -1.0f,  1.0f, 0.5f },
-    {  1.0f, -1.0f, 0.5f },
-    {  1.0f,  1.0f, 0.5f }
+    { -1.0f,  .0f, 0.f },
+    { -1.0f,  .0f, 1.f },
+    {  0.0f,  .0f, 0.f },
+    {  0.0f,  .0f, 1.f }
 };
 #else
 {
