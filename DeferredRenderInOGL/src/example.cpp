@@ -116,9 +116,9 @@ void glut_keyboard(unsigned char key, int x, int y)
         break;
     case 'v':
     {
-        bool view = RenderOption::getRenderOption().multipleView;
-        RenderOption::getRenderOption().multipleView = !view;
-        cout << "- keyboard: multiple viewport: " << RenderOption::getRenderOption().multipleView << std::endl;
+        bool view = RenderOption::getRenderOption().deferred;
+        RenderOption::getRenderOption().deferred= !view;
+        cout << "- keyboard: deferred Rendering: " << RenderOption::getRenderOption().deferred<< std::endl;
         break;
     }
     case 'f':

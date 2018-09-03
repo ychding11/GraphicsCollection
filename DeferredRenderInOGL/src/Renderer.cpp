@@ -390,7 +390,7 @@ void Renderer::ObserveScene()
     //DrawCamera();
 }
 
-void Renderer::RenderSingle()
+void Renderer::RenderForward()
 {
     ViewPort sceneViewPort(0, 0, mBackBufferWidth, mBackBufferHeight);
 
@@ -414,7 +414,7 @@ void Renderer::RenderSingle()
     }
 }
 
-void Renderer::RenderMultiple()
+void Renderer::RenderDeferred()
 {
     ViewPort sceneViewPort(0, 0, mBackBufferWidth, mBackBufferHeight);
     sceneViewPort.apply();

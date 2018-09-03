@@ -52,14 +52,14 @@ struct ViewPort
 
 struct RenderOption
 {
-    bool multipleView;
+    bool deferred;
     bool shadowOff;
     bool wireframe;
     bool drawVnormal;
     DebugType diagType;
 
     RenderOption()
-        : multipleView(true)
+        : deferred(true)
         , shadowOff(true)
         , wireframe(false)
         , drawVnormal(false)
@@ -121,8 +121,8 @@ private:
         mNormalToWorld = transpose(inverse(mWorld));
     }
 
-    void RenderSingle();
-    void RenderMultiple();
+    void RenderForward();
+    void RenderDeferred();
 
     void CreatedScreenQaudBuffer();
     void CreateObjectModelBuffer();
@@ -168,10 +168,10 @@ public:
 
     void  Render(void)
     {
-        if (RenderOption::getRenderOption().multipleView)
-            this->RenderMultiple();
+        if (RenderOption::getRenderOption().deferred)
+            this->RenderDeferred();
         else
-            this->RenderSingle();
+            this->RenderForward();
     }
 
 };
