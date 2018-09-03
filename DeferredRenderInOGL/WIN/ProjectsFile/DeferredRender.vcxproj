@@ -88,9 +88,6 @@
     <ClCompile Include="..\..\src\camera.cpp" />
     <ClCompile Include="..\..\src\example.cpp" />
     <ClCompile Include="..\..\src\glHandleUI.cpp" />
-    <ClCompile Include="..\..\src\glRoutine.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\..\src\glslUtility.cpp" />
     <ClCompile Include="..\..\src\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

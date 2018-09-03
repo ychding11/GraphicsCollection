@@ -231,17 +231,11 @@ void Renderer::CreateGeomFB(int w, int h)
 
 void Renderer::DrawGeometryPass()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, FBO[0]);
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glEnable(GL_TEXTURE_2D);
-
     ShaderManager& shdmgr = ShaderManager::getShaderManager();
     ShaderProgram& shader = shdmgr.ActiveShader("GeometryPass");
     shdmgr.UpdateShaderParam("GeometryPass");
+
+	glEnable(GL_TEXTURE_2D);
 
 	int bTextured;
 	int numModel = mModels->getModelCount();
@@ -284,9 +278,6 @@ void Renderer::DrawGeometryPass()
 
 void Renderer::DrawFinalPass()
 {
-	glDisable(GL_DEPTH_TEST);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 	ShaderManager& shdmgr = ShaderManager::getShaderManager();
 	ShaderProgram& shader = shdmgr.ActiveShader("FinalPass");
 	shdmgr.UpdateShaderParam("FinalPass");
@@ -425,12 +416,28 @@ void Renderer::RenderSingle()
 
 void Renderer::RenderMultiple()
 {
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     ViewPort sceneViewPort(0, 0, mBackBufferWidth, mBackBufferHeight);
     sceneViewPort.apply();
 
+	RenderOption &option = RenderOption::getRenderOption();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO[0]);
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 	DrawGeometryPass();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear( GL_COLOR_BUFFER_BIT );
+	glDisable(GL_DEPTH_TEST);
 	DrawFinalPass();
+
+	if (option.drawVnormal)
+	{
+		DrawModel("VisualNormal");
+	}
 }
 
 void Renderer::RenderVertexNormal()
