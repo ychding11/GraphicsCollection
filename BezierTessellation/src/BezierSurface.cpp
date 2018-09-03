@@ -10,12 +10,6 @@ RenderOption& RenderOption::getRenderOption()
     return renderOption;
 }
 
-static CModelViewerCamera modelCamera;
-CModelViewerCamera& CameraManager::getCamera()
-{
-    return modelCamera;
-}
-
 BezierSurface& BezierSurfaceManager::getBezierSurface(std::string name )
 {
     static BezierSurface* surface = new BezierSurface();

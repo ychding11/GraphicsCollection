@@ -1,5 +1,4 @@
 #include "DXUT.h"
-#include "DXUTcamera.h"
 #include "DXUTgui.h"
 #include "DXUTsettingsDlg.h"
 #include "SDKmisc.h"
@@ -107,49 +106,6 @@ void InitApp()
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 22, VK_F2 );
 
     g_SampleUI.SetCallback( OnGUIEvent ); iY = 0;
-
-#if 0
-    g_SampleUI.AddComboBox(IDC_SELECTED_OBJECT, 0, iY += 5, 170, 22, VK_F8, false, &g_ObjectModelSelectCombo);
-    g_ObjectModelSelectCombo->AddItem(L"Teapot      ", ULongToPtr(E_TEAPOT));
-    g_ObjectModelSelectCombo->AddItem(L"Mobius Strip", ULongToPtr(E_MOBIUS_STRIP));
-
-    WCHAR sz[100];
-    iY += 10;
-    swprintf_s( sz, L"Patch Divisions: %2.1f", g_fSubdivs );
-    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
-    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fSubdivs * 10) );
-    swprintf_s( sz, L"Material Ka: %2.1f", g_fKa );
-    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
-    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fKa * 10) );
-    
-    swprintf_s( sz, L"Material Kd: %2.1f", g_fKd );
-    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
-    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fKd * 10) );
-
-    swprintf_s( sz, L"Material Ks: %2.1f", g_fKs );
-    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
-    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fKs * 10) );
-
-    swprintf_s( sz, L"Material Shininess: %2.1f", g_fShininess );
-    g_SampleUI.AddStatic( IDC_PATCH_SUBDIVS_STATIC, sz, 10, iY += 26, 170, 22 );
-    g_SampleUI.AddSlider( IDC_PATCH_SUBDIVS, 10, iY += 24, 170, 22, 10 * MIN_DIVS, 10 * MAX_DIVS, (int)(g_fShininess * 10) );
-    iY += 24;
-    g_SampleUI.AddCheckBox( IDC_TOGGLE_LINES, L"Toggle Wires", 20, iY += 26, 150, 22, g_bDrawWires );
-    g_SampleUI.AddCheckBox( IDC_SINGLE_PATCH, L"Single Patch", 20, iY += 26, 150, 22, g_bSinglePatch );
-    g_SampleUI.AddCheckBox( IDC_TRI_DOMAIN, L"Tri Domain", 20, iY += 26, 150, 22, g_bTriDomain );
-
-    iY += 24;
-    g_SampleUI.AddRadioButton( IDC_PARTITION_INTEGER, IDC_PARTITION_MODE, L"Integer", 20, iY += 26, 170, 22 );
-    g_SampleUI.AddRadioButton( IDC_PARTITION_FRAC_EVEN, IDC_PARTITION_MODE, L"Fractional Even", 20, iY += 26, 170, 22 );
-    g_SampleUI.AddRadioButton( IDC_PARTITION_FRAC_ODD, IDC_PARTITION_MODE, L"Fractional Odd", 20, iY += 26, 170, 22 );
-    g_SampleUI.GetRadioButton( IDC_PARTITION_INTEGER )->SetChecked( true );
-#endif
-
-    // Setup the camera's view parameters
-    static const XMVECTORF32 s_vecEye = { 0.0f, .5f, -5.0f, 0.f };
-    static const XMVECTORF32 s_vecAt  = { 0.0f, 0.0f,   0.0f, 0.f };
-    CameraManager::getCamera().SetViewParams( s_vecEye, s_vecAt );
-
 }
 
 bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* pUserContext )
@@ -159,8 +115,6 @@ bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* p
 
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
-    // Update the camera's position based on user input 
-    CameraManager::getCamera().FrameMove( fElapsedTime );
 }
 
 static const WCHAR* UserOption()
@@ -201,9 +155,6 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bo
     if( *pbNoFurtherProcessing ) return 0;
     *pbNoFurtherProcessing = g_SampleUI.MsgProc( hWnd, uMsg, wParam, lParam );
     if( *pbNoFurtherProcessing ) return 0;
-
-    // Pass all remaining windows messages to camera so it can respond to user input
-    CameraManager::getCamera().HandleMessages( hWnd, uMsg, wParam, lParam );
 
     return 0;
 }
