@@ -53,7 +53,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\3party\freeglut\include;..\..\3party\glew\include;..\..\3party\glm;..\..\3party;..\..\3party\FreeImage;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -86,12 +86,19 @@
   <ItemGroup>
     <ClCompile Include="..\..\3party\glm.cpp" />
     <ClCompile Include="..\..\src\camera.cpp" />
+    <ClCompile Include="..\..\src\example.cpp" />
     <ClCompile Include="..\..\src\glHandleUI.cpp" />
-    <ClCompile Include="..\..\src\glRoutine.cpp" />
+    <ClCompile Include="..\..\src\glRoutine.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\glslUtility.cpp" />
-    <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="..\..\src\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\objLoader.cpp" />
+    <ClCompile Include="..\..\src\Renderer.cpp" />
     <ClCompile Include="..\..\src\shader.cpp" />
+    <ClCompile Include="..\..\src\ShaderManager.cpp" />
     <ClCompile Include="..\..\src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -100,17 +107,24 @@
     <ClInclude Include="..\..\src\glRoutine.h" />
     <ClInclude Include="..\..\src\glslUtility.h" />
     <ClInclude Include="..\..\src\objLoader.h" />
+    <ClInclude Include="..\..\src\Renderer.h" />
     <ClInclude Include="..\..\src\shader.h" />
+    <ClInclude Include="..\..\src\ShaderManager.h" />
     <ClInclude Include="..\..\src\util.h" />
     <ClInclude Include="..\..\src\variables.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader\diagnostic.frag.glsl" />
-    <None Include="shader\pass.frag.glsl" />
-    <None Include="shader\pass.vert.glsl" />
-    <None Include="shader\shade.vert.glsl" />
+    <None Include="shader\finalPass.frag" />
+    <None Include="shader\geometryPass.frag" />
+    <None Include="shader\geometryPass.vert" />
+    <None Include="shader\plain.frag.glsl" />
+    <None Include="shader\plain.vert.glsl" />
+    <None Include="shader\finalPass.vert" />
     <None Include="shader\shadowmap.frag.glsl" />
     <None Include="shader\shadowmap.vert.glsl" />
+    <None Include="shader\visualNormal.frag.glsl" />
+    <None Include="shader\visualNormal.geom.glsl" />
+    <None Include="shader\visualNormal.vert.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

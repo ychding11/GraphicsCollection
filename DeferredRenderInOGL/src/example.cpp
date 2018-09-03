@@ -229,10 +229,10 @@ int  main( int argc, char* argv[] )
     HookGLutHandler();
 
     CameraManager::getCamera("draw").SetMode(FREE);
-    CameraManager::getCamera("draw").SetPosition(glm::vec3(0, 1, 4));
+    CameraManager::getCamera("draw").SetPosition(glm::vec3(0, 0, 2));
     CameraManager::getCamera("draw").SetLookAt(glm::vec3(0, 0, 0));
-    CameraManager::getCamera("draw").SetClipping(.1, 1000);
-    CameraManager::getCamera("draw").SetFOV(45);
+    CameraManager::getCamera("draw").SetClipping(.1, 100);
+    CameraManager::getCamera("draw").SetFOV(90);
     CameraManager::getCamera("draw").SetViewport(0, 0, window.size.x, window.size.y);
 
     shader::ShaderManager::getShaderManager().SetupShaders();

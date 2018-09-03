@@ -45,6 +45,15 @@
     <ClCompile Include="..\..\src\glHandleUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ShaderManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\example.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\variables.h">
@@ -71,24 +80,45 @@
     <ClInclude Include="..\..\src\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Renderer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ShaderManager.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader\pass.vert.glsl">
-      <Filter>Source Files\Shader</Filter>
-    </None>
-    <None Include="shader\pass.frag.glsl">
-      <Filter>Source Files\Shader</Filter>
-    </None>
-    <None Include="shader\diagnostic.frag.glsl">
-      <Filter>Source Files\Shader</Filter>
-    </None>
-    <None Include="shader\shade.vert.glsl">
-      <Filter>Source Files\Shader</Filter>
-    </None>
     <None Include="shader\shadowmap.vert.glsl">
       <Filter>Source Files\Shader</Filter>
     </None>
     <None Include="shader\shadowmap.frag.glsl">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\visualNormal.vert.glsl">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\visualNormal.geom.glsl">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\visualNormal.frag.glsl">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\plain.frag.glsl">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\plain.vert.glsl">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\finalPass.frag">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\geometryPass.vert">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\geometryPass.frag">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\finalPass.vert">
       <Filter>Source Files\Shader</Filter>
     </None>
   </ItemGroup>

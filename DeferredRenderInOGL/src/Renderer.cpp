@@ -40,20 +40,19 @@ void Renderer::CreatedScreenQaudBuffer()
 {
     QuadVertexFormat verts [] =
     {
-		{vec3(-1, 1,0),vec2(0,1)},
-        {vec3(-1,-1,0),vec2(0,0)},
-        {vec3( 1,-1,0),vec2(1,0)},
-        {vec3( 1, 1,0),vec2(1,1)}
+	{ vec3(-1, 1,0),vec2(0,1) },
+	{ vec3(-1,-1,0),vec2(0,0) },
+	{ vec3(1, -1,0),vec2(1,0) },
+	{ vec3(1,  1,0),vec2(1,1) }
     };
-    unsigned short indices[] = { 0,1,2,0,2,3};
-
-    glGenVertexArrays( 1, &vao[QUAD] );
-    glBindVertexArray( vao[QUAD] );
+    unsigned short indices[] = { 0,1,2,  0,2,3 }; //CCW
 
     glGenBuffers(1,&vbo[QUAD]);
     glBindBuffer(GL_ARRAY_BUFFER, vbo[QUAD]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
 
+    glGenVertexArrays( 1, &vao[QUAD] );
+    glBindVertexArray( vao[QUAD] );
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertexFormat), 0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertexFormat), (void*)sizeof(vec3));
     glEnableVertexAttribArray(0);
@@ -230,11 +229,10 @@ void Renderer::CreateGeomFB(int w, int h)
     }
 }
 
-void Renderer::RenderGeometryPass()
+void Renderer::DrawGeometryPass()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO[0]);
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
@@ -284,20 +282,17 @@ void Renderer::RenderGeometryPass()
 	}
 }
 
-void Renderer::RenderFinalPass()
+void Renderer::DrawFinalPass()
 {
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//glDisable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	ShaderManager& shdmgr = ShaderManager::getShaderManager();
 	ShaderProgram& shader = shdmgr.ActiveShader("FinalPass");
 	shdmgr.UpdateShaderParam("FinalPass");
 
-	shader.setParameter(shader::i1, &mBackBufferHeight, "u_ScreenHeight");
-	shader.setParameter(shader::i1, &mBackBufferWidth,  "u_ScreenWidth");
-
 	glEnable(GL_TEXTURE_2D);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthFBTex);
 	shader.setTexParameter(0, "u_Depthtex");
@@ -314,13 +309,14 @@ void Renderer::RenderFinalPass()
 	glBindTexture(GL_TEXTURE_2D, colorFBTex);
 	shader.setTexParameter(3, "u_Colortex");
 
-#if 1
+#if 0
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, shadowmapTex);
 	shader.setTexParameter(4, "u_shadowmap");
 #endif
 	//Draw the screen space quad
 	glBindVertexArray(vao[QUAD]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[QUAD]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[QUAD]);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 }
@@ -433,8 +429,8 @@ void Renderer::RenderMultiple()
     ViewPort sceneViewPort(0, 0, mBackBufferWidth, mBackBufferHeight);
     sceneViewPort.apply();
 
-	//RenderGeometryPass();
-	RenderFinalPass();
+	DrawGeometryPass();
+	DrawFinalPass();
 }
 
 void Renderer::RenderVertexNormal()

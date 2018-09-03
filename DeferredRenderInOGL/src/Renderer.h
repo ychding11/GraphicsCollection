@@ -59,7 +59,7 @@ struct RenderOption
     DebugType diagType;
 
     RenderOption()
-        : multipleView(false)
+        : multipleView(true)
         , shadowOff(true)
         , wireframe(false)
         , drawVnormal(false)
@@ -129,8 +129,8 @@ private:
     void CreateShadowFB(int w = 1024, int h = 1024);
     void CreateGeomFB(int w, int h);
 
-    void RenderGeometryPass();
-    void RenderFinalPass();
+    void DrawGeometryPass();
+    void DrawFinalPass();
     void RenderShadowPass();
 
     void DrawModel(std::string shadername);

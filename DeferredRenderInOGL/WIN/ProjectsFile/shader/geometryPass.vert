@@ -19,7 +19,6 @@ out vec4 vsProjectedPos;
 
 void main(void)
 {
-    //vec4 worldPos = u_World * vec4(Position, 1.0);
     vec4 worldPos = vec4(Position, 1.0);
     vec4 viewPos  = u_View  * worldPos;
     gl_Position   = u_Projection * viewPos;

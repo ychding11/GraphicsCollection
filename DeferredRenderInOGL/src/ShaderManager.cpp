@@ -60,6 +60,7 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
     }
     else 
     {
+#if 1
         Camera &camera = CameraManager::getCamera("draw");
         mat4 model, view, projection, normalToView, normalToWorld;
         camera.Update();
@@ -72,6 +73,7 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
         shader.setParameter(shader::mat4x4, (void*)&projection[0][0], "u_Projection");
         shader.setParameter(shader::mat4x4, (void*)&normalToWorld[0][0], "u_NormalToWorld");
         shader.setParameter(shader::mat4x4, (void*)&normalToView[0][0],  "u_NormalToView");
+#endif
     }
 
     if (name == "VisualNormal")
@@ -89,6 +91,7 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
     }
     else if (name == "FinalPass")
     {
+#if 1
         const int diag = option.diagType;
 		const int shadowOn = !option.shadowOff;
         shader.setParameter(shader::i1, (void*)&diag, "u_DiagType");
@@ -102,6 +105,7 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
 
 		Camera &camera = CameraManager::getCamera("draw");
 		shader.setParameter(shader::fv3, &camera.camera_position[0], "u_eyePos");
+#endif
     }
     else
     {

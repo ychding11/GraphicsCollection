@@ -10,4 +10,5 @@ void main()
 {
     vsTexcoord  = Texcoord;
     vsPosition  = vec4(Position, 1.0f);
+	gl_Position = vsPosition;
 }
