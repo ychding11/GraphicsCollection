@@ -27,7 +27,8 @@ layout (location = 2) out vec4 outColor;
 
 void main(void)
 {
-    outNormal   = vec4( normalize(vsNormal), 0.0f);
+    //outNormal   = vec4( normalize(vsNormal), 0.0f);
+    outNormal   = vec4( vsNormal, 0.0f);
     outPosition = vsPosition;
     outColor    = vec4( u_Color, u_Shininess );
 	if( u_bBump == 1 )

@@ -27,7 +27,8 @@ void main(void)
     vec3 normal   = normalize( u_NormalToWorld * vec4(Normal,0) ).xyz;
     float NdotL   = max(dot(normal, lightDir), 0.0);
     vsColor = NdotL * diffuse;
-    vsNormal = vec4(normal, 1.f);
+
     gl_Position   = u_Projection * u_View * u_World * vec4(Position, 1.0);
+    vsNormal = vec4(normal, 0.f);
     vsPosition = gl_Position;
 }
