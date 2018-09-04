@@ -3,6 +3,18 @@
 #include "ShaderManager.h"
 
 
+#define D3D11_CALL_CHECK(x)                           \
+do{                                                   \
+    LRESULT ret = x;                                  \
+    if((ret) != S_OK)                                 \
+    {                                                 \
+        char buf[512];                                \
+        sprintf_s(buf, 512, "- Error @%s:%d\t  %s %d\t \n",__FILE__,__LINE__, #x, (ret) );  \
+        OutputDebugStringA(buf);                      \
+    }                                                 \
+} while(0)
+
+
 static RenderOption renderOption;
 RenderOption& RenderOption::getRenderOption()
 {
@@ -75,8 +87,7 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     Desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     Desc.MiscFlags = 0;
     Desc.ByteWidth = ( sizeof(FrameParam) + 15 ) & ~0xf;
-    V_RETURN(pd3dDevice->CreateBuffer(&Desc, nullptr, &mpcbFrameParam));
-    DXUT_SetDebugName(mpcbFrameParam, "CB_PER_FRAME_Const_Buffer");
+    D3D11_CALL_CHECK(pd3dDevice->CreateBuffer(&Desc, nullptr, &mpcbFrameParam));
 
     ////////////////////////////////////////////////////////////////////////
     /// rasterizer state objects
@@ -86,11 +97,9 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     RasterDesc.FillMode = D3D11_FILL_SOLID;
     RasterDesc.CullMode = D3D11_CULL_NONE;
     RasterDesc.DepthClipEnable = TRUE;
-    V_RETURN(pd3dDevice->CreateRasterizerState(&RasterDesc, &mpRSSolid));
-    DXUT_SetDebugName(mpRSSolid, "Solid_RS");
+    D3D11_CALL_CHECK(pd3dDevice->CreateRasterizerState(&RasterDesc, &mpRSSolid));
     RasterDesc.FillMode = D3D11_FILL_WIREFRAME;
-    V_RETURN(pd3dDevice->CreateRasterizerState(&RasterDesc, &mpRSWireframe));
-    DXUT_SetDebugName(mpRSWireframe, "Wireframe_RS");
+    D3D11_CALL_CHECK(pd3dDevice->CreateRasterizerState(&RasterDesc, &mpRSWireframe));
 
     ////////////////////////////////////////////////////////////////////////
     /// Vertex Buffer objects
@@ -104,8 +113,7 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     D3D11_SUBRESOURCE_DATA vbInitData;
     ZeroMemory(&vbInitData, sizeof(vbInitData));
     vbInitData.pSysMem = mMeshData->VBuffer();
-    V_RETURN(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointVB));
-    DXUT_SetDebugName(mpControlPointVB, "Control Points VB");
+    D3D11_CALL_CHECK(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointVB));
 
     ////////////////////////////////////////////////////////////////////////
     /// Index Buffer objects
@@ -113,8 +121,7 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     vbDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
     vbDesc.ByteWidth   = mMeshData->IBufferSize();
     vbInitData.pSysMem = mMeshData->IBuffer();
-    V_RETURN(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointIB));
-    DXUT_SetDebugName(mpControlPointIB, "Control Points IB");
+    D3D11_CALL_CHECK(pd3dDevice->CreateBuffer(&vbDesc, &vbInitData, &mpControlPointIB));
 
     ////////////////////////////////////////////////////////////////////////
     /// sample state objects
@@ -128,8 +135,8 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-    V_RETURN(pd3dDevice->CreateSamplerState(&sampDesc, &mpSamplerLinear));
-    V_RETURN(DXUTCreateShaderResourceViewFromFile(pd3dDevice, L"heightmap.png", &mpHeightMapSRV));
+    D3D11_CALL_CHECK(pd3dDevice->CreateSamplerState(&sampDesc, &mpSamplerLinear));
+    D3D11_CALL_CHECK(DXUTCreateShaderResourceViewFromFile(pd3dDevice, L"heightmap.png", &mpHeightMapSRV));
 
     ////////////////////////////////////////////////////////////////////////
     /// blend state objects
@@ -138,6 +145,7 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     ////////////////////////////////////////////////////////////////////////
     /// depth stencil state objects
     ////////////////////////////////////////////////////////////////////////
+    return S_OK;
 }
 
 void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)

@@ -5,9 +5,9 @@
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include "DXUT.h"
-#include "SDKmisc.h"
 #include "ShaderManager.h"
 #include "IDataSource.h"
+#include "ShaderContainer.h"
 
 
 #ifndef SAFE_RELEASE
@@ -76,6 +76,7 @@ public:
 
 private:
     IDataSource*  mMeshData;
+    ShaderContainer *mShaders;
     PartitionMode mPartitionMode;
 
     ID3D11Buffer*             mpcbFrameParam = nullptr;
@@ -122,7 +123,8 @@ public:
 public:
     BezierSurface(void)
         : mPartitionMode(PARTITION_INTEGER)
-        , mMeshData(nullptr)
+        , mMeshData(nullptr) 
+        , mShaders(nullptr)
     { }
 
     ~BezierSurface()

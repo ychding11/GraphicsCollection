@@ -5,6 +5,7 @@
 #include "resource.h"
 #include "BezierSurface.h"
 #include "IDataSource.h"
+#include "ShaderContainer.h"
 
 #pragma warning( disable : 4100 )
 
@@ -274,6 +275,9 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( g_DialogResourceManager.OnD3D11CreateDevice( pd3dDevice, pd3dImmediateContext ) );
     V_RETURN( g_D3DSettingsDlg.OnD3D11CreateDevice( pd3dDevice ) );
     g_pTxtHelper = new CDXUTTextHelper( pd3dDevice, pd3dImmediateContext, &g_DialogResourceManager, 15 );
+
+    ShaderContainer::getShaderContainer().addShader(".\\shader\\TesseQuad_new.hlsl");
+    ShaderContainer::getShaderContainer().Init(pd3dDevice);
 
     //BezierSurfaceManager::getBezierSurface().SetupMeshData(new UtahTeapot);
     BezierSurfaceManager::getBezierSurface().SetupMeshData(new Quad);
