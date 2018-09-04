@@ -55,7 +55,7 @@ void glut_idle()
 
 void glut_reshape(int w, int h)
 {
-    RendererManager::getRender().UpdateBackBufferSize(w, h);
+    RendererManager::getRender().UpdateBackBuffer(w, h);
     if (h > 0)
     {
         window.size = ivec2(w, h);

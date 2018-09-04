@@ -148,7 +148,7 @@ private:
 
 public:
 
-    void UpdateBackBufferSize(int width, int height)
+    void UpdateBackBuffer(int width, int height)
     {
         mBackBufferHeight = height;
         mBackBufferWidth  = width;

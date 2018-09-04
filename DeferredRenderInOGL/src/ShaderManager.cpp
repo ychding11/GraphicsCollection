@@ -65,6 +65,20 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
         mat4 model, view, projection, normalToView, normalToWorld;
         camera.Update();
         camera.GetMatricies(projection, view, model);
+
+		static float theta = 0.f;
+		vec3 eye(0.f,1.f,1.f);
+		vec3 at(0.f, 0.f, 0.f);
+		float d = glm::length(eye - at);
+		theta += 0.001 * 3.1415926f;
+		float x = d * cos(theta);
+		float z = d * sin(theta);
+		eye.x = x;
+		eye.z = z;
+
+		view = glm::lookAt(eye, at, vec3(0.f, 1.f, 0.f));
+		projection = glm::perspective(90.f, 16.f/9.f, 0.1f, 100.f);
+
         normalToView  = transpose(inverse(view * world));
         normalToWorld = transpose(inverse(world));
 
