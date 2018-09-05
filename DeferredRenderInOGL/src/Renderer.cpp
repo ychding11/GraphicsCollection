@@ -231,6 +231,10 @@ void Renderer::CreateGeomFB(int w, int h)
 
 void Renderer::DrawGeometryPass()
 {
+	RenderOption & option = RenderOption::getRenderOption();
+	mat4 world(1.f);
+	option.world = world;
+
     ShaderManager& shdmgr = ShaderManager::getShaderManager();
     ShaderProgram& shader = shdmgr.ActiveShader("GeometryPass");
     shdmgr.UpdateShaderParam("GeometryPass");
@@ -276,13 +280,56 @@ void Renderer::DrawGeometryPass()
 	}
 }
 
+void Renderer::UpdateCamera(void)
+{
+	static float theta = 0.f;
+	vec3 eye(0.f, .6f, 2.f);
+	vec3 at(0.f, 0.f, 0.f);
+	float d = glm::length(eye - at);
+	theta += 0.001 * 3.1415926f;
+	float x = d * cos(theta);
+	float z = d * sin(theta);
+	eye.x = x;
+	eye.z = z;
+
+	RenderOption& option = RenderOption::getRenderOption();
+	option.view = glm::lookAt(eye, at, vec3(0.f, 1.f, 0.f));
+	option.proj = glm::perspective(90.f, 16.f / 9.f, 0.1f, 100.f);
+	option.eye = eye;
+}
+
 void Renderer::DrawLight()
 {
+	mat4 lightWorld = glm::translate(0.f, 1.f, 0.f);
+	lightWorld = glm::scale(lightWorld, 0.3f, 0.3f, 0.3f);
+	lightWorld = glm::rotate(lightWorld, 90.f, 1.f, 0.f, 0.f);
+
+	RenderOption & option = RenderOption::getRenderOption();
+	option.world = lightWorld;
+
 	ShaderManager& shdmgr = ShaderManager::getShaderManager();
 	ShaderProgram& shader = shdmgr.ActiveShader("Light");
 	shdmgr.UpdateShaderParam("Light");
 
-	//Draw the screen space quad
+	glBindVertexArray(vao[QUAD]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[QUAD]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[QUAD]);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+}
+
+void Renderer::DrawPlane()
+{
+	mat4 lightWorld = glm::translate(0.f, -1.f, -1.f);
+	lightWorld = glm::scale(lightWorld, 3.f, 3.f, 3.f);
+	lightWorld = glm::rotate(lightWorld, 90.f, 1.f, 0.f, 0.f);
+
+	RenderOption & option = RenderOption::getRenderOption();
+	option.world = lightWorld;
+
+	ShaderManager& shdmgr = ShaderManager::getShaderManager();
+	ShaderProgram& shader = shdmgr.ActiveShader("Light");
+	shdmgr.UpdateShaderParam("Light");
+
 	glBindVertexArray(vao[QUAD]);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[QUAD]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[QUAD]);
@@ -337,6 +384,10 @@ void Renderer::DrawDrawCamera(std::string shadernam, std::string cameraname)
 
 void Renderer::DrawModel(std::string shadername)
 {
+	RenderOption & option = RenderOption::getRenderOption();
+	mat4 world(1.f);
+	option.world = world;
+
     ShaderManager& shdmgr = ShaderManager::getShaderManager();
     shdmgr.ActiveShader(shadername);
     shdmgr.UpdateShaderParam(shadername);
@@ -406,6 +457,7 @@ void Renderer::RenderForward()
     //DrawModel("Phong");
     glDisable( GL_CULL_FACE );
 	DrawLight();
+	DrawPlane();
     if (option.drawVnormal)
     {
         DrawModel("VisualNormal");

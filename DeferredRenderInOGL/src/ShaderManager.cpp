@@ -43,12 +43,12 @@ ShaderProgram& ShaderManager::ActiveShader(const std::string& name)
 void ShaderManager::UpdateShaderParam(const std::string& name)
 {
     ShaderProgram & shader = *mShaderList[name];
-    mat4 world(1.0f);
     RenderOption & option = RenderOption::getRenderOption();
 	vec3 eye(0.f,.0f,2.f);
 
     if (name == "Observer")
     {
+		mat4 world(1.0f);
         Camera &camera = CameraManager::getCamera("observe");
         mat4 model, view, projection, normalToView, normalToWorld;
         camera.Update();
@@ -64,33 +64,22 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
     }
     else 
     {
-#if 1
-        Camera &camera = CameraManager::getCamera("draw");
-        mat4 model, view, projection, normalToView, normalToWorld;
-        camera.Update();
-        camera.GetMatricies(projection, view, model);
-
-		static float theta = 0.f;
-		vec3 at(0.f, 0.f, 0.f);
-		float d = glm::length(eye - at);
-		theta += 0.001 * 3.1415926f;
-		float x = d * cos(theta);
-		float z = d * sin(theta);
-		eye.x = x;
-		eye.z = z;
-
-		view = glm::lookAt(eye, at, vec3(0.f, 1.f, 0.f));
-		projection = glm::perspective(90.f, 16.f/9.f, 0.1f, 100.f);
+        mat4 world, view, projection, normalToView, normalToWorld;
+#if 0
+		
+#else
+		view = option.view;
+		projection = option.proj;
+		world = option.world;
 
         normalToView  = transpose(inverse(view * world));
         normalToWorld = transpose(inverse(world));
-
+#endif
         shader.setParameter(shader::mat4x4, (void*)&world[0][0], "u_World");
         shader.setParameter(shader::mat4x4, (void*)&view[0][0], "u_View");
         shader.setParameter(shader::mat4x4, (void*)&projection[0][0], "u_Projection");
         shader.setParameter(shader::mat4x4, (void*)&normalToWorld[0][0], "u_NormalToWorld");
         shader.setParameter(shader::mat4x4, (void*)&normalToView[0][0],  "u_NormalToView");
-#endif
     }
 
     if (name == "VisualNormal")
@@ -105,13 +94,13 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
 						0.0f, 0.1f, 0.0f, 0.f,
 						0.0f, 0.0f, 0.1f, 0.f,
 						0.0f, 1.0f, 0.0f,  1.f );
-#endif
 		mat4 lightWorld = glm::translate(0.f, 1.f, 0.f);
 		lightWorld = glm::scale(lightWorld, 0.3f, 0.3f, 0.3f);
 		lightWorld = glm::rotate(lightWorld, 90.f, 1.f, 0.f, 0.f);
+#endif
 
 		vec3 lightIntensity(1.f, 1.f, 1.f);
-		shader.setParameter(shader::mat4x4, (void*)&lightWorld[0][0], "u_World");
+		shader.setParameter(shader::mat4x4, (void*)&option.world[0][0], "u_World");
 		shader.setParameter(shader::fv3, (void*)&lightIntensity, "u_LightIntensity");
     }
     else if (name == "Plain")
@@ -121,7 +110,7 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
     }
     else if (name == "Phong")
     {
-        shader.setParameter(shader::fv3, (void*)&eye, "u_EyePos");
+        shader.setParameter(shader::fv3, (void*)&option.eye, "u_EyePos");
     }
     else if (name == "GeometryPass")
     {

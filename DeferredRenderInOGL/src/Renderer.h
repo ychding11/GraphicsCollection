@@ -57,6 +57,10 @@ struct RenderOption
     bool wireframe;
     bool drawVnormal;
     DebugType diagType;
+	vec3 eye;
+	mat4 world;
+	mat4 view;
+	mat4 proj;
 
     RenderOption()
         : deferred(false)
@@ -64,6 +68,10 @@ struct RenderOption
         , wireframe(false)
         , drawVnormal(false)
         , diagType(DebugType::DEBUG_FULL_SCENE)
+		, eye(0.f)
+		, world(1.f)
+		, view(1.f)
+		, proj(1.f)
     { }
 
     static RenderOption& getRenderOption();
@@ -145,10 +153,13 @@ private:
 	//Draw Model with different shaders
     void DrawModel(std::string shadername);
 
-
 	//Draw light source
 	void DrawLight();
 
+	//Draw Plane 
+	void DrawPlane();
+
+	void UpdateCamera(void);
     void DrawDrawCamera(std::string shadernam, std::string cameraname);
 
     void SplitBackBuffer(ViewPort &vp1, ViewPort &vp2);
@@ -181,6 +192,7 @@ public:
 
     void  Render(void)
     {
+		UpdateCamera();
         if (RenderOption::getRenderOption().deferred)
             this->RenderDeferred();
         else
