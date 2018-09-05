@@ -276,6 +276,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     g_pTxtHelper = new CDXUTTextHelper( pd3dDevice, pd3dImmediateContext, &g_DialogResourceManager, 15 );
 
     ShaderContainer::getShaderContainer().addShader(".\\shader\\TesseQuad_new.hlsl");
+    ShaderContainer::getShaderContainer().addShader(".\\shader\\TesseBezierSurface.hlsl");
+    
     ShaderContainer::getShaderContainer().Init(pd3dDevice);
 
     //BezierSurfaceManager::getBezierSurface().SetupMeshData(new UtahTeapot);

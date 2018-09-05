@@ -5,6 +5,8 @@
 #include <map>
 #include <string>
 #include <iostream>
+#include <fstream>
+#include <regex>
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
@@ -139,10 +141,7 @@ private:
     std::map<std::string, ID3D11GeometryShader*> mGeometryShaderList;
     std::map<std::string, ID3D11InputLayout*>    mInputLayoutList;
     
-    void AnalyzeShaderComponent()
-    {
-
-    }
+    void AnalyzeShaderComponent();
 };
 
 class ShaderContainer

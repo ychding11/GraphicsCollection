@@ -1,4 +1,5 @@
-
+   //vs ps hs ds
+   //vspshsds
 #ifndef BEZIER_HS_PARTITION
 #define BEZIER_HS_PARTITION "integer"
 #endif

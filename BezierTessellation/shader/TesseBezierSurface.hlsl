@@ -1,4 +1,4 @@
-
+// vs ps hs ds
 // See the hull shader: [partitioning(BEZIER_HS_PARTITION)]
 // This sample demonstrates "integer", "fractional_even", and "fractional_odd"
 #ifndef BEZIER_HS_PARTITION
@@ -54,7 +54,7 @@ struct VS_CONTROL_POINT_OUTPUT
 
 // The input to the vertex shader comes from the vertex buffer.
 // The output from the vertex shader will go into the hull shader.
-VS_CONTROL_POINT_OUTPUT BezierVS( VS_CONTROL_POINT_INPUT Input )
+VS_CONTROL_POINT_OUTPUT VSMain( VS_CONTROL_POINT_INPUT Input )
 {
     VS_CONTROL_POINT_OUTPUT Output;
     Output.vPosition = mul(float4(Input.vPosition,1.0), g_mWorld).xyz;
@@ -108,7 +108,7 @@ HS_CONSTANT_DATA_OUTPUT BezierConstantHS( InputPatch<VS_CONTROL_POINT_OUTPUT, IN
 [outputtopology("triangle_cw")]
 [outputcontrolpoints(OUTPUT_PATCH_SIZE)]
 [patchconstantfunc("BezierConstantHS")]
-HS_OUTPUT BezierHS( InputPatch<VS_CONTROL_POINT_OUTPUT, INPUT_PATCH_SIZE> p, 
+HS_OUTPUT HSMain( InputPatch<VS_CONTROL_POINT_OUTPUT, INPUT_PATCH_SIZE> p, 
                     uint i : SV_OutputControlPointID,
                     uint PatchID : SV_PrimitiveID )
 {
@@ -182,7 +182,7 @@ float3 EvaluateBezier( const OutputPatch<HS_OUTPUT, OUTPUT_PATCH_SIZE> bezpatch,
 // rasterization pipeline and get drawn to the screen.
 
 [domain("quad")]
-DS_OUTPUT BezierDS( HS_CONSTANT_DATA_OUTPUT input, 
+DS_OUTPUT DSMain( HS_CONSTANT_DATA_OUTPUT input, 
                     float2 UV : SV_DomainLocation,
                     const OutputPatch<HS_OUTPUT, OUTPUT_PATCH_SIZE> bezpatch )
 {
@@ -208,7 +208,7 @@ DS_OUTPUT BezierDS( HS_CONSTANT_DATA_OUTPUT input,
 //--------------------------------------------------------------------------------------
 // Solid color shading pixel shader (used for wireframe overlay)
 //--------------------------------------------------------------------------------------
-float4 WireframePS( DS_OUTPUT Input ) : SV_TARGET
+float4 PSMain( DS_OUTPUT Input ) : SV_TARGET
 {
     return float4( 0.f, 1.0f, 0.f, 1.0 );
 }
@@ -216,7 +216,7 @@ float4 WireframePS( DS_OUTPUT Input ) : SV_TARGET
 //--------------------------------------------------------------------------------------
 // Solid color shading pixel shader (used for wireframe overlay)
 //--------------------------------------------------------------------------------------
-float4 SolidColorPS( DS_OUTPUT Input ) : SV_TARGET
+float4 DiagPSMain( DS_OUTPUT Input ) : SV_TARGET
 {
         return float4( 0.3, 0.4, 0.4, 1.0 );
 }
