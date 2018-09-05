@@ -60,11 +60,17 @@ class Shader
 private:
     std::wstring mShaderFile;
     bool initialized;
+    bool mHasGS;
+    bool mHasHS;
+    bool mHasDS;
 
 public:
     Shader(std::wstring shaderfile)
         : mShaderFile(shaderfile)
         , initialized (false)
+        , mHasGS(false)
+        , mHasHS(false)
+        , mHasDS(false)
     { }
 
     ~Shader()
@@ -96,22 +102,26 @@ public:
 
     ID3D11HullShader*     getHullShader(std::string name)
     {
-        return mHullShaderList[name];
+        //return mHullShaderList[name];
+        CHECK_D3D11_OBJECT_RETURN(mHullShaderList,name);
     }
 
     ID3D11DomainShader*   getDomainShader(std::string name)
     {
-        return mDomainShaderList[name];
+        //return mDomainShaderList[name];
+        CHECK_D3D11_OBJECT_RETURN(mDomainShaderList,name);
     }
 
     ID3D11GeometryShader*   getGeometryShader(std::string name)
     {
-        return mGeometryShaderList[name];
+        //return mGeometryShaderList[name];
+        CHECK_D3D11_OBJECT_RETURN(mGeometryShaderList,name);
     }
 
     ID3D11PixelShader*    getPixelShader(std::string name)
     {
-        return mPixelShaderList[name];
+        //return mPixelShaderList[name];
+        CHECK_D3D11_OBJECT_RETURN(mPixelShaderList,name);
     }
 
     ID3D11InputLayout*    getInputLayout(std::string name)
@@ -129,6 +139,10 @@ private:
     std::map<std::string, ID3D11GeometryShader*> mGeometryShaderList;
     std::map<std::string, ID3D11InputLayout*>    mInputLayoutList;
     
+    void AnalyzeShaderComponent()
+    {
+
+    }
 };
 
 class ShaderContainer
