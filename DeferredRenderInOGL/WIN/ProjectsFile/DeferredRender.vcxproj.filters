@@ -118,5 +118,17 @@
     <None Include="shader\finalPass.vert">
       <Filter>Source Files\Shader</Filter>
     </None>
+    <None Include="shader\phong.frag.glsl">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\phong.vert.glsl">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\light.frag">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\light.vert">
+      <Filter>Source Files\Shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

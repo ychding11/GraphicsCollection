@@ -67,7 +67,7 @@ void Renderer::CreatedScreenQaudBuffer()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0 );
 }
 
-void Renderer::CreateObjectModelBuffer()
+void Renderer::CreateModelBuffers()
 {
     int numModel = mModels->getModelCount();
     if (numModel >= QUAD)
@@ -78,12 +78,12 @@ void Renderer::CreateObjectModelBuffer()
     for( int i = 0; i < numModel; ++i )
     {
         const ObjModel* model = mModels->getModel(i);
-        glGenVertexArrays( 1, &vao[i] );
-        glBindVertexArray( vao[i] );
-
         glGenBuffers( 1, &vbo[i] );
         glBindBuffer( GL_ARRAY_BUFFER, vbo[i] );
         glBufferData( GL_ARRAY_BUFFER, sizeof(float) * 3 * model->numVert, model->vbo, GL_STATIC_DRAW  );
+
+        glGenVertexArrays( 1, &vao[i] );
+        glBindVertexArray( vao[i] );
 
         glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, 0 );
         glEnableVertexAttribArray( 0 );
@@ -276,7 +276,20 @@ void Renderer::DrawGeometryPass()
 	}
 }
 
-void Renderer::DrawFinalPass()
+void Renderer::DrawLight()
+{
+	ShaderManager& shdmgr = ShaderManager::getShaderManager();
+	ShaderProgram& shader = shdmgr.ActiveShader("Light");
+	shdmgr.UpdateShaderParam("Light");
+
+	//Draw the screen space quad
+	glBindVertexArray(vao[QUAD]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[QUAD]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[QUAD]);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+}
+
+void Renderer::DrawScreenPass()
 {
 	ShaderManager& shdmgr = ShaderManager::getShaderManager();
 	ShaderProgram& shader = shdmgr.ActiveShader("FinalPass");
@@ -341,24 +354,6 @@ void Renderer::DrawModel(std::string shadername)
     }
 }
 
-void Renderer::DrawVertexNormal(std::string shadername)
-{
-    ShaderManager& shdmgr = ShaderManager::getShaderManager();
-    shdmgr.ActiveShader(shadername);
-    shdmgr.UpdateShaderParam(shadername);
-
-    int numModel = mModels->getModelCount();
-    for (int i = 0; i < numModel; ++i)
-    {
-        glBindVertexArray(vao[i]);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[i]);
-        const ObjModel* model = mModels->getModel(i);
-        for (int i = 0; i < model->numGroup; ++i)
-        {
-            glDrawElements(GL_TRIANGLES, 3 * model->groups[i].numTri, GL_UNSIGNED_INT, (void*)model->groups[i].ibo_offset);
-        }
-    }
-}
 
 void Renderer::SplitBackBuffer(ViewPort &vp1, ViewPort &vp2)
 {
@@ -407,7 +402,9 @@ void Renderer::RenderForward()
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
     sceneViewPort.apply();
-    DrawModel("Plain");
+    //DrawModel("Plain");
+    //DrawModel("Phong");
+	DrawLight();
     if (option.drawVnormal)
     {
         DrawModel("VisualNormal");
@@ -421,6 +418,7 @@ void Renderer::RenderDeferred()
 
 	RenderOption &option = RenderOption::getRenderOption();
 
+	//first pass
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO[0]);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	glEnable(GL_DEPTH_TEST);
@@ -429,57 +427,16 @@ void Renderer::RenderDeferred()
 	glCullFace(GL_BACK);
 	DrawGeometryPass();
 
+	//second pass
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear( GL_COLOR_BUFFER_BIT );
 	glDisable(GL_DEPTH_TEST);
-	DrawFinalPass();
+	DrawScreenPass();
 
+	//third pass
 	if (option.drawVnormal)
 	{
 		DrawModel("VisualNormal");
 	}
 }
 
-void Renderer::RenderVertexNormal()
-{
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-    glEnable( GL_DEPTH_TEST );
-    glEnable( GL_CULL_FACE );
-    glCullFace( GL_BACK );
-
-
-    if (RenderOption::getRenderOption().wireframe)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    else
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    
-    ShaderManager& shdmgr = ShaderManager::getShaderManager();
-    shdmgr.ActiveShader("VisualNormal");
-    shdmgr.UpdateShaderParam("VisualNormal");
-
-    int numModel = mModels->getModelCount();
-    for( int i = 0; i < numModel; ++i )
-    {
-        glBindVertexArray( vao[i] );
-        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo[i] );
-        const ObjModel* model = mModels->getModel(i);
-        for( int i = 0; i < model->numGroup; ++i )
-        {
-            glDrawElements( GL_TRIANGLES, 3 * model->groups[i].numTri , GL_UNSIGNED_INT, (void*)model->groups[i].ibo_offset );
-        }
-    }
-
-    shdmgr.ActiveShader("Plain");
-    shdmgr.UpdateShaderParam("Plain");
-    for( int i = 0; i < numModel; ++i )
-    {
-        glBindVertexArray( vao[i] );
-        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo[i] );
-        const ObjModel* model = mModels->getModel(i);
-        for( int i = 0; i < model->numGroup; ++i )
-        {
-            glDrawElements( GL_TRIANGLES, 3 * model->groups[i].numTri , GL_UNSIGNED_INT, (void*)model->groups[i].ibo_offset );
-        }
-    }
-}

@@ -28,6 +28,8 @@ void ShaderManager::BuildShaderList()
     mShaderList["Plain"]        = new ShaderProgram("shader/plain.vert.glsl", "shader/plain.frag.glsl");
     mShaderList["GeometryPass"] = new ShaderProgram("shader/geometryPass.vert", "shader/geometryPass.frag");
     mShaderList["FinalPass"]    = new ShaderProgram("shader/finalPass.vert", "shader/finalPass.frag");
+    mShaderList["Phong"]        = new ShaderProgram("shader/phong.vert.glsl", "shader/phong.frag.glsl");
+    mShaderList["Light"]        = new ShaderProgram("shader/light.vert", "shader/light.frag");
 }
 
 
@@ -43,6 +45,8 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
     ShaderProgram & shader = *mShaderList[name];
     mat4 world(1.0f);
     RenderOption & option = RenderOption::getRenderOption();
+	vec3 eye(0.f,.0f,2.f);
+
     if (name == "Observer")
     {
         Camera &camera = CameraManager::getCamera("observe");
@@ -67,7 +71,6 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
         camera.GetMatricies(projection, view, model);
 
 		static float theta = 0.f;
-		vec3 eye(0.f,1.f,1.f);
 		vec3 at(0.f, 0.f, 0.f);
 		float d = glm::length(eye - at);
 		theta += 0.001 * 3.1415926f;
@@ -95,10 +98,21 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
         const float normalStrength = .05f;
         shader.setParameter(shader::f1, (void*)&normalStrength, "u_NormalLength");
     }
+    else if (name == "Light")
+    {
+		mat4 lightWorld(1.0f);
+		vec3 lightIntensity(1.f, 1.f, 1.f);
+		shader.setParameter(shader::mat4x4, (void*)&lightWorld[0][0], "u_World");
+		shader.setParameter(shader::fv3, (void*)&lightIntensity, "u_LightIntensity");
+    }
     else if (name == "Plain")
     {
         const int diag = option.diagType;
         shader.setParameter(shader::i1, (void*)&diag, "u_DiagType");
+    }
+    else if (name == "Phong")
+    {
+        shader.setParameter(shader::fv3, (void*)&eye, "u_EyePos");
     }
     else if (name == "GeometryPass")
     {

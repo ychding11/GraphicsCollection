@@ -59,7 +59,7 @@ struct RenderOption
     DebugType diagType;
 
     RenderOption()
-        : deferred(true)
+        : deferred(false)
         , shadowOff(true)
         , wireframe(false)
         , drawVnormal(false)
@@ -125,18 +125,31 @@ private:
     void RenderDeferred();
 
     void CreatedScreenQaudBuffer();
-    void CreateObjectModelBuffer();
+
+	//Create vao vbo ibo for model
+    void CreateModelBuffers();
+
     void CreateShadowFB(int w = 1024, int h = 1024);
+
+	//Create Frame Buffers for Deferred Shading
     void CreateGeomFB(int w, int h);
 
+	// render geometry data into FB
     void DrawGeometryPass();
-    void DrawFinalPass();
+
+	// render lighting to screen
+    void DrawScreenPass();
+
     void RenderShadowPass();
 
+	//Draw Model with different shaders
     void DrawModel(std::string shadername);
-    void DrawVertexNormal(std::string shadernam);
+
+
+	//Draw light source
+	void DrawLight();
+
     void DrawDrawCamera(std::string shadernam, std::string cameraname);
-    void RenderVertexNormal();
 
     void SplitBackBuffer(ViewPort &vp1, ViewPort &vp2);
     void ObserveScene();
@@ -161,7 +174,7 @@ public:
     {
         mModels = models;
         CreatedScreenQaudBuffer();
-        CreateObjectModelBuffer();
+        CreateModelBuffers();
 
         CreateShadowFB();
     }

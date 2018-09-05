@@ -114,6 +114,10 @@
     <None Include="shader\finalPass.frag" />
     <None Include="shader\geometryPass.frag" />
     <None Include="shader\geometryPass.vert" />
+    <None Include="shader\light.frag" />
+    <None Include="shader\light.vert" />
+    <None Include="shader\phong.frag.glsl" />
+    <None Include="shader\phong.vert.glsl" />
     <None Include="shader\plain.frag.glsl" />
     <None Include="shader\plain.vert.glsl" />
     <None Include="shader\finalPass.vert" />
