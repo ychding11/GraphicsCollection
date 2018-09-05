@@ -1,8 +1,8 @@
 
 #include "BezierSurface.h"
-#include "ShaderManager.h"
 #include "ShaderContainer.h"
 
+#include "SDKmisc.h"
 
 #define D3D11_CALL_CHECK(x)                           \
 do{                                                   \
@@ -153,7 +153,6 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
 
     ShaderContainer& container = ShaderContainer::getShaderContainer();
     Shader&  shdmgr = container[".\\shader\\TesseQuad_new.hlsl"];
-    //ShaderManager& shdmgr = ShaderManager::getShaderManager();
 
     UINT Stride = sizeof(ControlPoint);
     UINT Offset = 0;

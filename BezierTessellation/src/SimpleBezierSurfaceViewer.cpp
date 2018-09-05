@@ -275,8 +275,6 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( g_D3DSettingsDlg.OnD3D11CreateDevice( pd3dDevice ) );
     g_pTxtHelper = new CDXUTTextHelper( pd3dDevice, pd3dImmediateContext, &g_DialogResourceManager, 15 );
 
-    //ShaderManager::getShaderManager().InitD3D11ShaderObjects(pd3dDevice);
-
     ShaderContainer::getShaderContainer().addShader(".\\shader\\TesseQuad_new.hlsl");
     ShaderContainer::getShaderContainer().Init(pd3dDevice);
 

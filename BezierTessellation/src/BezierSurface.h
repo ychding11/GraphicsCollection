@@ -5,7 +5,6 @@
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include "DXUT.h"
-#include "ShaderManager.h"
 #include "IDataSource.h"
 #include "ShaderContainer.h"
 
@@ -117,7 +116,6 @@ public:
         SAFE_RELEASE( mpEnvMapSRV );
         SAFE_RELEASE( mpSkyMapSRV );
 
-        ShaderManager::getShaderManager().Destroy();
     }
 
 public:
