@@ -4,7 +4,12 @@
 
 
 HRESULT Shader::InitD3D11ShaderObjects(ID3D11Device*  pd3dDevice)
-{
+{      
+    UINT Flags1 = D3DCOMPILE_ENABLE_STRICTNESS;
+
+#if defined( DEBUG ) || defined( _DEBUG )
+    Flags1 |= D3DCOMPILE_DEBUG;
+#endif
     const D3D11_INPUT_ELEMENT_DESC patchlayout[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -14,7 +19,7 @@ HRESULT Shader::InitD3D11ShaderObjects(ID3D11Device*  pd3dDevice)
     ID3DBlob* pBlobVS = nullptr;
     ID3D11VertexShader*   pVertexShader = nullptr;
     ID3D11InputLayout*    pPatchLayout = nullptr;
-    COMPILE_SHADER_CALL_CHECK(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pBlobVS, &pErrorBlob));
+    COMPILE_SHADER_CALL_CHECK(D3DCompileFromFile(mShaderFile.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", Flags1, 0, &pBlobVS, &pErrorBlob));
     CREATE_SHADER_CALL_CHECK(pd3dDevice->CreateVertexShader(pBlobVS->GetBufferPointer(), pBlobVS->GetBufferSize(), nullptr, &pVertexShader));
     mVertexShaderList["PlainVertexShader"] = pVertexShader;
     CREATE_SHADER_CALL_CHECK(pd3dDevice->CreateInputLayout(patchlayout, ARRAYSIZE(patchlayout), pBlobVS->GetBufferPointer(), pBlobVS->GetBufferSize(), &pPatchLayout));

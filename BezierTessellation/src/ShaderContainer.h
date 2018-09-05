@@ -37,6 +37,19 @@ do{                                                   \
     }                                                 \
 } while(0)
 
+#define CHECK_D3D11_OBJECT_RETURN(x,y)                \
+do{                                                   \
+    if (x.find(y) != x.end())                         \
+        return x[y];                                  \
+    else                                              \
+    {                                                 \
+        char buf[512];                                \
+        sprintf_s(buf, 512, "- Error @%s:%d\t  %s %s\t \n",__FILE__,__LINE__, #x, y.c_str());  \
+        OutputDebugStringA(buf);                      \
+        return nullptr;                               \
+    }                                                 \
+} while(0)
+
 
 class ShaderContainer;
 
@@ -59,7 +72,7 @@ public:
 
     void Init(ID3D11Device*  pd3dDevice)
     {
-        if (initialized == false)
+        //if (initialized == false)
         {
             InitD3D11ShaderObjects( pd3dDevice);
             initialized = true;
@@ -74,7 +87,11 @@ public:
 
     ID3D11VertexShader*   getVertexShader(std::string name)
     {
-        return mVertexShaderList[name];
+#if 0
+        if (mVertexShaderList.find(name) != mVertexShaderList.end())
+            return mVertexShaderList[name];
+#endif
+        CHECK_D3D11_OBJECT_RETURN(mVertexShaderList,name);
     }
 
     ID3D11HullShader*     getHullShader(std::string name)
@@ -99,7 +116,8 @@ public:
 
     ID3D11InputLayout*    getInputLayout(std::string name)
     {
-        return mInputLayoutList[name];
+        //return mInputLayoutList[name];
+        CHECK_D3D11_OBJECT_RETURN(mInputLayoutList,name);
     }
 
 private:

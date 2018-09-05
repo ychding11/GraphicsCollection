@@ -1,6 +1,7 @@
 
 #include "BezierSurface.h"
 #include "ShaderManager.h"
+#include "ShaderContainer.h"
 
 
 #define D3D11_CALL_CHECK(x)                           \
@@ -76,7 +77,6 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
 {
     HRESULT hr;
-    ShaderManager::getShaderManager().InitD3D11ShaderObjects(pd3dDevice);
 
     ////////////////////////////////////////////////////////////////////////
     /// Const Buffer
@@ -150,7 +150,11 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
 
 void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
 {
-    ShaderManager& shdmgr = ShaderManager::getShaderManager();
+
+    ShaderContainer& container = ShaderContainer::getShaderContainer();
+    Shader&  shdmgr = container[".\\shader\\TesseQuad_new.hlsl"];
+    //ShaderManager& shdmgr = ShaderManager::getShaderManager();
+
     UINT Stride = sizeof(ControlPoint);
     UINT Offset = 0;
     pd3dImmediateContext->IASetInputLayout(shdmgr.getInputLayout("ControlPointLayout"));
@@ -179,7 +183,7 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
     if (RenderOption::getRenderOption().diagModeOn)
     {
         pd3dImmediateContext->RSSetState(mpRSSolid);
-        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
+        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("DiagPixelShader"), nullptr, 0);
         pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
     }
     else if (RenderOption::getRenderOption().wireframeOn)
@@ -187,7 +191,8 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
         RenderOption::getRenderOption().wireframeOn = false;
         UpdateCBParam(pd3dImmediateContext);
         pd3dImmediateContext->RSSetState(mpRSSolid);
-        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        //pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
         pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
 
         RenderOption::getRenderOption().wireframeOn = true;
@@ -200,7 +205,8 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
     else
     {
         pd3dImmediateContext->RSSetState(mpRSSolid);
-        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        //pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
         pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
     }
 }

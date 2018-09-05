@@ -77,7 +77,6 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     DXUTSetCallbackD3D11SwapChainResized( OnD3D11ResizedSwapChain );
     DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender );
     DXUTSetCallbackD3D11SwapChainReleasing( OnD3D11ReleasingSwapChain );
-
     DXUTSetCallbackD3D11DeviceDestroyed( OnD3D11DestroyDevice );
 
     InitApp();
@@ -121,7 +120,7 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 static const WCHAR* UserOption()
 {
     const RenderOption & option = RenderOption::getRenderOption();
-    wchar_t wString[4096];
+    static wchar_t wString[4096];
     wsprintf(wString, L"- wireframe: %d, diagModeOn:%d, tessellator factor:%d, height map:%d, diag type:%d ",
         option.wireframeOn, option.diagModeOn, option.tessellateFactor, option.heightMapOn, option.diagType);
     return wString;
@@ -276,6 +275,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( g_D3DSettingsDlg.OnD3D11CreateDevice( pd3dDevice ) );
     g_pTxtHelper = new CDXUTTextHelper( pd3dDevice, pd3dImmediateContext, &g_DialogResourceManager, 15 );
 
+    //ShaderManager::getShaderManager().InitD3D11ShaderObjects(pd3dDevice);
+
     ShaderContainer::getShaderContainer().addShader(".\\shader\\TesseQuad_new.hlsl");
     ShaderContainer::getShaderContainer().Init(pd3dDevice);
 
@@ -360,5 +361,6 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     g_DialogResourceManager.OnD3D11DestroyDevice();
     g_D3DSettingsDlg.OnD3D11DestroyDevice();
     DXUTGetGlobalResourceCache().OnDestroyDevice();
+    ShaderContainer::getShaderContainer().Destory();
     BezierSurfaceManager::getBezierSurface().DestroyD3D11Objects();
 }
