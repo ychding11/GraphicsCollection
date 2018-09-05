@@ -150,4 +150,12 @@ public:
     TessQuad(IDataSource *data );
     void Render(ID3D11DeviceContext* pd3dImmediateContext) override;
 };
+
+class TessBezier : public TessSurface
+{
+public:
+    TessBezier (IDataSource *data );
+    void Render(ID3D11DeviceContext* pd3dImmediateContext) override;
+};
+
 #endif  

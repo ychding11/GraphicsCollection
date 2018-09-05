@@ -24,9 +24,11 @@ RenderOption& RenderOption::getRenderOption()
 }
 
 static Quad quad;
+static UtahTeapot teapot;
 TessSurface& TessSurfaceManager::getTessSurface(std::string name )
 {
-    static TessSurface* surface = new TessQuad(&quad);
+    //static TessSurface* surface = new TessQuad(&quad);
+    static TessSurface* surface = new TessBezier(&teapot);
     return *surface;
 
 }
@@ -34,9 +36,9 @@ TessSurface& TessSurfaceManager::getTessSurface(std::string name )
 using namespace DirectX;
 
 
-static XMMATRIX   tempWorld(1, 0,  0, 0,
-                            0, 1,  0, 0,
-                            0, 0,  1, 0,
+static XMMATRIX   tempWorld(0.3f, 0,  0, 0,
+                            0, 0.3f,  0, 0,
+                            0, 0,  0.3f, 0,
                             0, 0,  0, 1);
 void TessSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 {
@@ -78,7 +80,6 @@ void TessSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 
 HRESULT TessSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
 {
-    HRESULT hr;
 
     ////////////////////////////////////////////////////////////////////////
     /// Const Buffer
@@ -215,17 +216,21 @@ void TessQuad::Render(ID3D11DeviceContext* pd3dImmediateContext)
     }
 }
 
-#if 0
+TessBezier::TessBezier(IDataSource *data)
+    :TessSurface(data)
+{ }
+
+#if 1
+void TessBezier::Render(ID3D11DeviceContext* pd3dImmediateContext)
 {
 
     ShaderContainer& container = ShaderContainer::getShaderContainer();
-    Shader&  shdmgr = container[".\\shader\\TesseQuad_new.hlsl"];
+    Shader&  shdmgr = container[".\\shader\\TesseBezierSurface.hlsl"];
 
     UINT Stride = sizeof(ControlPoint);
     UINT Offset = 0;
     pd3dImmediateContext->IASetInputLayout(shdmgr.getInputLayout("ControlPointLayout"));
-    //pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST);
-    pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+    pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST);
     pd3dImmediateContext->IASetVertexBuffers(0, 1, &mpControlPointVB, &Stride, &Offset);
     pd3dImmediateContext->IASetIndexBuffer(mpControlPointIB, DXGI_FORMAT_R32_UINT, 0);
 
@@ -257,7 +262,6 @@ void TessQuad::Render(ID3D11DeviceContext* pd3dImmediateContext)
         RenderOption::getRenderOption().wireframeOn = false;
         UpdateCBParam(pd3dImmediateContext);
         pd3dImmediateContext->RSSetState(mpRSSolid);
-        //pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
         pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
         pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
 
@@ -270,8 +274,7 @@ void TessQuad::Render(ID3D11DeviceContext* pd3dImmediateContext)
     }
     else
     {
-        pd3dImmediateContext->RSSetState(mpRSSolid);
-        //pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        pd3dImmediateContext->RSSetState(mpRSWireframe);
         pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
         pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
     }
