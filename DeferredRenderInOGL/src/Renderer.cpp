@@ -402,8 +402,9 @@ void Renderer::RenderForward()
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
     sceneViewPort.apply();
-    //DrawModel("Plain");
+    DrawModel("Plain");
     //DrawModel("Phong");
+    glDisable( GL_CULL_FACE );
 	DrawLight();
     if (option.drawVnormal)
     {
