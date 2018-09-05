@@ -57,39 +57,6 @@ void CALLBACK KeyboardProc(UINT nChar, bool bKeyDown, bool bAltDown, void* pUser
 void InitApp();
 void RenderText();
 
-int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow )
-{
-    // Enable run-time memory check for debug builds.
-#if defined(DEBUG) | defined(_DEBUG)
-    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-#endif
-
-    // DXUT will create and use the best device that is available on the system depending on which D3D callbacks are set below
-
-    // Set DXUT callbacks
-    DXUTSetCallbackDeviceChanging( ModifyDeviceSettings );
-    DXUTSetCallbackMsgProc( MsgProc );
-	DXUTSetCallbackKeyboard(KeyboardProc);
-    DXUTSetCallbackFrameMove( OnFrameMove );
-
-    DXUTSetCallbackD3D11DeviceAcceptable( IsD3D11DeviceAcceptable );
-    DXUTSetCallbackD3D11DeviceCreated( OnD3D11CreateDevice );
-    DXUTSetCallbackD3D11SwapChainResized( OnD3D11ResizedSwapChain );
-    DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender );
-    DXUTSetCallbackD3D11SwapChainReleasing( OnD3D11ReleasingSwapChain );
-    DXUTSetCallbackD3D11DeviceDestroyed( OnD3D11DestroyDevice );
-
-    InitApp();
-    DXUTInit( true, true ); // Parse the command line, show msgboxes on error, and an extra cmd line param to force REF for now
-    DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
-    DXUTCreateWindow( L"Tessellation of Bezier Surface" );
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0,  true, 1920, 1080 );
-    DXUTMainLoop();
-
-    return DXUTGetExitCode();
-}
-
-
 //--------------------------------------------------------------------------------------
 // Initialize the app 
 //--------------------------------------------------------------------------------------
@@ -261,7 +228,7 @@ bool CALLBACK IsD3D11DeviceAcceptable( const CD3D11EnumAdapterInfo *AdapterInfo,
     return true;
 }
 
-
+ID3D11Device* gpd3dDevice = nullptr;
 //--------------------------------------------------------------------------------------
 // Create any D3D11 resources that aren't dependant on the back buffer
 //--------------------------------------------------------------------------------------
@@ -274,15 +241,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( g_DialogResourceManager.OnD3D11CreateDevice( pd3dDevice, pd3dImmediateContext ) );
     V_RETURN( g_D3DSettingsDlg.OnD3D11CreateDevice( pd3dDevice ) );
     g_pTxtHelper = new CDXUTTextHelper( pd3dDevice, pd3dImmediateContext, &g_DialogResourceManager, 15 );
-
-    ShaderContainer::getShaderContainer().addShader(".\\shader\\TesseQuad_new.hlsl");
-    ShaderContainer::getShaderContainer().addShader(".\\shader\\TesseBezierSurface.hlsl");
-    
-    ShaderContainer::getShaderContainer().Init(pd3dDevice);
-
-    //BezierSurfaceManager::getBezierSurface().SetupMeshData(new UtahTeapot);
-    //BezierSurfaceManager::getBezierSurface().SetupMeshData(new Quad);
-    TessSurfaceManager::getTessSurface().Initialize(pd3dDevice);;
+    gpd3dDevice = pd3dDevice;
 
     return S_OK;
 }
@@ -361,6 +320,47 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     g_DialogResourceManager.OnD3D11DestroyDevice();
     g_D3DSettingsDlg.OnD3D11DestroyDevice();
     DXUTGetGlobalResourceCache().OnDestroyDevice();
+}
+
+int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow )
+{
+    // Enable run-time memory check for debug builds.
+#if defined(DEBUG) | defined(_DEBUG)
+    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif
+
+    // DXUT will create and use the best device that is available on the system depending on which D3D callbacks are set below
+
+    // Set DXUT callbacks
+    DXUTSetCallbackDeviceChanging( ModifyDeviceSettings );
+    DXUTSetCallbackMsgProc( MsgProc );
+	DXUTSetCallbackKeyboard(KeyboardProc);
+    DXUTSetCallbackFrameMove( OnFrameMove );
+
+    DXUTSetCallbackD3D11DeviceAcceptable( IsD3D11DeviceAcceptable );
+    DXUTSetCallbackD3D11DeviceCreated( OnD3D11CreateDevice );
+    DXUTSetCallbackD3D11SwapChainResized( OnD3D11ResizedSwapChain );
+    DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender );
+    DXUTSetCallbackD3D11SwapChainReleasing( OnD3D11ReleasingSwapChain );
+    DXUTSetCallbackD3D11DeviceDestroyed( OnD3D11DestroyDevice );
+
+    InitApp();
+    DXUTInit( true, true ); // Parse the command line, show msgboxes on error, and an extra cmd line param to force REF for now
+    DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
+    DXUTCreateWindow( L"Tessellation of Bezier Surface" );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0,  true, 1920, 1080 );
+
+    ShaderContainer::getShaderContainer().addShader(".\\shader\\TesseQuad_new.hlsl");
+    ShaderContainer::getShaderContainer().addShader(".\\shader\\TesseBezierSurface.hlsl");
+    ShaderContainer::getShaderContainer().Init(gpd3dDevice);
+    TessSurfaceManager::getTessSurface().Initialize(gpd3dDevice);;
+
+    DXUTMainLoop();
+
     ShaderContainer::getShaderContainer().Destory();
     TessSurfaceManager::getTessSurface().DestroyD3D11Objects();
+
+    return DXUTGetExitCode();
 }
+
+
