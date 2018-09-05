@@ -1,6 +1,7 @@
 
-#include "BezierSurface.h"
+#include "TessSurface.h"
 #include "ShaderContainer.h"
+#include "IDataSource.h"
 
 #include "SDKmisc.h"
 
@@ -22,9 +23,10 @@ RenderOption& RenderOption::getRenderOption()
     return renderOption;
 }
 
-BezierSurface& BezierSurfaceManager::getBezierSurface(std::string name )
+static Quad quad;
+TessSurface& TessSurfaceManager::getTessSurface(std::string name )
 {
-    static BezierSurface* surface = new BezierSurface();
+    static TessSurface* surface = new TessQuad(&quad);
     return *surface;
 
 }
@@ -36,7 +38,7 @@ static XMMATRIX   tempWorld(1, 0,  0, 0,
                             0, 1,  0, 0,
                             0, 0,  1, 0,
                             0, 0,  0, 1);
-void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
+void TessSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 {
     const RenderOption & renderOption = RenderOption::getRenderOption();
 
@@ -74,7 +76,7 @@ void BezierSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 
 }
 
-HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
+HRESULT TessSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
 {
     HRESULT hr;
 
@@ -148,7 +150,72 @@ HRESULT BezierSurface::CreateD3D11GraphicsObjects(ID3D11Device*  pd3dDevice)
     return S_OK;
 }
 
-void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
+
+TessQuad::TessQuad(IDataSource *data)
+    :TessSurface(data)
+{ }
+
+void TessQuad::Render(ID3D11DeviceContext* pd3dImmediateContext)
+{
+    ShaderContainer& container = ShaderContainer::getShaderContainer();
+    Shader&  shdmgr = container[".\\shader\\TesseQuad_new.hlsl"];
+
+    UINT Stride = sizeof(ControlPoint);
+    UINT Offset = 0;
+    pd3dImmediateContext->IASetInputLayout(shdmgr.getInputLayout("ControlPointLayout"));
+    pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+    pd3dImmediateContext->IASetVertexBuffers(0, 1, &mpControlPointVB, &Stride, &Offset);
+    pd3dImmediateContext->IASetIndexBuffer(mpControlPointIB, DXGI_FORMAT_R32_UINT, 0);
+
+    // Bind all of the CBs
+    this->UpdateCBParam(pd3dImmediateContext);
+    pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mpcbFrameParam);
+    pd3dImmediateContext->HSSetConstantBuffers(0, 1, &mpcbFrameParam);
+    pd3dImmediateContext->DSSetConstantBuffers(0, 1, &mpcbFrameParam);
+    pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpcbFrameParam);
+
+    // Set the shaders
+    pd3dImmediateContext->VSSetShader(shdmgr.getVertexShader("PlainVertexShader"), nullptr, 0);
+    pd3dImmediateContext->HSSetShader(shdmgr.getHullShader("HullShader"), nullptr, 0);
+    pd3dImmediateContext->DSSetShader(shdmgr.getDomainShader("DomainShader"), nullptr, 0);
+    pd3dImmediateContext->GSSetShader(nullptr, nullptr, 0);
+
+    pd3dImmediateContext->DSSetSamplers(0, 1, &mpSamplerLinear);
+    pd3dImmediateContext->DSSetShaderResources(0, 1, &mpHeightMapSRV);
+
+    // Diag mode
+    if (RenderOption::getRenderOption().diagModeOn)
+    {
+        pd3dImmediateContext->RSSetState(mpRSSolid);
+        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("DiagPixelShader"), nullptr, 0);
+        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
+    }
+    else if (RenderOption::getRenderOption().wireframeOn)
+    {
+        RenderOption::getRenderOption().wireframeOn = false;
+        UpdateCBParam(pd3dImmediateContext);
+        pd3dImmediateContext->RSSetState(mpRSSolid);
+        //pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
+        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
+
+        RenderOption::getRenderOption().wireframeOn = true;
+        UpdateCBParam(pd3dImmediateContext);
+        pd3dImmediateContext->RSSetState(mpRSWireframe);
+        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
+        RenderOption::getRenderOption().wireframeOn = true;
+
+    }
+    else
+    {
+        pd3dImmediateContext->RSSetState(mpRSSolid);
+        //pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("WireframePixelShader"), nullptr, 0);
+        pd3dImmediateContext->PSSetShader(shdmgr.getPixelShader("PlainPixelShader"), nullptr, 0);
+        pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
+    }
+}
+
+#if 0
 {
 
     ShaderContainer& container = ShaderContainer::getShaderContainer();
@@ -209,3 +276,4 @@ void BezierSurface::Render(ID3D11DeviceContext* pd3dImmediateContext)
         pd3dImmediateContext->DrawIndexed(mMeshData->IBufferElement(), 0, 0);
     }
 }
+#endif

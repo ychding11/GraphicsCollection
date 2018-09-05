@@ -38,9 +38,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\BezierSurface.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\ShaderManager.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -55,6 +52,9 @@
     </ClInclude>
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\ShaderContainer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TessSurface.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

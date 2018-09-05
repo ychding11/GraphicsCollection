@@ -57,7 +57,7 @@ struct RenderOption
 
 };
 
-class BezierSurface
+class TessSurface
 {
 public:
 
@@ -66,17 +66,8 @@ public:
         float controlPoint[3];
     };
 
-    enum PartitionMode
-    {
-        PARTITION_INTEGER,
-        PARTITION_FRACTIONAL_EVEN,
-        PARTITION_FRACTIONAL_ODD
-    };
-
-private:
+protected:
     IDataSource*  mMeshData;
-    ShaderContainer *mShaders;
-    PartitionMode mPartitionMode;
 
     ID3D11Buffer*             mpcbFrameParam = nullptr;
     ID3D11Buffer*             mpcbMaterial = nullptr;
@@ -119,44 +110,44 @@ public:
     }
 
 public:
-    BezierSurface(void)
-        : mPartitionMode(PARTITION_INTEGER)
-        , mMeshData(nullptr) 
-        , mShaders(nullptr)
+    TessSurface(IDataSource *data = nullptr)
+        : mMeshData(data) 
     { }
 
-    ~BezierSurface()
-    {
-        delete mMeshData; 
-    }
+    virtual ~TessSurface()
+    { }
 
-    void SetupMeshData(IDataSource *data)
+    virtual void SetupMeshData(IDataSource *data)
     {
         assert(data);
         mMeshData = data;
     }
 
-    void Initialize(ID3D11Device*  d3dDevice, ID3D11DeviceContext* context)
+    virtual void Initialize(ID3D11Device*  d3dDevice )
     {
         CreateD3D11GraphicsObjects(d3dDevice);
     }
 
-    void Render(ID3D11DeviceContext* pd3dImmediateContext);
-
-
+    virtual void Render(ID3D11DeviceContext* pd3dImmediateContext) = 0;
 
 private:
     HRESULT CreateD3D11GraphicsObjects(ID3D11Device*  d3dDevice);
 
+protected:
     void UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContex);
 
 };
 
-class BezierSurfaceManager
+class TessSurfaceManager
 {
 public:
-    static BezierSurface& getBezierSurface(std::string name = "");
-
+    static TessSurface& getTessSurface(std::string name = "");
 };
 
+class TessQuad : public TessSurface
+{
+public:
+    TessQuad(IDataSource *data );
+    void Render(ID3D11DeviceContext* pd3dImmediateContext) override;
+};
 #endif  

@@ -3,7 +3,7 @@
 #include "DXUTsettingsDlg.h"
 #include "SDKmisc.h"
 #include "resource.h"
-#include "BezierSurface.h"
+#include "TessSurface.h"
 #include "IDataSource.h"
 #include "ShaderContainer.h"
 
@@ -281,8 +281,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     ShaderContainer::getShaderContainer().Init(pd3dDevice);
 
     //BezierSurfaceManager::getBezierSurface().SetupMeshData(new UtahTeapot);
-    BezierSurfaceManager::getBezierSurface().SetupMeshData(new Quad);
-    BezierSurfaceManager::getBezierSurface().Initialize(pd3dDevice, pd3dImmediateContext);;
+    //BezierSurfaceManager::getBezierSurface().SetupMeshData(new Quad);
+    TessSurfaceManager::getTessSurface().Initialize(pd3dDevice);;
 
     return S_OK;
 }
@@ -332,7 +332,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     auto pDSV = DXUTGetD3D11DepthStencilView();
     pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
 
-    BezierSurfaceManager::getBezierSurface().Render(pd3dImmediateContext);
+    TessSurfaceManager::getTessSurface().Render(pd3dImmediateContext);
 
     ////////////////////////////////////////////////////////////////
     // Render the HUD
@@ -362,5 +362,5 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     g_D3DSettingsDlg.OnD3D11DestroyDevice();
     DXUTGetGlobalResourceCache().OnDestroyDevice();
     ShaderContainer::getShaderContainer().Destory();
-    BezierSurfaceManager::getBezierSurface().DestroyD3D11Objects();
+    TessSurfaceManager::getTessSurface().DestroyD3D11Objects();
 }

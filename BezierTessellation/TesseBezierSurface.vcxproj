@@ -375,7 +375,7 @@
     <None Include="..\DXUT\Optional\directx.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\BezierSurface.h" />
+    <ClInclude Include="src\TessSurface.h" />
     <ClInclude Include="src\IDataSource.h" />
     <ClInclude Include="src\quad.h" />
     <ClInclude Include="src\resource.h" />
