@@ -7,7 +7,7 @@ uniform vec3 u_LightIntensity;
 void main()
 {
   {
-	float f = 2.f;
+	float f = 1.f;
 	outColor = vec4(u_LightIntensity, 1.f) * f;
   }
 }

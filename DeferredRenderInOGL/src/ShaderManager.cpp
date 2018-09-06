@@ -94,23 +94,25 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
 						0.0f, 0.1f, 0.0f, 0.f,
 						0.0f, 0.0f, 0.1f, 0.f,
 						0.0f, 1.0f, 0.0f,  1.f );
-		mat4 lightWorld = glm::translate(0.f, 1.f, 0.f);
-		lightWorld = glm::scale(lightWorld, 0.3f, 0.3f, 0.3f);
-		lightWorld = glm::rotate(lightWorld, 90.f, 1.f, 0.f, 0.f);
 #endif
 
-		vec3 lightIntensity(1.f, 1.f, 1.f);
+		//vec3 lightIntensity(1.f, 1.f, 1.f);
 		shader.setParameter(shader::mat4x4, (void*)&option.world[0][0], "u_World");
-		shader.setParameter(shader::fv3, (void*)&lightIntensity, "u_LightIntensity");
+		shader.setParameter(shader::fv3, (void*)&option.lightIntensity, "u_LightIntensity");
     }
     else if (name == "Plain")
     {
         const int diag = option.diagType;
         shader.setParameter(shader::i1, (void*)&diag, "u_DiagType");
+        shader.setParameter(shader::fv3, (void*)&option.eye, "u_EyePos");
+        shader.setParameter(shader::fv3, (void*)&option.lightIntensity, "u_LightIntensity");
+        shader.setParameter(shader::fv3, (void*)&option.lightPosition, "u_LightPos");
     }
     else if (name == "Phong")
     {
         shader.setParameter(shader::fv3, (void*)&option.eye, "u_EyePos");
+        shader.setParameter(shader::fv3, (void*)&option.lightIntensity, "u_LightIntensity");
+        shader.setParameter(shader::fv3, (void*)&option.lightPosition, "u_LightPos");
     }
     else if (name == "GeometryPass")
     {

@@ -57,6 +57,8 @@ struct RenderOption
     bool wireframe;
     bool drawVnormal;
     DebugType diagType;
+	vec3 lightPosition;
+	vec3 lightIntensity;
 	vec3 eye;
 	mat4 world;
 	mat4 view;
@@ -68,6 +70,8 @@ struct RenderOption
         , wireframe(false)
         , drawVnormal(false)
         , diagType(DebugType::DEBUG_FULL_SCENE)
+		, lightPosition(0.f)
+		, lightIntensity(1.f)
 		, eye(0.f)
 		, world(1.f)
 		, view(1.f)

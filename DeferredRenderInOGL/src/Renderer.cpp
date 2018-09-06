@@ -300,12 +300,19 @@ void Renderer::UpdateCamera(void)
 
 void Renderer::DrawLight()
 {
-	mat4 lightWorld = glm::translate(0.f, 1.f, 0.f);
-	lightWorld = glm::scale(lightWorld, 0.3f, 0.3f, 0.3f);
+	mat4 lightWorld = glm::translate(1.f, 1.f, 0.f);
+	lightWorld = glm::scale(lightWorld, 0.02f, 0.02f, 0.02f);
 	lightWorld = glm::rotate(lightWorld, 90.f, 1.f, 0.f, 0.f);
+
+	vec4 lightPos = lightWorld * vec4(0.f, 0.f, 0.f, 1.f);
+	
+	// error
+	//vec4 lightPos = vec4(0.f, 0.f, 0.f, 1.f) * lightWorld;
 
 	RenderOption & option = RenderOption::getRenderOption();
 	option.world = lightWorld;
+	option.lightIntensity = vec3(1.f, 0.1f, 0.9f) * 1.f;
+	option.lightPosition = lightPos.xyz;
 
 	ShaderManager& shdmgr = ShaderManager::getShaderManager();
 	ShaderProgram& shader = shdmgr.ActiveShader("Light");
@@ -319,12 +326,13 @@ void Renderer::DrawLight()
 
 void Renderer::DrawPlane()
 {
-	mat4 lightWorld = glm::translate(0.f, -1.f, -1.f);
+	mat4 lightWorld = glm::translate(0.f, -1.f, -2.f);
 	lightWorld = glm::scale(lightWorld, 3.f, 3.f, 3.f);
 	lightWorld = glm::rotate(lightWorld, 90.f, 1.f, 0.f, 0.f);
 
 	RenderOption & option = RenderOption::getRenderOption();
 	option.world = lightWorld;
+	option.lightIntensity = vec3(0.3f, 0.3f, 0.3f);
 
 	ShaderManager& shdmgr = ShaderManager::getShaderManager();
 	ShaderProgram& shader = shdmgr.ActiveShader("Light");
