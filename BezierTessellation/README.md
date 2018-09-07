@@ -7,7 +7,7 @@
 ## Design 
 1. a flexisible design to extend the capability of adding new features
 
-![graph](https://g.gravizo.com/source/svg/custom_mark1?https%3A%2F%2Fgithub.com%2Fychding11%2FGraphicsCollection%2Fblob%2Fmytest%2FBezierTessellation%2FREADME.md)
+![graph](https://g.gravizo.com/source/svg/custom_mark1?https%3a%2f%2fgithub.com%2fychding11%2fGraphicsCollection%2fblob%2fmytest%2fBezierTessellation%2fREADME.md)
 <details> 
 <summary></summary>
 custom_mark1
