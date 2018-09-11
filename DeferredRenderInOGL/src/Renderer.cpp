@@ -280,7 +280,7 @@ void Renderer::DrawGeometryPass()
 	}
 }
 
-void Renderer::UpdateCamera(void)
+void Renderer::UpdatePersCamera(void)
 {
 	static float theta = 0.f;
 	vec3 eye(0.f, .6f, 2.f);
@@ -385,9 +385,73 @@ void Renderer::RenderShadowPass()
 
 }
 
-void Renderer::DrawDrawCamera(std::string shadernam, std::string cameraname)
+void Renderer::DrawDrawCamera(std::string shadername, std::string cameraname)
 {
+	vec4 p[8] =
+	{
+		// near plane
+		vec4(-1.f, -1.f, -1.f, 1.f), vec4(1.f, -1.f, -1.f, 1.f), vec4(1.f,  1.f, -1.f, 1.f), vec4(-1.f,  1.f, -1.f, 1.f),
+		// far plane
+		vec4(-1.f, -1.f, 1.f, 1.f),  vec4(1.f, -1.f, 1.f, 1.f),  vec4(1.f, 1.f, 1.f, 1.f),   vec4(-1.f,  1.f, 1.f, 1.f)
+	};
 
+	vec4 ip[8];
+
+	unsigned short indices[] =
+	{	0, 1,  1, 2,  2, 3,  3, 0,
+		4, 5,  5, 6,  6, 7,  7, 4,
+		0, 4,  1, 5,  2, 6,  3, 7
+    };
+
+	RenderOption & option = RenderOption::getRenderOption();
+	mat4 view = option.view;
+	mat4 proj = option.proj;
+	mat4 inv = glm::inverse(proj*view);
+
+	for (int i = 0; i < 8; ++i)
+	{
+		vec4 temp = inv * p[i];
+		temp.x = temp.x / temp.w;
+		temp.y = temp.y / temp.w;
+		temp.z = temp.z / temp.w;
+		temp.w = 1.f;
+		ip[i] = temp;
+	}
+
+	glGenBuffers(1, &vbo[QUAD - 1]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[QUAD - 1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(ip), ip, GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &vao[QUAD - 1]);
+	glBindVertexArray(vao[QUAD - 1]);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(vec4), 0);
+	glEnableVertexAttribArray(0);
+
+	glGenBuffers(1, &ibo[QUAD - 1]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[QUAD - 1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	//Render
+	mat4 world(1.f);
+	option.world = world;
+
+    ShaderManager& shdmgr = ShaderManager::getShaderManager();
+    shdmgr.ActiveShader(shadername);
+    shdmgr.UpdateShaderParam(shadername);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	glDisable(GL_DEPTH_TEST);
+
+	//Draw 
+	glBindVertexArray(vao[QUAD - 1]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[QUAD - 1]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[QUAD - 1]);
+	glDrawElements(GL_LINES, 24, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void Renderer::DrawModel(std::string shadername)

@@ -30,6 +30,7 @@ void ShaderManager::BuildShaderList()
     mShaderList["FinalPass"]    = new ShaderProgram("shader/finalPass.vert", "shader/finalPass.frag");
     mShaderList["Phong"]        = new ShaderProgram("shader/phong.vert.glsl", "shader/phong.frag.glsl");
     mShaderList["Light"]        = new ShaderProgram("shader/light.vert", "shader/light.frag");
+    mShaderList["Observer"]     = new ShaderProgram("shader/observer.vert", "shader/observer.frag");
 }
 
 
@@ -49,16 +50,18 @@ void ShaderManager::UpdateShaderParam(const std::string& name)
     if (name == "Observer")
     {
 		mat4 world(1.0f);
-        Camera &camera = CameraManager::getCamera("observe");
-        mat4 model, view, projection, normalToView, normalToWorld;
-        camera.Update();
-        camera.GetMatricies(projection, view, model);
-        normalToView  = transpose(inverse(view * world));
-        normalToWorld = transpose(inverse(world));
+
+		vec3 eye(0.f, 10.f, 10.f);
+		vec3 at(0.f, 0.f, 0.f);
+		mat4 view = glm::lookAt(eye, at, vec3(0.f, 1.f, 0.f));
+		mat4 proj = glm::perspective(90.f, 1.f, 0.001f, 100.f);
+
+        mat4 normalToView  = transpose(inverse(view * world));
+        mat4 normalToWorld = transpose(inverse(world));
 
         shader.setParameter(shader::mat4x4, (void*)&world[0][0], "u_World");
         shader.setParameter(shader::mat4x4, (void*)&view[0][0], "u_View");
-        shader.setParameter(shader::mat4x4, (void*)&projection[0][0], "u_Projection");
+        shader.setParameter(shader::mat4x4, (void*)&proj[0][0], "u_Projection");
         shader.setParameter(shader::mat4x4, (void*)&normalToWorld[0][0], "u_NormalToWorld");
         shader.setParameter(shader::mat4x4, (void*)&normalToView[0][0],  "u_NormalToView");
     }

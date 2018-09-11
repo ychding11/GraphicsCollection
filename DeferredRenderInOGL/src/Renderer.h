@@ -163,11 +163,13 @@ private:
 	//Draw Plane 
 	void DrawPlane();
 
-	void UpdateCamera(void);
+	void UpdatePersCamera(void);
+
     void DrawDrawCamera(std::string shadernam, std::string cameraname);
 
-    void SplitBackBuffer(ViewPort &vp1, ViewPort &vp2);
     void ObserveScene();
+
+    void SplitBackBuffer(ViewPort &vp1, ViewPort &vp2);
 
     ModelContainer *mModels;
 
@@ -196,11 +198,15 @@ public:
 
     void  Render(void)
     {
-		UpdateCamera();
+		UpdatePersCamera();
+#if 1
+		DrawDrawCamera("Observer", "");
+#else
         if (RenderOption::getRenderOption().deferred)
             this->RenderDeferred();
         else
             this->RenderForward();
+#endif
     }
 
 };

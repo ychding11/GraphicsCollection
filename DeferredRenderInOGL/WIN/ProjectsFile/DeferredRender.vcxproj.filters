@@ -130,5 +130,11 @@
     <None Include="shader\light.vert">
       <Filter>Source Files\Shader</Filter>
     </None>
+    <None Include="shader\observer.frag">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader\observer.vert">
+      <Filter>Source Files\Shader</Filter>
+    </None>
   </ItemGroup>
 </Project>
