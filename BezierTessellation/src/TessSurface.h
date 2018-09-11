@@ -9,6 +9,8 @@
 #include "ShaderContainer.h"
 
 
+using namespace DirectX;
+
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p)      { if (p) { (p)->Release(); (p) = nullptr; } }
 #endif
@@ -43,6 +45,7 @@ struct RenderOption
     int heightMapOn;
     int  tessellateFactor;
     DiagType diagType;
+    DirectX::XMMATRIX  world;
 
     RenderOption::RenderOption()
         : wireframeOn(false)

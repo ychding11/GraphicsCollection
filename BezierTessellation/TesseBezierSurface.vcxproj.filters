@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\BezierSurface.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\ShaderManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -34,6 +31,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\ShaderContainer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TessSurface.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

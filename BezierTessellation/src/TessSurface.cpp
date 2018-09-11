@@ -33,12 +33,6 @@ TessSurface& TessSurfaceManager::getTessSurface(std::string name )
 
 }
 
-
-
-static XMMATRIX   tempWorld(0.3f, 0,  0, 0,
-                            0, 0.3f,  0, 0,
-                            0, 0,  0.3f, 0,
-                            0, 0,  0, 1);
 void TessSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
 {
     const RenderOption & renderOption = RenderOption::getRenderOption();
@@ -48,7 +42,7 @@ void TessSurface::UpdateCBParam(ID3D11DeviceContext* pd3dImmediateContext)
     XMVECTOR up     = { 0.0f, 1.0f, 0.0f };
     float length = DirectX::XMVector3Length( XMVECTOR{ 0.0f,  0.f, 1.0f } - atPos).m128_f32[0];
     static float theta = 0.f;
-    theta += 0.001 * XM_2PI;
+    theta += 0.0001 * XM_2PI;
     float x = length * cosf(theta);
     float z = length * sinf(theta);
           
@@ -161,6 +155,9 @@ void TessQuad::Render(ID3D11DeviceContext* pd3dImmediateContext)
     ShaderContainer& container = ShaderContainer::getShaderContainer();
     Shader&  shdmgr = container[".\\shader\\TesseQuad_new.hlsl"];
 
+    RenderOption & renderOption = RenderOption::getRenderOption();
+    renderOption.world = DirectX::XMMatrixIdentity();
+
     UINT Stride = sizeof(ControlPoint);
     UINT Offset = 0;
     pd3dImmediateContext->IASetInputLayout(shdmgr.getInputLayout("ControlPointLayout"));
@@ -223,6 +220,13 @@ void TessBezier::Render(ID3D11DeviceContext* pd3dImmediateContext)
 {
     ShaderContainer& container = ShaderContainer::getShaderContainer();
     Shader&  shdmgr = container[".\\shader\\TesseBezierSurface.hlsl"];
+
+    RenderOption & renderOption = RenderOption::getRenderOption();
+    XMMATRIX world = renderOption.world;
+    world = XMMatrixScaling( 0.20f, 0.25f, 0.25f );
+    world = XMMatrixMultiply( XMMatrixScaling( 0.18f, 0.25f, 0.25f ), XMMatrixRotationX( -.5f * 3.1415926f ));
+    world = XMMatrixMultiply( XMMatrixTranslation( 0.f, -.3f, 0.f), world);
+    renderOption.world = world;
 
     UINT Stride = sizeof(ControlPoint);
     UINT Offset = 0;

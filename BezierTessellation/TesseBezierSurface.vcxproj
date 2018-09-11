@@ -220,7 +220,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;usp10.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;usp10.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -393,11 +393,16 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\BezierSurface.cpp" />
     <ClCompile Include="src\IDataSource.cpp" />
+    <ClCompile Include="src\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\ShaderContainer.cpp" />
     <ClCompile Include="src\ShaderManager.cpp" />
-    <ClCompile Include="src\SimpleBezierSurfaceViewer.cpp" />
+    <ClCompile Include="src\SimpleBezierSurfaceViewer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\TessSurface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\TesseBezierSurface.hlsl">
