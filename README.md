@@ -1,33 +1,7 @@
-# GraphicsCollection
----
-This is a small collection of Compute Graphics technique demo. It is adapted from [directx-sdk-samples](https://github.com/walbourn/directx-sdk-samples).
-I keep the project name unchanged if it is adapted.
-
-## Ocean Simulation
-It is an implementaion of a paper which gives an idea of "projection grid" to simulate infinite ocean surface.
-It is now under development on D3D11.
-
-## Tessellate Bezier Surface 
-It is a simple demo about how to tessallate Utah teapot made of Bezier Surface. 
-The code structure is under refactor now.
-
-![run time screenshot ](./demo/runtime-bezier-tessellation.png)
-
-## Environment Map 
-There is a submoduel for generating primitives. They are used for testing Lighting Model and environment mapping.
-This project is under development.
-
-![run time screenshot](./demo/runtime-light-model.png)
-
-## Gallery
-
-![sphere phong model](./demo/demo-sphere-phong.png)
-![half sphere phong intel](./demo/half-sphere-phong-intel.png)
-![half cylinder phong intel](./demo/half-cylinder-phong-intel.png)
-![half cone phong intel](./demo/half-cone-phong-intel.png)
-![Torus phong error normalintel](./demo/torus-phong-err-intel.png)
-![Torus phong intel](./demo/torus-phong-intel.png)
 
 ---
-![teapot](./demo/teapot-phong.png)
-![teapot-wireframe](./demo/teapot-wireframe.png)
+Wait for Update...
+
+
+
+
