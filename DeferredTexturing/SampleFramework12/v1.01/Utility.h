@@ -148,6 +148,12 @@ inline uint32 GetIndex(const void* indices, uint32 idx, uint32 indexSize)
         return reinterpret_cast<const uint32*>(indices)[idx];
 }
 
+// Gets an index from an index buffer
+template<typename T>
+T GetValue(const void* indices, uint32 idx)
+{
+    return reinterpret_cast<const T*>(indices)[idx];
+}
 
 template<typename T, uint64 N>
 uint64 ArraySize(T(&)[N])
