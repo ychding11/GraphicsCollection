@@ -164,6 +164,9 @@ void MeshRenderer::Initialize(const Model* model_)
     meshDrawIndices.Init(numMeshes, uint32(-1));
     meshZDepths.Init(numMeshes, FloatMax);
 
+    // Used for Index Batch
+    meshDrawIndicesPre.Init(numMeshes, uint32(-1));
+
 	// Update BB of each Mesh
     for(uint64 i = 0; i < numMeshes; ++i)
     {
@@ -173,6 +176,9 @@ void MeshRenderer::Initialize(const Model* model_)
         Float3 center = mesh.AABBMin() + extents;
         boundingBox.Center = center.ToXMFLOAT3();
         boundingBox.Extents = extents.ToXMFLOAT3();
+
+        // Count Total Index Nuber of Model for Batch
+        numIndexInModel += mesh.NumIndices();
     }
 
 	// Permutate Shader and Cache
@@ -657,34 +663,54 @@ void MeshRenderer::RenderDepthByBatch(ID3D12GraphicsCommandList* cmdList, const 
 
     // Bind vertices and indices
     D3D12_VERTEX_BUFFER_VIEW vbView = model->VertexBuffer().VBView();
-    D3D12_INDEX_BUFFER_VIEW ibView = model->IndexBuffer().IBView();
     cmdList->IASetVertexBuffers(0, 1, &vbView);
+   
+    {
+        //// Begin batch index
+        // Batch all visible meshes Triangles
+        batchedIndexCount = 0;
+        for (uint64 idx = 0; idx < numVisible; ++idx)
+        {
+            uint64 meshIdx = meshDrawIndices[idx];
+            const Mesh& mesh = model->Meshes()[meshIdx];
+            const uint16* indexData = mesh.Indices();
+            const uint32 numIndices = mesh.NumIndices();
+            const uint32 indexSize = mesh.IndexSize();
+            const uint32 vtxOffset = mesh.VertexOffset();
+
+            // Prepare the triangles
+            const uint32 numTriangles = numIndices / 3;
+            for (uint64 partIdx = 0; partIdx < mesh.MeshParts().Size(); ++partIdx)
+            {
+                const MeshPart& meshPart = mesh.MeshParts()[partIdx];
+                const uint32 startTriangle = meshPart.IndexStart / 3;
+                const uint32 endTriangle = (meshPart.IndexStart + meshPart.IndexCount) / 3;
+                for (uint32 i = startTriangle; i < endTriangle; ++i)
+                {
+                    const uint32 idx0 = GetValue<uint16>(indexData, i * 3 + 0) + vtxOffset;
+                    const uint32 idx1 = GetValue<uint16>(indexData, i * 3 + 1) + vtxOffset;
+                    const uint32 idx2 = GetValue<uint16>(indexData, i * 3 + 2) + vtxOffset;
+                    batchedIndices[batchedIndexCount++] = static_cast<uint16>(idx0);
+                    batchedIndices[batchedIndexCount++] = static_cast<uint16>(idx1);
+                    batchedIndices[batchedIndexCount++] = static_cast<uint16>(idx2);
+                }
+            }
+        }
+        batchedIndexBuffer.MapAndSetData(batchedIndices.Data(), batchedIndexCount);
+        //// End of batch index
+    }
+
+    // Bind batched Index Buffer
+    D3D12_INDEX_BUFFER_VIEW ibView = batchedIndexBuffer.IBView();
     cmdList->IASetIndexBuffer(&ibView);
 
-	uint32 numTriangles = 0;
-
-    // Batch all meshes Triangles
-    for(uint64 i = 0; i < numVisible; ++i)
-    {
-        uint64 meshIdx = meshDrawIndices[i];
-        const Mesh& mesh = model->Meshes()[meshIdx];
-
-        // Draw the whole mesh
-        cmdList->DrawIndexedInstanced(mesh.NumIndices(), 1, mesh.IndexOffset(), mesh.VertexOffset(), 0);
-		numTriangles += mesh.NumIndices() / 3;
-    }
-
-    // Draw all meshes
-    for(uint64 i = 0; i < numVisible; ++i)
-    {
-        uint64 meshIdx = meshDrawIndices[i];
-        const Mesh& mesh = model->Meshes()[meshIdx];
-
-		numTriangles += mesh.NumIndices() / 3;
-    }
     // Draw the batched mesh
     cmdList->DrawIndexedInstanced(batchedIndexCount, 1, 0, 0, 0);
 }
+
+
+#define BATCH 0
+
 // Renders all meshes using depth-only rendering for a sun shadow map
 void MeshRenderer::RenderDepthPrepass(ID3D12GraphicsCommandList* cmdList, const Camera& camera)
 {
@@ -698,20 +724,34 @@ void MeshRenderer::RenderDepthPrepass(ID3D12GraphicsCommandList* cmdList, const 
     else
         numVisible = CullMeshes(camera, meshBoundingBoxes, meshDrawIndices);
 
+#if BATCH
+    RenderDepthByBatch(cmdList, camera, depthPSO, numVisible);
+#else
     RenderDepth(cmdList, camera, depthPSO, numVisible);
+#endif
 }
 
 // Renders all meshes using depth-only rendering for a sun shadow map
 void MeshRenderer::RenderSunShadowDepth(ID3D12GraphicsCommandList* cmdList, const OrthographicCamera& camera)
 {
     const uint64 numVisible = CullMeshesOrthographic(camera, true, meshBoundingBoxes, meshDrawIndices);
+
+#if BATCH
+    RenderDepthByBatch(cmdList, camera, sunShadowPSO, numVisible);
+#else
     RenderDepth(cmdList, camera, sunShadowPSO, numVisible);
+#endif
 }
 
 void MeshRenderer::RenderSpotLightShadowDepth(ID3D12GraphicsCommandList* cmdList, const Camera& camera)
 {
     const uint64 numVisible = CullMeshes(camera, meshBoundingBoxes, meshDrawIndices);
+
+#if BATCH
+    RenderDepthByBatch(cmdList, camera, spotLightShadowPSO, numVisible);
+#else
     RenderDepth(cmdList, camera, spotLightShadowPSO, numVisible);
+#endif
 }
 
 // Renders meshes using cascaded shadow mapping
@@ -770,9 +810,133 @@ void MeshRenderer::RenderSpotLightShadowMap(ID3D12GraphicsCommandList* cmdList, 
         shadowCamera.Initialize(1.0f, light.AngularAttenuation.y, AppSettings::SpotShadowNearClip, AppSettings::SpotLightRange);
         shadowCamera.SetPosition(light.Position);
         shadowCamera.SetOrientation(light.Orientation);
+
+        ////Update all VS constant here
         RenderSpotLightShadowDepth(cmdList, shadowCamera);
 
         Float4x4 shadowMatrix = shadowCamera.ViewProjectionMatrix() * ShadowHelper::ShadowScaleOffsetMatrix;
         spotLightShadowMatrices[i] = Float4x4::Transpose(shadowMatrix);
+    }
+
+}
+
+// Render shadows for all spot lights
+void MeshRenderer::RenderSpotLightShadowMapByBatch(ID3D12GraphicsCommandList* cmdList, const Camera& camera)
+{
+    PIXMarker marker(cmdList, L"Spot Light Shadow Map Rendering");
+    CPUProfileBlock cpuProfileBlock("Spot Light Shadow Map Rendering");
+    ProfileBlock profileBlock(cmdList, "Spot Light Shadow Map Rendering");
+
+    const Array<ModelSpotLight>& spotLights = model->SpotLights();
+    const uint64 numSpotLights = Min<uint64>(spotLights.Size(), AppSettings::MaxLightClamp);
+    for (uint64 i = 0; i < numSpotLights; ++i)
+    {
+        PIXMarker lightMarker(cmdList, MakeString(L"Rendering Spot Light Shadow %u", i).c_str());
+
+        // Set the viewport
+        DX12::SetViewport(cmdList, SpotLightShadowMapSize, SpotLightShadowMapSize);
+
+        // Set the shadow map as the depth target
+        D3D12_CPU_DESCRIPTOR_HANDLE dsv = spotLightShadowMap.ArrayDSVs[i];
+        cmdList->OMSetRenderTargets(0, nullptr, false, &dsv);
+        cmdList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+        const ModelSpotLight& light = spotLights[i];
+
+        // Draw the mesh with depth only, using the new shadow camera
+        PerspectiveCamera shadowCamera;
+        shadowCamera.Initialize(1.0f, light.AngularAttenuation.y, AppSettings::SpotShadowNearClip, AppSettings::SpotLightRange);
+        shadowCamera.SetPosition(light.Position);
+        shadowCamera.SetOrientation(light.Orientation);
+
+        // Cull Mesh and Batch index for each Light 
+        const uint64 numVisible = CullMeshes(camera, meshBoundingBoxes, meshDrawIndices);
+
+        RenderSpotLightShadowDepth(cmdList, shadowCamera);
+
+        Float4x4 shadowMatrix = shadowCamera.ViewProjectionMatrix() * ShadowHelper::ShadowScaleOffsetMatrix;
+        spotLightShadowMatrices[i] = Float4x4::Transpose(shadowMatrix);
+    }
+
+    // Draw Shadow by batch
+}
+
+// Renders all meshes using depth-only rendering by single call
+void MeshRenderer::BatchIndexForLight(uint64 idxLight, uint64 numVisible)
+{
+    // Batch all visible meshes Triangles
+    batchedOffset[idxLight] = batchedIndexCount;
+    for (uint64 idx = 0; idx < numVisible; ++idx)
+    {
+        uint64 meshIdx = meshDrawIndices[idx];
+        const Mesh& mesh = model->Meshes()[meshIdx];
+        const uint16* indexData = mesh.Indices();
+        const uint32 numIndices = mesh.NumIndices();
+        const uint32 indexSize = mesh.IndexSize();
+        const uint32 vtxOffset = mesh.VertexOffset();
+
+        // Prepare the triangles
+        const uint32 numTriangles = numIndices / 3;
+        for (uint64 partIdx = 0; partIdx < mesh.MeshParts().Size(); ++partIdx)
+        {
+            const MeshPart& meshPart = mesh.MeshParts()[partIdx];
+            const uint32 startTriangle = meshPart.IndexStart / 3;
+            const uint32 endTriangle = (meshPart.IndexStart + meshPart.IndexCount) / 3;
+            for (uint32 i = startTriangle; i < endTriangle; ++i)
+            {
+                const uint32 idx0 = GetValue<uint16>(indexData, i * 3 + 0) + vtxOffset;
+                const uint32 idx1 = GetValue<uint16>(indexData, i * 3 + 1) + vtxOffset;
+                const uint32 idx2 = GetValue<uint16>(indexData, i * 3 + 2) + vtxOffset;
+                batchedIndices[batchedIndexCount++] = static_cast<uint16>(idx0);
+                batchedIndices[batchedIndexCount++] = static_cast<uint16>(idx1);
+                batchedIndices[batchedIndexCount++] = static_cast<uint16>(idx2);
+            }
+        }
+    }
+}
+
+// Render shadows for all spot lights
+void MeshRenderer::BatchIndexBufferForAllLights(const Camera& camera)
+{
+    CPUProfileBlock cpuProfileBlock("Batch Index Buffer for All Spot Light.");
+
+    const Array<ModelSpotLight>& spotLights = model->SpotLights();
+    const uint64 numSpotLights = Min<uint64>(spotLights.Size(), AppSettings::MaxLightClamp);
+    this->batchedIndexCount = 0;
+    this->batchedIndices.Init(numSpotLights * numIndexInModel, 0);
+
+    for (uint64 i = 0; i < numSpotLights; ++i)
+    {
+        const ModelSpotLight& light = spotLights[i];
+
+        // Draw the mesh with depth only, using the new shadow camera
+        PerspectiveCamera shadowCamera;
+        shadowCamera.Initialize(1.0f, light.AngularAttenuation.y, AppSettings::SpotShadowNearClip, AppSettings::SpotLightRange);
+        shadowCamera.SetPosition(light.Position);
+        shadowCamera.SetOrientation(light.Orientation);
+
+        // Cull Mesh and Batch index for each Light 
+        const uint64 numVisible = CullMeshes(camera, meshBoundingBoxes, meshDrawIndices);
+        BatchIndexForLight(i, numVisible);
+
+        Float4x4 shadowMatrix = shadowCamera.ViewProjectionMatrix() * ShadowHelper::ShadowScaleOffsetMatrix;
+        spotLightShadowMatrices[i] = Float4x4::Transpose(shadowMatrix);
+    }
+    static bool created = false;
+
+    if (created == false)
+    {
+        FormattedBufferInit fbInit;
+        fbInit.Format = DXGI_FORMAT_R16_UINT;
+        fbInit.NumElements = batchedIndexCount;
+        fbInit.InitData = batchedIndices.Data();
+        fbInit.CPUAccessible = true;
+        fbInit.Dynamic = true;
+        batchedIndexBuffer.Initialize(fbInit);
+        created = true;
+    }
+    else
+    {
+        batchedIndexBuffer.MapAndSetData(batchedIndices.Data(), batchedIndexCount);
     }
 }
