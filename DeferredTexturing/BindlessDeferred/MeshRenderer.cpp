@@ -639,6 +639,52 @@ void MeshRenderer::RenderDepth(ID3D12GraphicsCommandList* cmdList, const Camera&
 	//AddToLog("");
 }
 
+// Renders all meshes using depth-only rendering by single call
+void MeshRenderer::RenderDepthByBatch(ID3D12GraphicsCommandList* cmdList, const Camera& camera, ID3D12PipelineState* pso, uint64 numVisible)
+{
+    cmdList->SetGraphicsRootSignature(depthRootSignature);
+    cmdList->SetPipelineState(pso);
+    cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    Float4x4 world;
+
+    // Set constant buffers
+    MeshVSConstants vsConstants;
+    vsConstants.World = world;
+    vsConstants.View = camera.ViewMatrix();
+    vsConstants.WorldViewProjection = world * camera.ViewProjectionMatrix();
+    DX12::BindTempConstantBuffer(cmdList, vsConstants, 0, CmdListMode::Graphics);
+
+    // Bind vertices and indices
+    D3D12_VERTEX_BUFFER_VIEW vbView = model->VertexBuffer().VBView();
+    D3D12_INDEX_BUFFER_VIEW ibView = model->IndexBuffer().IBView();
+    cmdList->IASetVertexBuffers(0, 1, &vbView);
+    cmdList->IASetIndexBuffer(&ibView);
+
+	uint32 numTriangles = 0;
+
+    // Batch all meshes Triangles
+    for(uint64 i = 0; i < numVisible; ++i)
+    {
+        uint64 meshIdx = meshDrawIndices[i];
+        const Mesh& mesh = model->Meshes()[meshIdx];
+
+        // Draw the whole mesh
+        cmdList->DrawIndexedInstanced(mesh.NumIndices(), 1, mesh.IndexOffset(), mesh.VertexOffset(), 0);
+		numTriangles += mesh.NumIndices() / 3;
+    }
+
+    // Draw all meshes
+    for(uint64 i = 0; i < numVisible; ++i)
+    {
+        uint64 meshIdx = meshDrawIndices[i];
+        const Mesh& mesh = model->Meshes()[meshIdx];
+
+		numTriangles += mesh.NumIndices() / 3;
+    }
+    // Draw the batched mesh
+    cmdList->DrawIndexedInstanced(batchedIndexCount, 1, 0, 0, 0);
+}
 // Renders all meshes using depth-only rendering for a sun shadow map
 void MeshRenderer::RenderDepthPrepass(ID3D12GraphicsCommandList* cmdList, const Camera& camera)
 {

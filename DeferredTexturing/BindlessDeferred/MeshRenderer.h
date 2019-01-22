@@ -98,6 +98,8 @@ protected:
     void LoadShaders();
     void RenderDepth(ID3D12GraphicsCommandList* cmdList, const Camera& camera, ID3D12PipelineState* pso, uint64 numVisible);
 
+    void RenderDepthByBatch(ID3D12GraphicsCommandList* cmdList, const Camera& camera, ID3D12PipelineState* pso, uint64 numVisible);
+
     const Model* model = nullptr;
 
     DepthBuffer sunShadowMap;
@@ -123,6 +125,10 @@ protected:
     Array<DirectX::BoundingBox> meshBoundingBoxes;
     Array<uint32> meshDrawIndices;
     Array<float> meshZDepths;
+
+	Array<uint16>   batchedIndices;
+	FormattedBuffer batchedIndexBuffer;
+	uint32 batchedIndexCount = 0;
 
     SunShadowConstantsDepthMap sunShadowConstants;
 };
