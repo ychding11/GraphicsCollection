@@ -87,6 +87,8 @@ public:
     void RenderSunShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
     void RenderSpotLightShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
 
+    void RenderSpotLightShadowMapByBatch(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
+
     const DepthBuffer& SunShadowMap() const { return sunShadowMap; }
     const DepthBuffer& SpotLightShadowMap() const { return spotLightShadowMap; }
     const Float4x4* SpotLightShadowMatrices() const { return spotLightShadowMatrices; }
@@ -97,6 +99,9 @@ protected:
 
     void LoadShaders();
     void RenderDepth(ID3D12GraphicsCommandList* cmdList, const Camera& camera, ID3D12PipelineState* pso, uint64 numVisible);
+
+    void BatchIndexBufferForAllLights(void);
+    void BatchIndexForLight(uint64 idxLight, uint64 numVisible);
 
     const Model* model = nullptr;
 
@@ -123,6 +128,16 @@ protected:
     Array<DirectX::BoundingBox> meshBoundingBoxes;
     Array<uint32> meshDrawIndices;
     Array<float> meshZDepths;
+
+    //// Index Buffer batch for all spot lights
+	Array<uint32>   batchedIndices;
+    Array<uint32>   batchedOffsetPerLight;
+	Array<uint32>   batchedIndexPerLight;
+	FormattedBuffer batchedIndexBuffer;
+    uint64          numBatchedSpotLights;
+	uint32          batchedIndexCount = 0;
+    uint64          numPreVisibleTriangle = 0;
+    uint32          numIndexInModel = 0;
 
     SunShadowConstantsDepthMap sunShadowConstants;
 };

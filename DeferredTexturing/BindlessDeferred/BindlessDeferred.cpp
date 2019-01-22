@@ -1331,14 +1331,20 @@ void BindlessDeferred::Render(const Timer& timer)
     if(AppSettings::EnableSun)
         meshRenderer.RenderSunShadowMap(cmdList, camera);
 
-    if(AppSettings::RenderLights)
-        meshRenderer.RenderSpotLightShadowMap(cmdList, camera);
+    if (AppSettings::RenderLights)
+    {
+        if(AppSettings::BatchForSpotLights) 
+            meshRenderer.RenderSpotLightShadowMapByBatch(cmdList, camera);
+        else
+            meshRenderer.RenderSpotLightShadowMap(cmdList, camera);
+    }
 
     {
         // Update the light constant buffer
         const void* srcData[2] = { spotLights.Data(), meshRenderer.SpotLightShadowMatrices() };
         uint64 sizes[2]   = { spotLights.MemorySize(), spotLights.Size() * sizeof(Float4x4) };
         uint64 offsets[2] = { 0, sizeof(SpotLight) * AppSettings::MaxSpotLights };
+        //uint64 offsets[2] = { 0, spotLights.MemorySize() };
         spotLightBuffer.MultiUpdateData(srcData, sizes, offsets, ArraySize_(srcData));
     }
 
@@ -1796,6 +1802,8 @@ void BindlessDeferred::RenderForward()
         mainPassData.DecalClusterBuffer = &decalClusterBuffer;
         mainPassData.SpotLightBuffer = &spotLightBuffer;
         mainPassData.SpotLightClusterBuffer = &spotLightClusterBuffer;
+
+        // Let Mesh Render to do Render Job
         meshRenderer.RenderMainPass(cmdList, camera, mainPassData);
 
         cmdList->OMSetRenderTargets(1, rtvHandles, false, &depthBuffer.DSV);
