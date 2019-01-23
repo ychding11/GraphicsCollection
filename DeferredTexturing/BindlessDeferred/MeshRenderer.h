@@ -100,8 +100,6 @@ protected:
     void LoadShaders();
     void RenderDepth(ID3D12GraphicsCommandList* cmdList, const Camera& camera, ID3D12PipelineState* pso, uint64 numVisible);
 
-    void RenderDepthByBatch(ID3D12GraphicsCommandList* cmdList, const Camera& camera, ID3D12PipelineState* pso, uint64 numVisible);
-
     void BatchIndexBufferForAllLights(void);
     void BatchIndexForLight(uint64 idxLight, uint64 numVisible);
 

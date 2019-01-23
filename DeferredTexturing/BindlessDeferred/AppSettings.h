@@ -98,6 +98,7 @@ namespace AppSettings
     extern BoolSetting ShowMSAAMask;
     extern BoolSetting ShowUVGradients;
     extern BoolSetting AnimateLightIntensity;
+    extern BoolSetting BatchForSpotLights;
 
     struct AppSettingsCBuffer
     {

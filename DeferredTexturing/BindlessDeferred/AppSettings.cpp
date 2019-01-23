@@ -66,6 +66,7 @@ namespace AppSettings
     BoolSetting ShowMSAAMask;
     BoolSetting ShowUVGradients;
     BoolSetting AnimateLightIntensity;
+    BoolSetting BatchForSpotLights;
 
     ConstantBuffer CBuffer;
     const uint32 CBufferRegister = 12;
@@ -120,10 +121,10 @@ namespace AppSettings
         ClearDecals.Initialize("ClearDecals", "Scene", "Clear Decals", "");
         Settings.AddSetting(&ClearDecals);
 
-        EnableDecalPicker.Initialize("EnableDecalPicker", "Scene", "Enable Decal Picker", "Enables or disables placing new decals with the mouse", true);
+        EnableDecalPicker.Initialize("EnableDecalPicker", "Scene", "Enable Decal Picker", "Enables or disables placing new decals with the mouse", false);
         Settings.AddSetting(&EnableDecalPicker);
 
-        RenderMode.Initialize("RenderMode", "Rendering", "Render Mode", "The rendering technique to use", RenderModes::DeferredTexturing, 2, RenderModesLabels);
+        RenderMode.Initialize("RenderMode", "Rendering", "Render Mode", "The rendering technique to use", RenderModes::ClusteredForward, 2, RenderModesLabels);
         Settings.AddSetting(&RenderMode);
 
         DepthPrepass.Initialize("DepthPrepass", "Rendering", "Depth Prepass", "Renders a depth prepass before the main pass or G-Buffer pass", false);
@@ -185,6 +186,9 @@ namespace AppSettings
 
         AnimateLightIntensity.Initialize("AnimateLightIntensity", "Debug", "Animate Light Intensity", "Modulates the light intensity to test buffer uploads", false);
         Settings.AddSetting(&AnimateLightIntensity);
+
+        BatchForSpotLights.Initialize("BatchForSpotLights", "Debug", "Batch For Spot Light", "Batch rendering for spot light shadow map", true);
+        Settings.AddSetting(&BatchForSpotLights);
 
         ConstantBufferInit cbInit;
         cbInit.Size = sizeof(AppSettingsCBuffer);
