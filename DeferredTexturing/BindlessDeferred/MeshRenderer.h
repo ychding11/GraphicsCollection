@@ -102,7 +102,7 @@ protected:
 
     void RenderDepthByBatch(ID3D12GraphicsCommandList* cmdList, const Camera& camera, ID3D12PipelineState* pso, uint64 numVisible);
 
-    void BatchIndexBufferForAllLights(const Camera& camera);
+    void BatchIndexBufferForAllLights(void);
     void BatchIndexForLight(uint64 idxLight, uint64 numVisible);
 
     const Model* model = nullptr;
@@ -134,6 +134,7 @@ protected:
     //// Index Buffer batch for all spot lights
 	Array<uint16>   batchedIndices;
     Array<uint32>   batchedOffset;
+	Array<uint32>   batchedIndexPerLight;
 	FormattedBuffer batchedIndexBuffer;
     uint64          numBatchedSpotLights;
 	uint32          batchedIndexCount = 0;

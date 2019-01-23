@@ -1332,7 +1332,8 @@ void BindlessDeferred::Render(const Timer& timer)
         meshRenderer.RenderSunShadowMap(cmdList, camera);
 
     if(AppSettings::RenderLights)
-        meshRenderer.RenderSpotLightShadowMap(cmdList, camera);
+        //meshRenderer.RenderSpotLightShadowMap(cmdList, camera);
+        meshRenderer.RenderSpotLightShadowMapByBatch(cmdList, camera);
 
     {
         // Update the light constant buffer
