@@ -1328,8 +1328,14 @@ void BindlessDeferred::Render(const Timer& timer)
 
     RenderClusters();
 
-    if(AppSettings::EnableSun)
-        meshRenderer.RenderSunShadowMap(cmdList, camera);
+    if (AppSettings::EnableSun)
+    {
+
+        if(AppSettings::BatchForSpotLights) 
+            meshRenderer.RenderSunShadowMapByBatch(cmdList, camera);
+        else
+            meshRenderer.RenderSunShadowMap(cmdList, camera);
+    }
 
     if (AppSettings::RenderLights)
     {

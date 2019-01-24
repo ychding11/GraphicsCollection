@@ -85,8 +85,9 @@ public:
     void RenderSpotLightShadowDepth(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
 
     void RenderSunShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
-    void RenderSpotLightShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
+    void RenderSunShadowMapByBatch(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
 
+    void RenderSpotLightShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
     void RenderSpotLightShadowMapByBatch(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
 
     const DepthBuffer& SunShadowMap() const { return sunShadowMap; }
@@ -102,6 +103,9 @@ protected:
 
     void BatchIndexBufferForAllLights(void);
     void BatchIndexForLight(uint64 idxLight, uint64 numVisible);
+
+    void BatchIndexBufferForAllCascades(void);
+    void BatchIndexForCacade(uint64 cascadeIndex, uint64 numVisible);
 
     const Model* model = nullptr;
 
@@ -130,14 +134,19 @@ protected:
     Array<float> meshZDepths;
 
     //// Index Buffer batch for all spot lights
-	Array<uint32>   batchedIndices;
-    Array<uint32>   batchedOffsetPerLight;
-	Array<uint32>   batchedIndexPerLight;
-	FormattedBuffer batchedIndexBuffer;
-    uint64          numBatchedSpotLights;
-	uint32          batchedIndexCount = 0;
-    uint64          numPreVisibleTriangle = 0;
+	Array<uint32>   batchedIndicesForSpotLights;
+    Array<uint32>   batchedOffsetPerSpotLight;
+	Array<uint32>   batchedIndexPerSpotLight;
+	FormattedBuffer batchedIndexBufferForSpotLights;
+	uint32          batchedIndexCountForSpotLights = 0;
     uint32          numIndexInModel = 0;
+
+    //// Index Buffer batch for all sun cascades 
+	Array<uint32>   batchedIndicesForSun;
+    Array<uint32>   batchedOffsetPerCascade;
+	Array<uint32>   batchedIndexPerCascade;
+	FormattedBuffer batchedIndexBufferForSun;
+	uint32          batchedIndexCountForCascades = 0;
 
     SunShadowConstantsDepthMap sunShadowConstants;
 };
