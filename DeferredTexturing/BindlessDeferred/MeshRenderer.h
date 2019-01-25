@@ -149,4 +149,5 @@ protected:
 	uint32          batchedIndexCountForCascades = 0;
 
     SunShadowConstantsDepthMap sunShadowConstants;
+    OrthographicCamera cascadeCameras[NumCascades];
 };

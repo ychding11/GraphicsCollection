@@ -722,11 +722,13 @@ void MeshRenderer::RenderSunShadowMapByBatch(ID3D12GraphicsCommandList* cmdList,
     CPUProfileBlock cpuProfileBlock("Sun Shadow Map Batch Rendering");
     ProfileBlock    profileBlock(cmdList, "Sun Shadow Map Batch Rendering");
 
-    OrthographicCamera cascadeCameras[NumCascades];
+    //OrthographicCamera cascadeCameras[NumCascades];
 
     static Float4x4 viewProjectionOld;
     if (camera.ViewProjectionMatrix() != viewProjectionOld)
     {
+		CPUProfileBlock cpuIBBatch("Index buffer Batch for Sun");
+		ProfileBlock    gpuIBBatch(cmdList, "Index buffer Batch for Sun");
         viewProjectionOld = camera.ViewProjectionMatrix();
 
         ShadowHelper::PrepareCascades(AppSettings::SunDirection, SunShadowMapSize, true, camera, sunShadowConstants.Base, cascadeCameras);
@@ -738,24 +740,31 @@ void MeshRenderer::RenderSunShadowMapByBatch(ID3D12GraphicsCommandList* cmdList,
             BatchIndexForCacade(i, numVisible);
         }
 
-        static bool created = false;
-        //if (created == false)
-        {
-            FormattedBufferInit fbInit;
-            fbInit.Format = DXGI_FORMAT_R32_UINT;
-            fbInit.NumElements = batchedIndexCountForSpotLights;
-            fbInit.InitData = batchedIndicesForSpotLights.Data();
-            //fbInit.CPUAccessible = true;
-            //fbInit.Dynamic = true;
-            batchedIndexBufferForSun.Initialize(fbInit);
-            created = true;
-        }
-        //else
-        {
-            //batchedIndexBufferForSun.MapAndSetData(batchedIndicesForSun.Data(), batchedIndexCountForCascades);
-            //batchedIndexBufferForSun.UpdateData(batchedIndicesForSun.Data(), batchedIndexCountForCascades, 0);
-        }
+		{
+			CPUProfileBlock cpuIBUpdate("Index buffer Update for Sun");
+			ProfileBlock    gpuIBUpdate(cmdList, "Index buffer Update for Sun");
+
+			static bool created = false;
+			if (created == false)
+			{
+				FormattedBufferInit fbInit;
+				fbInit.Format = DXGI_FORMAT_R32_UINT;
+				fbInit.NumElements = batchedIndexCountForSpotLights;
+				fbInit.InitData = batchedIndicesForSpotLights.Data();
+				//fbInit.CPUAccessible = true;
+				fbInit.Dynamic = true;
+				batchedIndexBufferForSun.Initialize(fbInit);
+				created = true;
+			}
+			else
+			{
+				//batchedIndexBufferForSun.MapAndSetData(batchedIndicesForSun.Data(), batchedIndexCountForCascades);
+				batchedIndexBufferForSun.UpdateData(batchedIndicesForSun.Data(), batchedIndexCountForCascades, 0);
+			}
+		}
     }
+
+	
 
     // Set PSO
     cmdList->SetGraphicsRootSignature(depthRootSignature);
