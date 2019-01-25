@@ -695,7 +695,7 @@ void MeshRenderer::RenderSunShadowMap(ID3D12GraphicsCommandList* cmdList, const 
     CPUProfileBlock cpuProfileBlock("Sun Shadow Map Rendering");
     ProfileBlock    profileBlock(cmdList, "Sun Shadow Map Rendering");
 
-    OrthographicCamera cascadeCameras[NumCascades];
+    //OrthographicCamera cascadeCameras[NumCascades];
     ShadowHelper::PrepareCascades(AppSettings::SunDirection, SunShadowMapSize, true, camera, sunShadowConstants.Base, cascadeCameras);
 
     // Render the meshes to each cascade
@@ -723,13 +723,15 @@ void MeshRenderer::RenderSunShadowMapByBatch(ID3D12GraphicsCommandList* cmdList,
     ProfileBlock    profileBlock(cmdList, "Sun Shadow Map Batch Rendering");
 
     //OrthographicCamera cascadeCameras[NumCascades];
+    static uint32 firstTime = 0;
 
     static Float4x4 viewProjectionOld;
-    if (camera.ViewProjectionMatrix() != viewProjectionOld)
+    if (firstTime  < 2 || camera.ViewProjectionMatrix() != viewProjectionOld)
     {
-		CPUProfileBlock cpuIBBatch("Index buffer Batch for Sun");
-		ProfileBlock    gpuIBBatch(cmdList, "Index buffer Batch for Sun");
+		//CPUProfileBlock cpuIBBatch("Index buffer Batch for Sun");
+		//ProfileBlock    gpuIBBatch(cmdList, "Index buffer Batch for Sun");
         viewProjectionOld = camera.ViewProjectionMatrix();
+        firstTime++;
 
         ShadowHelper::PrepareCascades(AppSettings::SunDirection, SunShadowMapSize, true, camera, sunShadowConstants.Base, cascadeCameras);
 
@@ -764,8 +766,6 @@ void MeshRenderer::RenderSunShadowMapByBatch(ID3D12GraphicsCommandList* cmdList,
 		}
     }
 
-	
-
     // Set PSO
     cmdList->SetGraphicsRootSignature(depthRootSignature);
     cmdList->SetPipelineState(sunShadowPSO);
@@ -776,6 +776,9 @@ void MeshRenderer::RenderSunShadowMapByBatch(ID3D12GraphicsCommandList* cmdList,
     D3D12_INDEX_BUFFER_VIEW ibView  = batchedIndexBufferForSun.IBView(); // Batched index
     cmdList->IASetVertexBuffers(0, 1, &vbView);
     cmdList->IASetIndexBuffer(&ibView);
+
+    // Set the viewport
+    DX12::SetViewport(cmdList, SunShadowMapSize, SunShadowMapSize);
 
     // Render the meshes to each cascade
     for(uint64 cascadeIdx = 0; cascadeIdx < NumCascades; ++cascadeIdx)
@@ -791,9 +794,6 @@ void MeshRenderer::RenderSunShadowMapByBatch(ID3D12GraphicsCommandList* cmdList,
         vsConstants.View = cameraOrth.ViewMatrix();
         vsConstants.WorldViewProjection = world * cameraOrth.ViewProjectionMatrix();
         DX12::BindTempConstantBuffer(cmdList, vsConstants, 0, CmdListMode::Graphics);
-
-        // Set the viewport
-        DX12::SetViewport(cmdList, SunShadowMapSize, SunShadowMapSize);
 
         // Set the shadow map as the depth target
         D3D12_CPU_DESCRIPTOR_HANDLE dsv = sunShadowMap.ArrayDSVs[cascadeIdx];
