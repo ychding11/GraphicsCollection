@@ -30,6 +30,11 @@ if (MSVC_VERSION GREATER_EQUAL "1900")
     endif()
 endif()
 
+file(GLOB APP_SHADER_FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/BindlessDeferred/*.hlsl
+	${CMAKE_CURRENT_SOURCE_DIR}/BindlessDeferred/SharedTypes.h
+)
+
 file(GLOB APP_SRC_FILES
 	${CMAKE_CURRENT_SOURCE_DIR}/BindlessDeferred/*.h
 	${CMAKE_CURRENT_SOURCE_DIR}/BindlessDeferred/*.cpp
@@ -163,6 +168,10 @@ ADD_EXECUTABLE( ${EXE_NAME} ${FRAMWORK_SRC_FILES} ${APP_SRC_FILES} )
 TARGET_LINK_LIBRARIES ( ${EXE_NAME} ${ALL_UGS_LIBS} )
 my_default_target_property(${EXE_NAME})
 
+# copy shaders 
+add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy ${APP_SHADER_FILES} ${APP_BINARY_DIR}
+)
 #######################################################################################
 # Hide the console window in visual studio projects
 #######################################################################################
