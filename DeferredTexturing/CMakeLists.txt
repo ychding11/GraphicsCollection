@@ -168,10 +168,20 @@ ADD_EXECUTABLE( ${EXE_NAME} ${FRAMWORK_SRC_FILES} ${APP_SRC_FILES} )
 TARGET_LINK_LIBRARIES ( ${EXE_NAME} ${ALL_UGS_LIBS} )
 my_default_target_property(${EXE_NAME})
 
+set (DLL_FILES 
+	${CMAKE_CURRENT_SOURCE_DIR}/Externals/Assimp-3.1.1/bin/assimp.dll
+	${CMAKE_CURRENT_SOURCE_DIR}/Externals/WinPixEventRuntime/bin/WinPixEventRuntime.dll
+)
+
 # copy shaders 
 add_custom_command(TARGET ${EXE_NAME} POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy ${APP_SHADER_FILES} ${APP_BINARY_DIR}
 )
+
+add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy ${DLL_FILES} ${APP_BINARY_DIR}
+)
+
 #######################################################################################
 # Hide the console window in visual studio projects
 #######################################################################################
