@@ -1764,6 +1764,7 @@ void _VulkanRenderer_Impl::createLightVisibilityBuffer()
 
 		std::array<vk::CopyDescriptorSet, 0> descriptor_copies;
 		device.updateDescriptorSets(descriptor_writes, descriptor_copies);
+        util::writeLog("create visibility buffer & point light buffer, update descriptor set.\n");
 	}
 
 }
@@ -1788,6 +1789,7 @@ void _VulkanRenderer_Impl::createLightCullingCommandBuffer()
 		light_culling_command_buffer = device.allocateCommandBuffers(alloc_info)[0];
 	}
 
+    util::writeLog("light culling pass create command buffer.\n");
 	// Record command buffer
 	{
 		vk::CommandBufferBeginInfo begin_info =
@@ -1800,6 +1802,7 @@ void _VulkanRenderer_Impl::createLightCullingCommandBuffer()
 
 		command.begin(begin_info);
 
+        util::writeLog("light culling pass --> begin command buffer.\n");
 		// using barrier since the sharing mode when allocating memory is exclusive
 		// begin after fragment shader finished reading from storage buffer
 
@@ -1837,8 +1840,8 @@ void _VulkanRenderer_Impl::createLightCullingCommandBuffer()
 			nullptr // pImageMemoryBarriers
 		);
 
+        util::writeLog("light culling pass --> set memory barrier{visibility buffer 'ps read'-'cs write' barrier,point light 'ps read'-'cs write' barrier}.\n");
 
-		// barrier
 		command.bindDescriptorSets(
 			vk::PipelineBindPoint::eCompute, // pipelineBindPoint
 			compute_pipeline_layout.get(), // layout
@@ -1847,12 +1850,16 @@ void _VulkanRenderer_Impl::createLightCullingCommandBuffer()
 			std::array<uint32_t, 0>() // pDynamicOffsets
 		);
 
+        util::writeLog("light culling pass --> set descriptor sets{light culling's, camera's, intermediate's}.\n");
+
 		PushConstantObject pco = { static_cast<int>(swap_chain_extent.width), static_cast<int>(swap_chain_extent.height), tile_count_per_row, tile_count_per_col };
 		command.pushConstants(compute_pipeline_layout.get(), vk::ShaderStageFlagBits::eCompute, 0, sizeof(pco), &pco);
+        util::writeLog("light culling pass --> push constants.\n");
 
 		command.bindPipeline(vk::PipelineBindPoint::eCompute, static_cast<VkPipeline>(compute_pipeline.get()));
+        util::writeLog("light culling pass --> bind compute pipeline object.\n");
 		command.dispatch(tile_count_per_row, tile_count_per_col, 1);
-
+        util::writeLog("light culling pass --> dispatch compute shader(%d,%d,%d).\n", tile_count_per_row, tile_count_per_col, 1);
 
 		std::vector<vk::BufferMemoryBarrier> barriers_after;
 		barriers_after.emplace_back
@@ -1885,7 +1892,9 @@ void _VulkanRenderer_Impl::createLightCullingCommandBuffer()
 			0, nullptr
 		);
 
+        util::writeLog("light culling pass --> set memory barrier{visibility buffer 'cs write'-'ps read' barrier,point light 'cs write'-'ps read' barrier}.\n");
 		command.end();
+        util::writeLog("light culling pass --> end command buffer.\n");
 	}
 }
 
