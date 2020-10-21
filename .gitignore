@@ -19,7 +19,6 @@
 *.VC.db
 *.ppm
 log.txt
-*.txt
 .vs
 Bin
 ipch
@@ -33,3 +32,4 @@ Release XP
 x64
 Test
 /wiki
+build

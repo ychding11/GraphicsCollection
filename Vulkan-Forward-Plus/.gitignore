@@ -1,0 +1,7 @@
+[Bb]uild/
+cmake_build/
+binaries/
+bin/
+documents/
+screenshots/
+README.md
