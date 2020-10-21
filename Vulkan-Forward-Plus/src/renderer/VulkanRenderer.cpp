@@ -576,7 +576,6 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 		device.destroyDescriptorSetLayout(layout);
 	};
 
-	// instance_descriptor_set_layout
 	{
 		// Transform information
 		// create descriptor for uniform buffer objects
@@ -601,8 +600,13 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 			device.createDescriptorSetLayout(layout_info, nullptr),
 			raii_layout_deleter
 		);
-        util::writeLog("create descriptor set layout: \t\nbinding info={ubo, uniform buffer, 1 descriptor, vertex|fragment stage,binding@0},"
-            " \t\n1 binding.");
+        util::writeLog("create descriptor set layout: \n"
+            "\t binding:\n"
+            "\t\t uniform buffer,\n"
+            "\t\t descriptor count=1\n"
+            "\t\t vertex|fragment stage\n"
+            "\t\t binding=0},\n"
+        );
 	}
 
 	// camera_descriptor_set_layout
@@ -625,8 +629,13 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 			device.createDescriptorSetLayout(create_info, nullptr),
 			raii_layout_deleter
 		);
-        util::writeLog("create descriptor set layout: \t\nbinding info={camera, storage buffer, 1 descriptor, vertex|fragment stage,binding@0},"
-            " \t\n1 binding.");
+        util::writeLog("create descriptor set layout: camera info\n"
+            "\t binding:\n"
+            "\t\t uniform buffer,\n"
+            "\t\t descriptor count=1\n"
+            "\t\t vertex|fragment stage\n"
+            "\t\t binding=0},\n"
+        );
 	}
 
 	// light_culling_descriptor_set_layout, shared between compute pipeline and graphics pipeline
@@ -665,9 +674,18 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 			raii_layout_deleter
 		);
 
-        util::writeLog("create descriptor set layout: \t\nbinding info={point light, storage buffer, 1 descriptor, compute|fragment stage,binding@1},"
-            "\t\nbinding info={point light culling result, storage buffer, 1 descriptor, compute|fragment stage,binding@0}"
-            " \t\n2 binding.");
+        util::writeLog("create descriptor set layout: light culling\n"
+            "\t binding:\n"
+            "\t\t storage buffer,\n"
+            "\t\t descriptor count=1\n"
+            "\t\t compute|fragment stage\n"
+            "\t\t binding=0},\n"
+            "\t binding:\n"
+            "\t\t storage buffer,\n"
+            "\t\t descriptor count=1\n"
+            "\t\t compute|fragment stage\n"
+            "\t\t binding=1},\n"
+        );
 	}
 
 	// descriptor set layout for intermediate objects during render passes, such as z-buffer
@@ -692,8 +710,14 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 			device.createDescriptorSetLayout(create_info, nullptr),
 			raii_layout_deleter
 		);
-        util::writeLog("create descriptor set layout: \t\nbinding info={previous depth, Combined Image Sampler, 1 descriptor, compute|fragment stage,binding@0},"
-            " \t\n1 binding.");
+
+        util::writeLog("create descriptor set layout: depth map in previous frame\n"
+            "\t binding:\n"
+            "\t\t combined image sampler,\n"
+            "\t\t descriptor count=1\n"
+            "\t\t compute|fragment stage\n"
+            "\t\t binding=0},\n"
+        );
 	}
 
 	// material_descriptror_layout // TODO: maybe I still need to do for each instance
@@ -737,10 +761,24 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 			device.createDescriptorSetLayout(create_info, nullptr),
 			raii_layout_deleter
 		);
-        util::writeLog("create descriptor set layout: \t\nbinding info={material uniform buffer, uniform buffer, 1 descriptor, fragment stage,binding@0},"
-            "\t\nbinding info={material albedo map, Combined Image Sampler, 1 descriptor, fragment stage,binding@1}"
-            "\t\nbinding info={material normal map, Combined Image Sampler, 1 descriptor, fragment stage,binding@2}"
-            " \t\n1 binding.\n");
+
+        util::writeLog("create descriptor set layout: material\n"
+            "\t binding:\n"
+            "\t\t uniform buffer,\n"
+            "\t\t descriptor count=1\n"
+            "\t\t fragment stage\n"
+            "\t\t binding=0},\n"
+            "\t binding:\n"
+            "\t\t combined image sampler,\n"
+            "\t\t descriptor count=1\n"
+            "\t\t fragment stage\n"
+            "\t\t binding=1},\n"
+            "\t binding:\n"
+            "\t\t combined image sampler,\n"
+            "\t\t descriptor count=1\n"
+            "\t\t fragment stage\n"
+            "\t\t binding=2},\n"
+        );
 	}
 }
 
@@ -1060,8 +1098,14 @@ void _VulkanRenderer_Impl::createFrameBuffers()
 				device.createFramebuffer(framebuffer_info, nullptr),
 				raii_framebuffer_deleter
 			);
+
+            util::writeLog("create frame buffer %d for main pass:\n"
+                "\t attachment: color image view, depth image view\n"
+                "\t size: %dx%d\n"
+                "\t layer: 1\n"
+                ,i, swap_chain_extent.width,swap_chain_extent.height
+            );
 		}
-        util::writeLog("create frame buffer for main render pass:{color image view, depth image view}\n" );
 	}
 
 	// depth pass frame buffer
@@ -1081,7 +1125,12 @@ void _VulkanRenderer_Impl::createFrameBuffers()
 			device.createFramebuffer(framebuffer_info, nullptr),
 			raii_framebuffer_deleter
 		);
-        util::writeLog("create frame buffer for early depth render pass:{depth image view}\n" );
+            util::writeLog("create frame buffer for early depth pass:\n"
+                "\t attachment: color image view, depth image view\n"
+                "\t size: %dx%d\n"
+                "\t layer: 1\n"
+                , swap_chain_extent.width,swap_chain_extent.height
+            );
 	}
 }
 
@@ -1157,11 +1206,6 @@ void _VulkanRenderer_Impl::createUniformBuffers()
 			, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
 			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	}
-
-    util::writeLog("create shader parameter uniform buffer.\n"
-        "\t SceneObjectUbo staging buffer & uniform buffer\n"
-    );
-
 	// Adding data to scene object buffer
 	{
 		SceneObjectUbo ubo = {};
@@ -1173,6 +1217,11 @@ void _VulkanRenderer_Impl::createUniformBuffers()
 		vkUnmapMemory(graphics_device, object_staging_buffer_memory.get());
 		utility.copyBuffer(object_staging_buffer.get(), object_uniform_buffer.get(), sizeof(ubo));
 	}
+    util::writeLog("create shader parameter @ uniform buffer:\n"
+        "\t SceneObjectUbo{model transform} staging buffer & uniform buffer\n"
+        "\t updating uniform buffer by staging buffer\n"
+    );
+
 	// create buffers for camera
 	{
 		VkDeviceSize bufferSize = sizeof(CameraUbo);
@@ -1186,7 +1235,7 @@ void _VulkanRenderer_Impl::createUniformBuffers()
 			, queue_family_indices.graphics_family
 			, 0);//		, queue_family_indices.compute_family);
 	}
-    util::writeLog("create shader parameter uniform buffer.\n"
+    util::writeLog("create shader parameter @ uniform buffer:\n"
         "\t SceneObjectUbo{model transform} staging buffer & uniform buffer\n"
         "\t CameraUbo{model transform} staging buffer & uniform buffer\n"
     );
@@ -1364,7 +1413,10 @@ void _VulkanRenderer_Impl::createIntermediateDescriptorSet()
 		intermediate_descriptor_set = device.allocateDescriptorSets(alloc_info)[0];
 	}
 
-    util::writeLog("create intermediate desciptor set.\n" );
+    util::writeLog("create intermediate desciptor set.\n"
+        "\t Descriptor sets are allocated from descriptor pool, in GPU & CPU accessible memory.\n"
+        "\t State is uninit after creation.\n"
+    );
 }
 
 void _VulkanRenderer_Impl::updateIntermediateDescriptorSet()
@@ -1393,7 +1445,11 @@ void _VulkanRenderer_Impl::updateIntermediateDescriptorSet()
 		std::array<vk::CopyDescriptorSet, 0> descriptor_copies;
 		device.updateDescriptorSets(descriptor_writes, descriptor_copies);
 
-        util::writeLog( "\t update intermediate descriptor set by a write descriptor set.\n" );
+        util::writeLog( "update intermediate descriptor set by a write descriptor set.\n"
+            "\t dstSet = intermediate_descriptor_set, dstbinding = 0, dstelement = 0, count = 1\n"
+            "\t type = combined image sampler\n"
+            "\t descriptor image info = {texture sampler, depth image, }\n"
+        );
 }
 
 void _VulkanRenderer_Impl::createDepthPrePassCommandBuffer()
@@ -1415,7 +1471,7 @@ void _VulkanRenderer_Impl::createDepthPrePassCommandBuffer()
 		depth_prepass_command_buffer = device.allocateCommandBuffers(alloc_info)[0];
 	}
 
-    util::writeLog( "pre-depth pass create primary command buffer.\n" );
+    util::writeLog( "pre-depth pass --> create primary command buffer.\n" );
 	// Begin command
 	{
 		vk::CommandBufferBeginInfo begin_info =
@@ -1466,7 +1522,7 @@ void _VulkanRenderer_Impl::createDepthPrePassCommandBuffer()
 		command.end();
 
         util::writeLog( "pre-depth pass --> end render pass.\n" );
-        util::writeLog( "pre-depth pass end command buffer.\n" );
+        util::writeLog( "pre-depth pass --> end command buffer.\n" );
 	}
 
 }
