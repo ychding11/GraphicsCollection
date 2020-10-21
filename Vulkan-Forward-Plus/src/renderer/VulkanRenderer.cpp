@@ -411,10 +411,10 @@ void _VulkanRenderer_Impl::createSwapChain()
 	swap_chain_images.resize(image_count);
 	vkGetSwapchainImagesKHR(graphics_device, swap_chain.get(), &image_count, swap_chain_images.data());
 
-    util::writeLog("Swap chain created. [%d] images size[%dx%d] in back buffer.", image_count,extent.width,extent.height);
-
 	swap_chain_image_format = surface_format.format;
 	swap_chain_extent = extent;
+
+    util::writeLog("create swapchain :  %d images size[%dx%d].", image_count,extent.width,extent.height);
 }
 
 void _VulkanRenderer_Impl::createSwapChainImageViews()
@@ -432,8 +432,8 @@ void _VulkanRenderer_Impl::createSwapChainImageViews()
 		VkImageView tmp_imageview;
 		utility.createImageView(swap_chain_images[i], swap_chain_image_format, VK_IMAGE_ASPECT_COLOR_BIT, &tmp_imageview);
 		swap_chain_imageviews.emplace_back(tmp_imageview, raii_deleter);
+        util::writeLog("create image view for image %d in swapchain.", i);
 	}
-    util::writeLog("create image view for swapchain back buffer.");
 }
 
 void _VulkanRenderer_Impl::createRenderPasses()
@@ -493,8 +493,10 @@ void _VulkanRenderer_Impl::createRenderPasses()
 		}
 		depth_pre_pass = VRaii<vk::RenderPass>(pass,renderpass_deletef);
 
-        util::writeLog("create depth pre-pass: it defines depath attachment properties={format, samples, load/store action for depth and stencil,"
-            " initial and fianal layout.} subpass(VK_PIPELINE_BIND_POINT_GRAPHICS), subpass dependency. ");
+        util::writeLog("create render pass --> early depth pass: \n"
+            "\t depth attachment{format, samples, load/store action for depth and stencil, initial and fianal layout.} count = 1\n"
+            "\t subpass(VK_PIPELINE_BIND_POINT_GRAPHICS), count = 1\n"
+            "\t subpass dependency, count=1\n");
 
 	}
 	// the render pass
@@ -559,9 +561,11 @@ void _VulkanRenderer_Impl::createRenderPasses()
 			throw std::runtime_error("failed to create render pass!");
 		}
 		render_pass = VRaii<vk::RenderPass>(tmp_render_pass, renderpass_deletef);
-        util::writeLog("create render pass: it defines color & depath attachment properties={format, samples, load/store action for depth and stencil,"
-            " initial and fianal layout.} subpass(VK_PIPELINE_BIND_POINT_GRAPHICS), subpass dependency. ");
 
+        util::writeLog("create render pass --> main pass: \n"
+            "\t depth & color attachment{format, samples, load/store action for depth and stencil, initial and fianal layout.} count = 2\n"
+            "\t subpass(VK_PIPELINE_BIND_POINT_GRAPHICS), count = 1\n"
+            "\t subpass dependency, count=1\n");
 	}
 }
 
@@ -881,20 +885,6 @@ void _VulkanRenderer_Impl::createGraphicsPipelines()
 		dynamic_state_info.dynamicStateCount = 2;
 		dynamic_state_info.pDynamicStates = dynamicStates;
 
-        util::writeLog("create main render pipeline state object:\n"
-            "\t reading shader code: forwardplus_vert.spv forwardplus_frag.spv\n"
-            "\t creating shader modules\n"
-            "\t creating shader stage : {shader stage, shader module,entry point}\n"
-            "\t creating vertex input: vertex binding description\n"
-            "\t creating vertex input: vertex attribute description\n"
-            "\t creating input assembly state: {topology, enable primitive restart}\n"
-            "\t creating viewport state info : {viewports, viewport count, scissors, scissors count}\n"
-            "\t creating multiple sample state info: {enable, samples, alpha to coverage, alpha to one}\n"
-            "\t creating depth stencil state info: {depth test enable, depth test enable, depth compare operation}\n"
-            "\t creating color blend state info: {}\n"
-            "\t creating color blend attachment state : {}\n"
-            "\t creating dynamic state info: {dynamic states, state count}\n"
-        );
 		VkPushConstantRange push_constant_range = {};
 		push_constant_range.offset = 0;
 		push_constant_range.size = sizeof(PushConstantObject);
@@ -949,7 +939,7 @@ void _VulkanRenderer_Impl::createGraphicsPipelines()
 			throw std::runtime_error("failed to create graphics pipeline!");
 		}
 
-        util::writeLog("create main render pipeline state object:\n"
+        util::writeLog("create main pass pipeline state object:\n"
             "\t reading shader code: forwardplus_vert.spv forwardplus_frag.spv\n"
             "\t creating shader modules\n"
             "\t creating shader stage : {shader stage, shader module,entry point}\n"
@@ -1021,7 +1011,7 @@ void _VulkanRenderer_Impl::createGraphicsPipelines()
 				device.createGraphicsPipeline(vk::PipelineCache(), depth_pipeline_info, nullptr),
 				raii_pipeline_deleter
 				);
-        util::writeLog("create early z render pipeline state object:\n"
+        util::writeLog("create early depth pass pipeline state object:\n"
             "\t reading shader code: depth_vert.spv\n"
             "\t creating shader modules\n"
             "\t creating shader stage : {shader stage, shader module,entry point}\n"
