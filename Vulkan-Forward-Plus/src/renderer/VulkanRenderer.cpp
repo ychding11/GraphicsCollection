@@ -494,7 +494,7 @@ void _VulkanRenderer_Impl::createRenderPasses()
 		depth_pre_pass = VRaii<vk::RenderPass>(pass,renderpass_deletef);
 
         util::writeLog("create render pass --> early depth pass: \n"
-            "\t depth attachment{format, samples, load/store action for depth and stencil, initial and fianal layout.} count = 1\n"
+            "\t depth attachment{format, samples, load/store action , initial and fianal layout.} count = 1\n"
             "\t subpass(VK_PIPELINE_BIND_POINT_GRAPHICS), count = 1\n"
             "\t subpass dependency, count=1\n");
 
@@ -563,7 +563,7 @@ void _VulkanRenderer_Impl::createRenderPasses()
 		render_pass = VRaii<vk::RenderPass>(tmp_render_pass, renderpass_deletef);
 
         util::writeLog("create render pass --> main pass: \n"
-            "\t depth & color attachment{format, samples, load/store action for depth and stencil, initial and fianal layout.} count = 2\n"
+            "\t depth & color attachment{format, samples, load/store action, initial and fianal layout.} count = 2\n"
             "\t subpass(VK_PIPELINE_BIND_POINT_GRAPHICS), count = 1\n"
             "\t subpass dependency, count=1\n");
 	}
@@ -602,7 +602,7 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 		);
         util::writeLog("create descriptor set layout: \n"
             "\t binding:\n"
-            "\t\t uniform buffer,\n"
+            "\t\t {uniform buffer,\n"
             "\t\t descriptor count=1\n"
             "\t\t vertex|fragment stage\n"
             "\t\t binding=0},\n"
@@ -631,7 +631,7 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 		);
         util::writeLog("create descriptor set layout: camera info\n"
             "\t binding:\n"
-            "\t\t uniform buffer,\n"
+            "\t\t {uniform buffer,\n"
             "\t\t descriptor count=1\n"
             "\t\t vertex|fragment stage\n"
             "\t\t binding=0},\n"
@@ -676,12 +676,12 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 
         util::writeLog("create descriptor set layout: light culling\n"
             "\t binding:\n"
-            "\t\t storage buffer,\n"
+            "\t\t {storage buffer,\n"
             "\t\t descriptor count=1\n"
             "\t\t compute|fragment stage\n"
             "\t\t binding=0},\n"
             "\t binding:\n"
-            "\t\t storage buffer,\n"
+            "\t\t {storage buffer,\n"
             "\t\t descriptor count=1\n"
             "\t\t compute|fragment stage\n"
             "\t\t binding=1},\n"
@@ -713,7 +713,7 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 
         util::writeLog("create descriptor set layout: depth map in previous frame\n"
             "\t binding:\n"
-            "\t\t combined image sampler,\n"
+            "\t\t {combined image sampler,\n"
             "\t\t descriptor count=1\n"
             "\t\t compute|fragment stage\n"
             "\t\t binding=0},\n"
@@ -764,17 +764,17 @@ void _VulkanRenderer_Impl::createDescriptorSetLayouts()
 
         util::writeLog("create descriptor set layout: material\n"
             "\t binding:\n"
-            "\t\t uniform buffer,\n"
+            "\t\t {uniform buffer,\n"
             "\t\t descriptor count=1\n"
             "\t\t fragment stage\n"
             "\t\t binding=0},\n"
             "\t binding:\n"
-            "\t\t combined image sampler,\n"
+            "\t\t {combined image sampler,\n"
             "\t\t descriptor count=1\n"
             "\t\t fragment stage\n"
             "\t\t binding=1},\n"
             "\t binding:\n"
-            "\t\t combined image sampler,\n"
+            "\t\t {combined image sampler,\n"
             "\t\t descriptor count=1\n"
             "\t\t fragment stage\n"
             "\t\t binding=2},\n"
@@ -929,9 +929,13 @@ void _VulkanRenderer_Impl::createGraphicsPipelines()
 		push_constant_range.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 		// no uniform variables or push constants
+		std::vector<VkDescriptorSetLayout> set_layouts = {
+            object_descriptor_set_layout.get(), camera_descriptor_set_layout.get(),
+            light_culling_descriptor_set_layout.get(), intermediate_descriptor_set_layout.get(),
+            material_descriptor_set_layout.get()
+        };
 		VkPipelineLayoutCreateInfo pipeline_layout_info = {};
 		pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		std::vector<VkDescriptorSetLayout> set_layouts = { object_descriptor_set_layout.get(), camera_descriptor_set_layout.get(), light_culling_descriptor_set_layout.get(), intermediate_descriptor_set_layout.get(), material_descriptor_set_layout.get() };
 		pipeline_layout_info.setLayoutCount = static_cast<uint32_t>(set_layouts.size()); // Optional
 		pipeline_layout_info.pSetLayouts = set_layouts.data(); // Optional
 		pipeline_layout_info.pushConstantRangeCount = 1; // Optional
@@ -939,8 +943,7 @@ void _VulkanRenderer_Impl::createGraphicsPipelines()
 
 
 		VkPipelineLayout temp_layout;
-		auto pipeline_layout_result = vkCreatePipelineLayout(graphics_device, &pipeline_layout_info, nullptr,
-			&temp_layout);
+		auto pipeline_layout_result = vkCreatePipelineLayout(graphics_device, &pipeline_layout_info, nullptr, &temp_layout);
 		if (pipeline_layout_result != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create pipeline layout!");
@@ -968,8 +971,7 @@ void _VulkanRenderer_Impl::createGraphicsPipelines()
 		pipelineInfo.flags = VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT;
 
 		VkPipeline temp_pipeline;
-		auto pipeline_result = vkCreateGraphicsPipelines(graphics_device, VK_NULL_HANDLE, 1
-			, &pipelineInfo, nullptr, &temp_pipeline);
+		auto pipeline_result = vkCreateGraphicsPipelines(graphics_device, VK_NULL_HANDLE, 1 , &pipelineInfo, nullptr, &temp_pipeline);
 		graphics_pipeline = VRaii<VkPipeline>(temp_pipeline, raii_pipeline_deleter);
 
 		if (pipeline_result != VK_SUCCESS)
@@ -991,7 +993,7 @@ void _VulkanRenderer_Impl::createGraphicsPipelines()
             "\t creating color blend attachment state : {}\n"
             "\t creating dynamic state info: {dynamic states, state count}\n"
             "\t creating push constant range: {offset, size, flag}\n"
-            "\t creating pipeline layout info: {descriptor sets, descriptor set count, push constant range}\n"
+            "\t creating pipeline layout info: {<descriptor sets,count>, <push constant,count> } //< it contains all shader resources bindings\n"
         );
 		//-------------------------------------depth prepass pipeline ------------------------------------------------
 
