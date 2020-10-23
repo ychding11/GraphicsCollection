@@ -10,7 +10,6 @@ include_directories("${EXTERNAL}/include")
 
 # Configure GLFW
 set(GLFW_ROOT_DIR "${EXTERNAL}/glfw-3.2.1")
-#set(GLFW_ROOT_DIR "${EXTERNAL}/glfw")
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -39,7 +38,17 @@ set(SOURCE_FILES
     "src/renderer/VulkanRenderer.cpp"
     "src/ShowBase.h"
     "src/ShowBase.cpp"
+	
+	"src/shaders/depth.vert"
+	"src/shaders/forwardplus.vert"
+	"src/shaders/forwardplus.frag"
+	"src/shaders/light_culling.comp.glsl"
     )
+
+set_source_files_properties("src/shaders/depth.vert" PROPERTIES HEADER_FILE_ONLY ON)
+set_source_files_properties("src/shaders/forwardplus.vert" PROPERTIES HEADER_FILE_ONLY ON)
+set_source_files_properties("src/shaders/forwardplus.frag" PROPERTIES HEADER_FILE_ONLY ON)
+set_source_files_properties("src/shaders/light_culling.comp.glsl" PROPERTIES HEADER_FILE_ONLY ON)
 
 add_executable(${CMAKE_PROJECT_NAME} ${SOURCE_FILES})
 
