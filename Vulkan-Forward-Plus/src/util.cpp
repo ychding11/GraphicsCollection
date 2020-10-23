@@ -31,7 +31,7 @@ std::vector<char> util::readFile(const std::string & filename)
     file_stream.close();
     return buffer;
 }
-
+static std::fstream g_DebugStream("effect_debug.txt", std::fstream::out);
 std::string util::writeLog(const char* format, ...)
 {
     char buffer[4096] = { 0 };
