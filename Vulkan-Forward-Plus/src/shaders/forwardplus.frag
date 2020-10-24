@@ -28,10 +28,7 @@ layout(std140, set = 0, binding = 0) uniform SceneObjectUbo
     mat4 model;
 } transform;
 
-// layout(set = 0, binding = 1) uniform sampler2D tex_sampler;
-// layout(set = 0, binding = 2) uniform sampler2D normal_sampler;
-
-layout(std140, set = 1, binding = 0) buffer readonly CameraUbo // FIXME: change back to uniform
+layout(std140, set = 1, binding = 0) buffer readonly CameraUbo // storage buffer 
 {
     mat4 view;
     mat4 proj;
@@ -44,7 +41,7 @@ layout(std430, set = 2, binding = 0) buffer readonly TileLightVisiblities
     LightVisiblity light_visiblities[];
 };
 
-layout(std140, set = 2, binding = 1) buffer readonly PointLights // FIXME: change back to uniform // readonly buffer PointLights
+layout(std140, set = 2, binding = 1) buffer readonly PointLights // storage buffer 
 {
 	int light_num;
 	PointLight pointlights[20000];
@@ -109,9 +106,11 @@ void main()
     {
         if (push_constants.debugview_index == 2)
         {
-			//heat map debug view
+			//< heat map debug view
+            //< how many lights covers current pixel ? 
 			float intensity = float(light_visiblities[tile_index].count) / 64;
-            out_color = vec4(vec3(intensity), 1.0) ; //light culling debug
+            out_color = vec4(vec3(intensity), 1.0);
+
 			//out_color = vec4(vec3(intensity * 0.62, intensity * 0.13, intensity * 0.94), 1.0) ; //light culling debug
 			//float minimum = 0.0;
 			//float maximum = 1.0;
@@ -119,17 +118,20 @@ void main()
 			//float b = max(0, 1 - ratio);
 			//float r = max(0, ratio - 1);
 			//float g = max(0, 1.0 - b - r);
-		        //out_color = vec4(vec3(r,g,b), 1.0);
+		    //out_color = vec4(vec3(r,g,b), 1.0);
 		}
 		else if (push_constants.debugview_index == 3)
         {
-            // depth debug view
-            float pre_depth = texture(depth_sampler, (gl_FragCoord.xy/push_constants.viewport_size) ).x;
+            //< depth debug view
+            //< depth map of previous frame
+            float pre_depth = texture(depth_sampler, (gl_FragCoord.xy/push_constants.viewport_size)).x;
             out_color = vec4(vec3( pre_depth ),1.0);
         }
         else if (push_constants.debugview_index == 4)
         {
-            // normal debug view
+            //< normal debug view
+            //< normal map of previous frame
+            //< how to show a nagetive normal by color ?
             out_color = vec4(abs(normal), 1.0);
         }
         return;
@@ -142,9 +144,9 @@ void main()
 	{
         PointLight light = pointlights[light_visiblities[tile_index].lightindices[i]];
 		vec3 light_dir = normalize(light.pos - frag_pos_world);
-        float lambertian = max(dot(light_dir, normal), 0.0);
+        float LdotN = max(dot(light_dir, normal), 0.0);
 
-        if(lambertian > 0.0)
+        if(LdotN  > 0.0)
         {
             float light_distance = distance(light.pos, frag_pos_world);
             if (light_distance > light.radius)
@@ -157,8 +159,8 @@ void main()
             float specAngle = max(dot(halfDir, normal), 0.0);
             float specular = pow(specAngle, 32.0);  // TODO?: spec color & power in g-buffer?
 
-            float att = clamp(1.0 - light_distance * light_distance / (light.radius * light.radius), 0.0, 1.0);
-            illuminance += light.intensity * att * (lambertian * diffuse + specular);
+            float decay = clamp(1.0 - light_distance * light_distance / (light.radius * light.radius), 0.0, 1.0);
+            illuminance += light.intensity * decay * (LdotN * diffuse + specular);
         }
 	}
 

@@ -254,6 +254,7 @@ private:
 
     void recreateSwapChain()
     {
+        util::writeLog("====================begin reset swapchain====================");
         vkDeviceWaitIdle(graphics_device);
 
         createSwapChain();
@@ -267,6 +268,7 @@ private:
         createGraphicsCommandBuffers();
         createLightCullingCommandBuffer(); // it needs light_visibility_buffer_size, which is changed on resize
         createDepthPrePassCommandBuffer();
+        util::writeLog("====================end reset swapchain====================\n");
     }
 
     void createSwapChain();
